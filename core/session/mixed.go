@@ -617,13 +617,28 @@ const mixedRareFloor = 1.5e-6
 // rareDigitReading（#200）：沒有字母的待定按鍵加上明確的聲調鍵（3 4 6 7）組成的讀音，首選字是罕用字時照字面
 // （1/3 不是「繃」、86 不是「嗄」），比照常見注音輸入法混打「組不出常用字就照字面」，跟 #175 的 57、#176 的 2.7 一樣
 // ↓ 仍有帶聲調的注音。跟前面的中文成詞（手＋5.3 是手肘）時照舊出字；個人用過的字機率會變高，也照舊出字。
+// 系統機率是下限：學習其他詞造成個人機率下降，不得把原本能打的「窄」（593）等讀音變成數字。
 func (s *Session) rareDigitReading(raw string, tone rune) bool {
 	if tone == zhuyin.Tone1 || raw == "" || strings.ContainsFunc(raw, unicode.IsLetter) {
 		return false
 	}
 	done, ok := s.mixedReading(raw, tone)
-	return ok && s.mixedSyllableScore(done) < mixedRareFloor && !s.readingContinues(done)
+	if !ok || s.mixedSyllableScore(done) >= mixedRareFloor || s.readingContinues(done) {
+		return false
+	}
+	dec := &decode.Decoder{Lex: s.model.Source(), Score: mixedSystemScorer{s.model}}
+	_, score := dec.Best(input.Exact{}.Expand([]zhuyin.Syllable{done}), nil, true)
+	return math.Exp(score) < mixedRareFloor
 }
+
+// Only the rarity gate uses this baseline; candidate ranking retains personalization.
+type mixedSystemScorer struct{ model *personal.Model }
+
+func (m mixedSystemScorer) Prob(left, word string) float64 {
+	return m.model.SystemProb(left, word)
+}
+
+func (m mixedSystemScorer) Prior(word string) float64 { return m.model.Prior(word) }
 
 // mixedSyllableScore：單一音節在句首的解碼機率（含個人用字）。只在多字詞裡常見的音節以詞首計（應 → 應該）。
 func (s *Session) mixedSyllableScore(syl zhuyin.Syllable) float64 {
