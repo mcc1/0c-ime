@@ -337,6 +337,20 @@ func (s *Session) mixedReading(raw string, tone rune) (zhuyin.Syllable, bool) {
 	return done, s.readingReachable(done)
 }
 
+// A completed, ordered syllable is Chinese evidence even when its keys look like
+// digits or its word is uncommon. Do not invent a different tone to obtain a word.
+func (s *Session) mixedExactReading(raw string, tone rune) (zhuyin.Syllable, bool) {
+	if !s.keysInSyllableOrder(raw) {
+		return "", false
+	}
+	c, ok := s.mixedComposer(raw)
+	if !ok {
+		return "", false
+	}
+	done, ok := c.Add(tone)
+	return done, ok && s.readingReachable(done)
+}
+
 // readingReachable reports whether a syllable typed at the cursor can start or
 // continue a dictionary word, alone or after the preceding Chinese syllables.
 func (s *Session) readingReachable(done zhuyin.Syllable) bool {
@@ -409,12 +423,22 @@ func (s *Session) finishMixedTone(key string) bool {
 			return true
 		}
 	}
+	// In Chinese mode, an explicit tone completing an exact syllable takes
+	// precedence over number/rarity heuristics. A preceding literal number still
+	// belongs to its number writing (3.4, 354), rather than starting a new syllable.
+	if key != " " && s.mixed.choice == 0 && s.literalNumberBefore() == "" {
+		if done, ok := s.mixedExactReading(raw, sym); ok {
+			s.clearMixed()
+			s.insertMixedTyped(done, raw+key)
+			return true
+		}
+	}
 	if key != " " && s.mixed.choice == 0 && (s.digitToneNumber(raw, sym) || s.numberAfterLiteral(raw, key) ||
 		s.rareDigitReading(raw, sym)) {
 		return false
 	}
 	// #119：緊接中文的完整反序音節（摺＋u2,6 → 摺疊）不拆成英文 u＋數字 2,6。
-	// 句首、空白或英文後仍保留 #200 的數字寫法；也不放寬後面的英→中切分。
+	// 句首、空白或英文後的數字寫法仍在這裡處理。
 	englishNumber := key != " " && s.mixed.choice == 0 && s.englishThenNumber(raw, key)
 	if englishNumber && !s.mixedAfterChinese() {
 		return false
@@ -484,32 +508,33 @@ const (
 	mixedMoveRatio   = 10
 )
 
-// mixedUnknownWordFloor：字典不認得的前段（ok、gmail、iphone）只在後段組成常用字時切開，
-// 帳號、型號裡碰巧組得成音節的罕用字（kevin87 的 ㄙㄚ˙）照字面。量級約「嗎」「打」的一半。
-// 前段不在字典裡就沒有英文的證據，音節照使用者打的長度取：兩邊差不到一半時取較長的音節（ok會，不是 okc為），
+// 前段不在字典裡時，明確聲調完成的音節也優先作中文，不用固定詞頻門檻排除。
+// 音節照使用者打的長度取：兩邊差不到一半時取較長的音節（ok會，不是 okc為），
 // 短的常用得多時取短的（netflix有，不是 netfli柳）。
-const (
-	mixedUnknownWordFloor = 1e-4
-	mixedUnknownRatio     = 0.5
-)
+const mixedUnknownRatio = 0.5
 
 // mixedBoundary（#119）：聲調鍵前的待定按鍵整串組不成音節時，找英→中的切點。前段照 mixedLiteralPrefix
 // 是已知英文、數字或標點的切法全部列出來，依 mixedPluralRatio／mixedMoveRatio 比較後段音節的解碼機率，
 // 不再固定取最長的英文前段：hellosu3 → hello你（hellos 也是英文字）、api2k7 → api的。都切不開時，字典不認得的
-// 英文前段（ok、gmail、iPhone）在明確的聲調鍵、後段至少兩個照順序打的注音鍵且組成常用字時也切開；
-// 接空白、前段夾數字或標點（網址、識別字）、聲調前一鍵是數字（帳號、編號）都照字面。整串本身是英文字（step3、zoom3）在呼叫前就排除。
+// 英文前段（ok、gmail、iPhone）在明確的聲調鍵、後段照順序打且有對應字詞時也切開。
+// 英數前段後面可從含字母的完整音節恢復，但不把前段數字拆一半借去組字。
+// 接空白、前段夾標點（網址、識別字）仍照字面。整串本身是英文字（step3、zoom3）在呼叫前就排除。
 func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllable, bool) {
 	if key == " " && s.englishThenPunct(raw) {
 		return 0, "", false
+	}
+	reading := s.mixedReading
+	if key != " " {
+		reading = s.mixedExactReading
 	}
 	best, bestScore, bestSyl := 0, 0.0, zhuyin.Syllable("")
 	for at := len(raw) - 1; at >= 1; at-- {
 		// 後段的按鍵要照聲母、介音、韻母的順序（#176：hello13 的 o1 是 ㄟㄅ，不是 hell北）。真的在打注音時照順序打，
 		// 把英文字尾借去組字時常顛倒；跟 #175 英文後面的反序數字留數字一樣。
-		if !s.mixedLiteralPrefix(raw[:at], raw[at:], key) || !s.keysInSyllableOrder(raw[at:]) || s.rareDigitReading(raw[at:], tone) {
+		if !s.mixedLiteralPrefix(raw[:at], raw[at:], key) || !s.keysInSyllableOrder(raw[at:]) {
 			continue
 		}
-		done, ok := s.mixedReading(raw[at:], tone)
+		done, ok := reading(raw[at:], tone)
 		if !ok {
 			continue
 		}
@@ -525,31 +550,30 @@ func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllabl
 	if best > 0 {
 		return best, bestSyl, true
 	}
-	// 打錯一鍵的注音（#203）：後段以數字鍵結尾（qji3wu0 的 ㄉㄧㄢ 天）也要切開，但切出來的後段要有字母，
-	// 只用數字鍵的後段照舊交給下面「帳號、編號」的判斷。接空白的單一鍵只認聲母（ㄗ 資、ㄙ 思）：型號、版本後面的
-	// 單一字母（gpt4o、ps4u、win7u）不是 ㄟ、ㄧ 一聲。
-	if at, done, ok := s.mixedAfterTypo(raw, tone); ok && (!unicode.IsDigit(rune(raw[len(raw)-1])) || strings.ContainsFunc(raw[at:], unicode.IsLetter)) &&
+	// 打錯的注音後面，只要新音節完整且有字詞就恢復中文，包括只用數字鍵的讀音。
+	// 接空白的單一鍵只認聲母（ㄗ 資、ㄙ 思）：型號、版本後面的
+	// 單一字母（ps4u、win7u）不是 ㄧ 一聲。
+	if at, done, ok := s.mixedAfterTypo(raw, tone); ok &&
 		(key != " " || len(raw)-at >= 2 || s.keyIsInitial(rune(raw[at]))) {
 		return at, done, true
-	}
-	// 聲調前一鍵是數字（lisa03、nina87）像帳號或編號，不切。
-	if unicode.IsDigit(rune(raw[len(raw)-1])) {
-		return 0, "", false
 	}
 	// 字典不認得的前段接空白，照字面。
 	if key == " " {
 		return 0, "", false
 	}
-	for at := len(raw) - 2; at >= 2; at-- {
-		if strings.ContainsFunc(raw[:at], func(r rune) bool { return r > unicode.MaxASCII || !unicode.IsLetter(r) }) ||
+	for at := len(raw) - 1; at >= 2; at-- {
+		prefix, rest := raw[:at], raw[at:]
+		if !strings.ContainsFunc(prefix, unicode.IsLetter) ||
+			strings.ContainsFunc(prefix, func(r rune) bool { return r > unicode.MaxASCII || !unicode.IsLetter(r) && !unicode.IsDigit(r) }) ||
+			strings.ContainsFunc(prefix, unicode.IsDigit) && !strings.ContainsFunc(rest, unicode.IsLetter) ||
 			!s.keysInSyllableOrder(raw[at:]) {
 			continue
 		}
-		done, ok := s.mixedReading(raw[at:], tone)
-		if !ok || tone == '˙' && done.ToneOf() != 5 { // 輕聲找不到字改讀一聲的不算（kubectl7 不是 kubec超）
+		done, ok := s.mixedExactReading(raw[at:], tone)
+		if !ok {
 			continue
 		}
-		if score := s.mixedSyllableScore(done); score >= mixedUnknownWordFloor && (best == 0 || score >= mixedUnknownRatio*bestScore) {
+		if score := s.mixedSyllableScore(done); best == 0 || score >= mixedUnknownRatio*bestScore {
 			best, bestScore, bestSyl = at, score, done
 		}
 	}
@@ -558,15 +582,14 @@ func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllabl
 
 // mixedAfterTypo：打錯一鍵的注音（qji3：ㄆㄨㄛˇ 組不成音節）在聲調鍵後仍是待定的按鍵，之後的注音會一路接在後面，
 // 直到下一個空白才整串照字面送出，好幾個字都變成英文字母（qji3ap6rup 而不是 qji3們今）。前段最後一個聲調鍵
-// （前一鍵不是數字：帳號、編號照舊）之後的按鍵照順序打、組成的不是罕用字（mixedRareFloor）時，從那裡切開：打錯的那段照字面，
-// 後面照常是中文。前段要有字母：只有數字與標點的是數字寫法。罕用字門檻不用 mixedUnknownWordFloor 的常用字門檻：
-// 句首機率會隨個人用字大幅變動（整串照字面送出的句子讓個人模型學到「句首接天」，們的句首機率掉到 5e-5）。
+// 之後的按鍵照順序打、有對應字詞時，從那裡切開：打錯的那段照字面，後面照常是中文。
+// 前段要有字母：只有數字與標點的是數字寫法。恢復不使用個人詞頻門檻，避免學習其他詞讓後續中文失效。
 func (s *Session) mixedAfterTypo(raw string, tone rune) (int, zhuyin.Syllable, bool) {
 	at := strings.LastIndexFunc(raw, func(r rune) bool {
 		sym, ok := s.layout.Symbol(r)
 		return ok && r != ' ' && zhuyin.ClassOf(sym) == zhuyin.Tone
 	}) + 1
-	if at < 2 || at >= len(raw) || unicode.IsDigit(rune(raw[at-2])) || !s.keysInSyllableOrder(raw[at:]) {
+	if at < 2 || at >= len(raw) || !s.keysInSyllableOrder(raw[at:]) {
 		return 0, "", false
 	}
 	if strings.ContainsFunc(raw[:at], func(r rune) bool { _, ok := s.layout.Symbol(r); return !ok }) {
@@ -575,8 +598,12 @@ func (s *Session) mixedAfterTypo(raw string, tone rune) (int, zhuyin.Syllable, b
 	if !strings.ContainsFunc(raw[:at], unicode.IsLetter) {
 		return 0, "", false // 只有數字與標點的前段是數字寫法（1-4-3、2025.3.31、2.7-3.1），不是打錯的注音
 	}
-	done, ok := s.mixedReading(raw[at:], tone)
-	if !ok || tone == '˙' && done.ToneOf() != 5 || s.mixedSyllableScore(done) < mixedRareFloor {
+	reading := s.mixedReading
+	if tone != zhuyin.Tone1 {
+		reading = s.mixedExactReading
+	}
+	done, ok := reading(raw[at:], tone)
+	if !ok {
 		return 0, "", false
 	}
 	return at, done, true
@@ -608,15 +635,16 @@ func (s *Session) englishThenNumber(raw, key string) bool {
 		!strings.ContainsFunc(word, func(r rune) bool { return r > unicode.MaxASCII })
 }
 
-// mixedRareFloor（#200）：只用數字鍵與標點鍵拼出的讀音，單音節機率（mixedSyllableScore）低於這個值就照字面。
+// mixedRareFloor（#200）：數字寫法回復與尚未完成音節的舊判斷使用的詞頻門檻。
+// 已完成的正序音節由 mixedExactReading 優先接收，不再因為詞頻低而改成英數。
 // 0.2.4 資料包裡，低於的是 1/3 繃、1/6 甭、5.3 肘、2.6 艔、86 嗄、06 玵、197 唄、287 瘩、.4 嘔、,4 誒、.6 吽、;3 軮
 // （PTT 語料合計 4 次）；最接近的常用一邊是 583 眨（2.2e-6）、03 俺（2.6e-6）、5.4 咒／宙（5.7e-6），2.4 豆、5.6 軸、
 // 1/4 蹦都在 1e-5 左右或更高（門檻的 6 倍以上）。
 const mixedRareFloor = 1.5e-6
 
-// rareDigitReading（#200）：沒有字母的待定按鍵加上明確的聲調鍵（3 4 6 7）組成的讀音，首選字是罕用字時照字面
-// （1/3 不是「繃」、86 不是「嗄」），比照常見注音輸入法混打「組不出常用字就照字面」，跟 #175 的 57、#176 的 2.7 一樣
-// ↓ 仍有帶聲調的注音。跟前面的中文成詞（手＋5.3 是手肘）時照舊出字；個人用過的字機率會變高，也照舊出字。
+// rareDigitReading 是數字寫法回復邏輯使用的罕用讀音判斷，例如 84.73 不應變成「阿噢3」。
+// 正序且有字詞的完整音節已在 finishMixedTone 優先組字；這個門檻不攔截它們。
+// 跟前面的中文成詞（手＋5.3 是手肘）、個人用過的字也不視為罕用。
 // 系統機率是下限：學習其他詞造成個人機率下降，不得把原本能打的「窄」（593）等讀音變成數字。
 func (s *Session) rareDigitReading(raw string, tone rune) bool {
 	if tone == zhuyin.Tone1 || raw == "" || strings.ContainsFunc(raw, unicode.IsLetter) {

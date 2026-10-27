@@ -274,19 +274,18 @@ func TestMixedCompleteReadingAfterChineseBeforeEnglishNumberGuard(t *testing.T) 
 	}
 }
 
-// #200：只用數字鍵與標點鍵、加聲調鍵拼出的讀音，自己的首選字是罕用字（1/3 繃、1/6 甭、5.3 肘、86 嗄）時照字面，
-// 比照「組不出常用字就照字面」；接在中文後面、英文後面也一樣。常用字（2.4 豆、5.6 軸、2/3 等、5/4 正、1/4 蹦）照舊出字，
-// 跟前面的中文成詞時（手肘）也照舊。照字面的按鍵按 ↓ 仍有帶聲調的注音。
-func TestMixedRareDigitKeyReading(t *testing.T) {
+// 中文模式中明確聲調完成的讀音優先組字，包括詞頻較低、只用數字與標點鍵的字。
+// 原始按鍵與原樣注音仍可在候選中選回。
+func TestMixedCompletedDigitKeyReadingPrefersChinese(t *testing.T) {
 	for _, tc := range []struct{ keys, want string }{
-		{"1/3", "1/3"},
-		{"1/6", "1/6"},
-		{"5.3", "5.3"},
-		{"86", "86"},
-		{"1/3 ", "1/3 "},
-		{"ji31/3", "我1/3"},
-		{"ji3 1/3", "我 1/3"},
-		{"hello1/3", "hello1/3"},
+		{"1/3", "繃"},
+		{"1/6", "甭"},
+		{"5.3", "肘"},
+		{"86", "嗄"},
+		{"1/3 ", "繃 "},
+		{"ji31/3", "我繃"},
+		{"ji3 1/3", "我 繃"},
+		{"hello1/3", "hello繃"},
 		{"2.4", "豆"},
 		{"5.6", "軸"},
 		{"2/3", "等"},
@@ -321,7 +320,7 @@ func TestMixedDigitReadingsSurviveUnrelatedLearning(t *testing.T) {
 	for _, tc := range []struct{ keys, want string }{
 		{"593", "窄"}, {"583", "眨"}, {"03", "俺"}, {"53", "只"}, {"183", "把"},
 		{"2.4", "豆"}, {"5.6", "軸"},
-		{"354", "354"}, {"57", "57"}, {"107", "107"}, {"1/3", "1/3"}, {"86", "86"},
+		{"354", "354"}, {"57", "57"}, {"107", "107"}, {"1/3", "繃"}, {"86", "嗄"},
 	} {
 		t.Run(tc.keys, func(t *testing.T) {
 			s := numberWritingSession()
@@ -352,9 +351,9 @@ func TestMixedDigitReadingsSurviveUnrelatedLearning(t *testing.T) {
 	}
 }
 
-func TestMixedRareDigitReadingCanStillLearn(t *testing.T) {
+func TestMixedCompletedRareReadingDoesNotRequireLearning(t *testing.T) {
 	s := numberWritingSession()
-	if got := mixedType(s, "5.3").Text(); got != "5.3" {
+	if got := mixedType(s, "5.3").Text(); got != "肘" {
 		t.Fatalf("unlearned rare reading: %q", got)
 	}
 	key(s, proto.KeyEscape)
