@@ -128,6 +128,15 @@ func serve() string {
 	eng.Model.Now = func() int64 { return time.Now().Unix() }
 
 	// 使用者設定：預設神經選字與前文開啟，補標點（Beta）關閉。明確的 -neural-*／-punct-* 參數優先（開發與隔離測試）。
+	// #206：Windows 的中英切換鍵預設改成左右 Shift；0.2.4 以前存檔時順手寫進去的 right 在第一次以新版啟動時換一次。
+	// 放在引擎：不論是新版安裝程式、還是舊版更新器在背景裝上這一版，第一個以新設定服務的一定是新版引擎。
+	if writable && runtime.GOOS == "windows" {
+		if adopted, err := settings.AdoptBothShift(*user); err != nil {
+			lg.Printf("中英切換鍵未換成左右 Shift，下次啟動再試：%v", err)
+		} else if adopted {
+			lg.Printf("中英切換鍵改成左右 Shift（Windows 的新預設，#206；可在設定程式改回右 Shift）")
+		}
+	}
 	settingsReport, configErr := settings.Read(settings.Path(*user))
 	config := settingsReport.Settings
 	if configErr != nil {
@@ -138,7 +147,9 @@ func serve() string {
 	}
 	eng.DocumentContextOff = !config.DocumentContext
 	eng.Fuzzy = config.FuzzyConfig()
+	eng.InputStyle = config.ProfileRules()
 	eng.MixedInput = config.MixedInput
+	eng.Toneless = config.Toneless // #150：開啟時 session 停用混打的自動判斷；health 的 mixed_input 照設定檔回報
 	eng.EnglishAutocomplete = config.EnglishAutocomplete
 	eng.CandidateBeforeCursor = config.CandidateCursor == "before"
 	eng.EmojiShortcut = config.EmojiShortcut
@@ -148,7 +159,7 @@ func serve() string {
 	eng.AdvanceAfterSelect = config.AdvanceAfterSelect
 	eng.CtrlPunct = config.CtrlPunctuation // #168
 	// #173：Windows、Linux 的設定；macOS 開 Caps Lock 一律切到英文（#84），不看設定檔的值。
-	eng.CapsLockEnglish = config.CapsLockEnglish && settings.CapsLockEnglishSetting(runtime.GOOS)
+	eng.CapsLockEnglish = config.CapsLockEnglish && (settings.CapsLockEnglishSetting(runtime.GOOS) || config.ProfileRules().CapsLetter == "lower")
 
 	if config.OutputSimplified { // #118：字典編在執行檔裡，只有開啟時才解析
 		if conv, err := simplified.TW2S(); err != nil {
@@ -208,6 +219,9 @@ func serve() string {
 	}
 	// 鍵盤排列（#83）：倚天 41 鍵時 session 停用混打與 = 開 Emoji；設定檔的值不動，health 照實回報。
 	eng.Layout, _ = layout.ByName(config.KeyboardLayout)
+	if config.CandidateLayout == "horizontal" {
+		eng.CandidateColumns = config.ProfileRules().CandidatePageSize
+	}
 	if config.CandidateLayout == "grid" {
 		eng.CandidateColumns = 5
 	}
@@ -419,6 +433,8 @@ func serve() string {
 	}
 	srv.Info = map[string]string{"version": buildVersion, "protocol": fmt.Sprint(proto.Version),
 		"neural_startup_state": neuralState, "personal_store": personalState, "personal_lock": lockState,
+		"input_profile": config.ActiveProfile().ID, "input_profile_fingerprint": config.ProfileFingerprint(),
+		"input_style_shift_space": config.ProfileRules().ShiftSpace, "input_style_shift_letter": config.ProfileRules().ShiftLetter, "input_style_caps_letter": config.ProfileRules().CapsLetter,
 		"selection_setting": config.Selection, "punctuation": fmt.Sprint(eng.Punct != nil), "document_context": fmt.Sprint(config.DocumentContext),
 		"fuzzy": eng.Fuzzy.Key(), "mixed_input": fmt.Sprint(config.MixedInput), "english_autocomplete": fmt.Sprint(config.EnglishAutocomplete), "left_shift": fmt.Sprint(config.TogglesLeft()), "right_shift": fmt.Sprint(config.TogglesRight()), "toggle_key": config.ToggleKey, "shift_tap_ms": "300", "mode_memory": config.ModeMemory, "start_mode": config.EffectiveStartMode(), "esc_clear": fmt.Sprint(config.EscClear), "space_selects": fmt.Sprint(config.SpaceSelects), "advance_after_select": fmt.Sprint(config.AdvanceAfterSelect),
 		"selection_keys": config.SelectionKeys, "candidate_cursor": config.CandidateCursor, "candidate_layout": config.CandidateLayout, "emoji_shortcut": config.EmojiShortcut, "emoji_equals_first": fmt.Sprint(config.EmojiEqualsFirst),
@@ -427,12 +443,17 @@ func serve() string {
 		"vocab_keys": fmt.Sprint(eng.Preview02 && vocabDisabled == ""),
 		// #135：沒在組字時的聲調鍵要交給核心（單按＋空白是聲調符號）；Windows 外殼在 TestKeyDown 依此決定。
 		"tone_mark_keys": fmt.Sprint(eng.ToneMarkKeys()),
+		// #183：沒在組字時引擎會處理的可見 ASCII 按鍵，依鍵盤排列與設定（許氏的數字、- / 交還應用程式）。
+		// Windows 外殼的 TestKeyDown 依此決定；舊引擎沒有這一項，外殼照舊依 keyboard_layout、emoji_shortcut 與 tone_mark_keys 推算。
+		"idle_keys": eng.IdleKeys(),
 		// #168：引擎認得 Ctrl＋標點的鍵名而且設定開著；外殼只在這一項是 true、又在中文模式時送那六個鍵，
 		// 舊引擎沒有這一項，外殼照舊交給應用程式。
 		"ctrl_punctuation": fmt.Sprint(eng.CtrlPunct),
 		// #173：引擎認得 caps_lock 請求而且設定「Caps Lock 開著時直接打英文」開著；外殼只在這一項是 true 時回報
 		// Caps Lock 狀態，舊引擎沒有這一項、或設定關閉時，注音模式照舊不理 Caps Lock（#168）。
 		"caps_lock_english": fmt.Sprint(eng.CapsLockEnglish),
+		// #150：不打聲調也能選字；外殼不用看，0c-update 拿它跟設定檔比較。
+		"toneless": fmt.Sprint(eng.Toneless),
 		// #192：設定「用快捷鍵切換簡體字」開著；外殼只在這一項是 true 時攔切換鍵，按下時送 output_simplified（同選單）。
 		// 設定改了會重啟引擎，舊引擎沒有這一項，外殼照舊把這個鍵交給應用程式。
 		"simplified_hotkey": fmt.Sprint(config.SimplifiedHotkey),

@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
+	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -37,7 +40,7 @@ const (
 	applyNotRequested  = "not_requested"      // 沒有要求套用：下次引擎啟動時生效
 	applyApplied       = "applied"            // 引擎已交接退出，下一個按鍵以新設定重新啟動
 	applyEngineStopped = "engine_not_running" // 引擎沒有在執行：外殼下一個按鍵啟動引擎時就是新設定
-	applyDeferred      = "deferred_composing" // 仍在組字：已儲存，等引擎自然重啟
+	applyDeferred      = "deferred_composing" // 仍在組字：新版引擎會在所有組字完成後套用
 	applyTimeout       = "timeout"
 	applyFailed        = "failed"
 )
@@ -120,13 +123,14 @@ type settingsItem struct {
 }
 
 type settingsDoc struct {
-	Schema         int            `json:"schema"`
-	OK             bool           `json:"ok"`
-	File           fileView       `json:"file"`
-	Engine         engineView     `json:"engine"`
-	Items          []settingsItem `json:"items"`
-	PendingRestart bool           `json:"pending_restart"`
-	Features       features       `json:"features"`
+	Profiles       settings.ProfileView `json:"profiles"`
+	Schema         int                  `json:"schema"`
+	OK             bool                 `json:"ok"`
+	File           fileView             `json:"file"`
+	Engine         engineView           `json:"engine"`
+	Items          []settingsItem       `json:"items"`
+	PendingRestart bool                 `json:"pending_restart"`
+	Features       features             `json:"features"`
 }
 
 // features 是 0.2.0 的介面入口（#128）。開發期間由內部開關控制，0.2.0 起恆為 true；設定程式與外殼仍依此
@@ -200,6 +204,12 @@ func runningValues(info map[string]string) map[string]string {
 	case "false":
 		out["caps-lock-english"] = "off"
 	}
+	switch info["toneless"] { // #150
+	case "true":
+		out["toneless"] = "on"
+	case "false":
+		out["toneless"] = "off"
+	}
 	switch info["space_selects"] {
 	case "true":
 		out["space-selects"] = "on"
@@ -269,6 +279,12 @@ func buildSettingsDoc(base string, dial autoupdate.Dialer) settingsDoc {
 		doc.Engine = engineView{State: "running", Version: info["version"]}
 		running = runningValues(info)
 	}
+	doc.Profiles = r.Settings.Profiles()
+	if up && herr == nil {
+		doc.Profiles.Running = info["input_profile"]
+		doc.Profiles.Pending = info["input_profile_fingerprint"] != "" && info["input_profile_fingerprint"] != r.Settings.ProfileFingerprint()
+		doc.PendingRestart = doc.Profiles.Pending
+	}
 	for _, it := range r.Settings.Items() {
 		item := settingsItem{Item: it}
 		if v, ok := running[it.Key]; ok {
@@ -294,7 +310,7 @@ type setOptions struct {
 	repair bool // 設定檔壞掉時改名保留，從預設值重新開始
 }
 
-const setUsage = "用法：0c-update set selection neural|statistical、set punctuation on|off、set document-context on|off、set mixed-input on|off、set english-autocomplete on|off、set left-shift on|off、set esc-clear on|off、set space-selects on|off、set candidate-cursor before|after、set advance-after-select on|off、set output-simplified on|off、set simplified-hotkey on|off、set ctrl-punctuation on|off、set caps-lock-english on|off（Windows、Linux）、set keyboard-layout standard|eten、set fuzzy-z-zh|fuzzy-c-ch|fuzzy-s-sh|fuzzy-en-eng off|select|auto [鍵 值 ...] [-apply] [-notify] [-json] [-repair]"
+const setUsage = "用法：0c-update set selection neural|statistical、set punctuation on|off、set document-context on|off、set mixed-input on|off、set english-autocomplete on|off、set left-shift on|off、set esc-clear on|off、set space-selects on|off、set candidate-cursor before|after、set advance-after-select on|off、set output-simplified on|off、set simplified-hotkey on|off、set ctrl-punctuation on|off、set caps-lock-english on|off（Windows、Linux）、set toneless on|off、set keyboard-layout standard|eten|hsu、set fuzzy-z-zh|fuzzy-c-ch|fuzzy-s-sh|fuzzy-en-eng off|select|auto [鍵 值 ...] [-apply] [-notify] [-json] [-repair]"
 
 func parseSetArgs(args []string) (setOptions, error) {
 	var o setOptions
@@ -381,7 +397,16 @@ func runSet(base string, dial autoupdate.Dialer, o setOptions, notice func(strin
 				return err
 			}
 		}
-		return settings.Save(path, s)
+		if err := settings.Save(path, s); err != nil {
+			return err
+		}
+		if choosesToggleKey(runtime.GOOS, o.pairs) {
+			// 自己選了中英切換鍵：新版引擎啟動時不再把右 Shift 換成左右 Shift（#206）。
+			if err := settings.MarkBothShift(path); err != nil {
+				fmt.Fprintln(os.Stderr, "0c-update: 無法記下中英切換鍵的選擇：", err)
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		return res, err
@@ -395,6 +420,11 @@ func runSet(base string, dial autoupdate.Dialer, o setOptions, notice func(strin
 		ensureEngineService(base) // 引擎交接退出後立刻叫起常駐引擎（#120）
 	}
 	return res, nil
+}
+
+// choosesToggleKey：Windows 上這次設定了中英切換鍵（新鍵 toggle-key 或舊鍵 left-shift，#206）。
+func choosesToggleKey(goos string, pairs [][2]string) bool {
+	return goos == "windows" && slices.ContainsFunc(pairs, func(p [2]string) bool { return p[0] == "toggle-key" || p[0] == "left-shift" })
 }
 
 // liveSimplified：這次只改了「輸出簡體字」，引擎可以即時切換、不必交接重啟（#169，設定程式的開關與舊外殼的選單都走這裡）。
@@ -424,6 +454,12 @@ func applySettings(dial autoupdate.Dialer, notice func(string)) applyView {
 		v.State = applyEngineStopped
 		restartResidentEngine()
 		return v
+	}
+	if info["composing"] != "0" && info["settings_deferred_apply"] == "true" {
+		if err := autoupdate.DeferSettings(dial); err != nil {
+			return applyView{Requested: true, State: applyFailed, Detail: err.Error()}
+		}
+		return applyView{Requested: true, State: applyDeferred, Detail: "所有輸入框完成組字後自動套用"}
 	}
 	if info["composing"] != "0" {
 		notice("設定已儲存；請先完成組字，完成後會切換設定。")

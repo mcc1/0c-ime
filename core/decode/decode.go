@@ -48,6 +48,7 @@ type Seg struct {
 
 // Lock 是使用者鎖定的區間：從某位置起 Len 個音節必須是 Word。硬條件。
 type Lock struct {
+	Segmentation    bool // Explicit word boundary: the locked word cannot merge with neighbors.
 	Word            string
 	Len             int
 	Completion      bool // 鎖定來自 Tab 補全；session 用來區分學習來源
@@ -197,7 +198,7 @@ func allowed(locks map[int]Lock, i, j int, w string) bool {
 		if s < i || s >= j || s == i && l.Word == w && l.Len == j-i {
 			continue
 		}
-		if l.LiteralBoundary == 0 && s+l.Len <= j {
+		if !l.Segmentation && l.LiteralBoundary == 0 && s+l.Len <= j {
 			if runes == nil {
 				runes = []rune(w)
 			}
@@ -304,15 +305,7 @@ func (d *Decoder) forward(lat input.Lattice, locks map[int]Lock) [][]state {
 			continue
 		}
 		// 從 i 出發的詞與狀態無關：只列舉一次
-		var arcs []arc
-		d.spans(lat, i, func(reading []zhuyin.Syllable, cost float64) {
-			j := i + len(reading)
-			for _, e := range d.Lex.Exact(reading) {
-				if allowed(locks, i, j, e.Surface) {
-					arcs = append(arcs, arc{j, e, cost})
-				}
-			}
-		})
+		arcs := d.wordArcs(lat, i, locks)
 		for _, st := range d.frontier(best[i]) {
 			for _, a := range arcs {
 				sc := st.score + d.repeatScore(lat, locks, st.path, i, a.j, a.e.Surface, d.arcLog(i, a.j, st.last, a.e, a.cost))
