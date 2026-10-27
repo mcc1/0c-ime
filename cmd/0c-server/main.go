@@ -149,6 +149,7 @@ func serve() string {
 	eng.Fuzzy = config.FuzzyConfig()
 	eng.InputStyle = config.ProfileRules()
 	eng.MixedInput = config.MixedInput
+	eng.MixedInputAggressive = config.MixedInputPolicy == settings.MixedAggressive
 	eng.Toneless = config.Toneless // #150：開啟時 session 停用混打的自動判斷；health 的 mixed_input 照設定檔回報
 	eng.EnglishAutocomplete = config.EnglishAutocomplete
 	eng.CandidateBeforeCursor = config.CandidateCursor == "before"
@@ -432,6 +433,7 @@ func serve() string {
 		closeAll()
 	}
 	srv.Info = map[string]string{"version": buildVersion, "protocol": fmt.Sprint(proto.Version),
+		"mixed_input_policy":   config.MixedInputPolicy,
 		"neural_startup_state": neuralState, "personal_store": personalState, "personal_lock": lockState,
 		"input_profile": config.ActiveProfile().ID, "input_profile_fingerprint": config.ProfileFingerprint(),
 		"input_style_shift_space": config.ProfileRules().ShiftSpace, "input_style_shift_letter": config.ProfileRules().ShiftLetter, "input_style_caps_letter": config.ProfileRules().CapsLetter,

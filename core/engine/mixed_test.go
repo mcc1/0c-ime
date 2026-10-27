@@ -38,3 +38,17 @@ func TestMixedToggleAndByteProtocol(t *testing.T) {
 		t.Fatal("new sessions must get configured toggle")
 	}
 }
+
+func TestMixedPolicyIsCopiedIntoEachSession(t *testing.T) {
+	e := testEngine()
+	e.MixedInput = true
+	first := e.OpenSession()
+	if e.Session(first).MixedInputAggressive {
+		t.Fatal("default policy must be conservative")
+	}
+	e.MixedInputAggressive = true
+	second := e.OpenSession()
+	if !e.Session(second).MixedInputAggressive || e.Session(first).MixedInputAggressive {
+		t.Fatal("policy was not isolated per session")
+	}
+}

@@ -44,6 +44,7 @@ type Engine struct {
 	Toneless              bool              // 「不打聲調也能選字」開著時由宿主設定（#150）；開啟時停用中英混打的自動判斷。
 	EnglishAutocomplete   bool
 	MixedInput            bool                // opt-in bilingual keys; disabled preserves legacy behavior.
+	MixedInputAggressive  bool                // Chinese-first mixed input; conservative by default
 	English               *english.Dictionary // nil uses the authored prototype vocabulary.
 	EnglishPack           string              // host-supplied pack version for diagnostics; empty means prototype.
 	EmojiShortcut         string
@@ -126,6 +127,7 @@ func (e *Engine) OpenSession() uint64 {
 	e.sessions[e.next].Toneless = e.Toneless
 	e.sessions[e.next].EnglishAutocomplete = e.EnglishAutocomplete
 	e.sessions[e.next].MixedInput = e.MixedInput
+	e.sessions[e.next].MixedInputAggressive = e.MixedInputAggressive
 	e.sessions[e.next].EmojiShortcut = e.EmojiShortcut
 	e.sessions[e.next].EmojiEqualsFirst = e.EmojiEqualsFirst
 	e.sessions[e.next].SetLayout(e.Layout)

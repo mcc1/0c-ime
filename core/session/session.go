@@ -110,6 +110,7 @@ type Session struct {
 	// MixedInput is opt-in; English is a shared, immutable vocabulary.
 	EnglishAutocomplete   bool
 	MixedInput            bool
+	MixedInputAggressive  bool // opt-in Chinese-first interpretation; false preserves account/number heuristics
 	English               *english.Dictionary
 	EmojiShortcut         string
 	EmojiEqualsFirst      bool

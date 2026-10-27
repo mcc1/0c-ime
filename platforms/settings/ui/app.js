@@ -425,7 +425,7 @@
   const INPUT_PAGES = {
     mode: {
       title: '中英切換', lead: '用哪個鍵切換注音和英文、換程式後回到哪個模式，以及在注音中直接打英文。',
-      keys: ['toggle-key', 'start-mode', 'mode-memory', 'mixed-input', 'english-autocomplete', 'caps-lock-english', 'style-shift-letter', 'style-caps-letter'],
+      keys: ['toggle-key', 'start-mode', 'mode-memory', 'mixed-input', 'mixed-input-policy', 'english-autocomplete', 'caps-lock-english', 'style-shift-letter', 'style-caps-letter'],
     },
     candidates: {
       title: '選字', lead: '候選字怎麼排、怎麼選，以及要不要列出近音的字（模糊音）。',

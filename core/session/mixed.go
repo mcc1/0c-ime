@@ -409,6 +409,13 @@ func (s *Session) finishMixedTone(key string) bool {
 			return true
 		}
 	}
+	if s.MixedInputAggressive && key != " " && s.mixed.choice == 0 && s.literalNumberBefore() == "" {
+		if done, ok := s.mixedExactReading(raw, sym); ok {
+			s.clearMixed()
+			s.insertMixedTyped(done, raw+key)
+			return true
+		}
+	}
 	if key != " " && s.mixed.choice == 0 && (s.digitToneNumber(raw, sym) || s.numberAfterLiteral(raw, key) ||
 		s.rareDigitReading(raw, sym)) {
 		return false
@@ -499,6 +506,9 @@ const (
 // 英文前段（ok、gmail、iPhone）在明確的聲調鍵、後段至少兩個照順序打的注音鍵且組成常用字時也切開；
 // 接空白、前段夾數字或標點（網址、識別字）、聲調前一鍵是數字（帳號、編號）都照字面。整串本身是英文字（step3、zoom3）在呼叫前就排除。
 func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllable, bool) {
+	if s.MixedInputAggressive && key != " " {
+		return s.mixedAggressiveBoundary(raw, key, tone)
+	}
 	if key == " " && s.englishThenPunct(raw) {
 		return 0, "", false
 	}
@@ -549,7 +559,9 @@ func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllabl
 		if !ok || tone == '˙' && done.ToneOf() != 5 { // 輕聲找不到字改讀一聲的不算（kubectl7 不是 kubec超）
 			continue
 		}
-		if score := s.mixedSyllableScore(done); score >= mixedUnknownWordFloor && (best == 0 || score >= mixedUnknownRatio*bestScore) {
+		score := s.mixedSyllableScore(done)
+		if (score >= mixedUnknownWordFloor || s.mixedSystemSyllableScore(done) >= mixedUnknownWordFloor) &&
+			(best == 0 || score >= mixedUnknownRatio*bestScore) {
 			best, bestScore, bestSyl = at, score, done
 		}
 	}

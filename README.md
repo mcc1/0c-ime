@@ -120,6 +120,8 @@ go test ./...
 go run ./cmd/0c-cli -data assets/data
 ```
 
+中英混打的「混打組字傾向」預設為**保守**，保留帳號、型號及數字的判斷；選**積極**時，明確聲調完成且有對應字詞的注音優先組字，也較積極地從英數或誤按後恢復中文，代價是部分帳號或型號可能變成中文字，需要原文時請切到英文。兩種模式都能從候選選回原按鍵，關閉混打時此選項不生效。CLI 可用 `-mixed-input -mixed-input-policy aggressive` 測試積極模式。積極模式不會用鄰近按鍵替換誤按鍵。
+
 `make assets` 從同版本的 [Release](https://github.com/0c-biggo/0c-ime/releases) 取得原始碼與模型 tarball（合計約 275 MB），驗證後把現成字典放到 `assets/data/`、已配對模型放到 `models/select/` 與 `models/punct/`，和出貨內容相同；0.2.2 起 Release 附的 Source code 壓縮檔也適用。要指定版本用 `make assets RELEASE=v0.2.2`，只取字典用 `make assets MODELS=0`（約 36 MB，以統計選字運作）。
 
 `cmd/` 下工具的旗標、輸入輸出與範例見官網 [CLI 文件](https://0c.biggo.com/docs/cli/)，例如 [0c-cli](https://0c.biggo.com/docs/cli/0c-cli/)、[0c-update](https://0c.biggo.com/docs/cli/0c-update/)、[0c-mcp](https://0c.biggo.com/docs/cli/0c-mcp/)。

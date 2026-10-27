@@ -88,7 +88,7 @@ func TestETenDisablesMixedAndEmojiItems(t *testing.T) {
 	}
 	d := disabled(s)
 	// 不打聲調（#150）只在標準排列有效，倚天時也停用。
-	if len(d) != 4 || d["mixed-input"] != "倚天 41 鍵時關閉" || d["emoji-shortcut"] != "倚天 41 鍵時關閉" || d["emoji-equals-first"] == "" || d["toneless"] != "倚天 41 鍵時關閉" {
+	if len(d) != 5 || d["mixed-input"] != "倚天 41 鍵時關閉" || d["mixed-input-policy"] != "倚天 41 鍵時關閉" || d["emoji-shortcut"] != "倚天 41 鍵時關閉" || d["emoji-equals-first"] == "" || d["toneless"] != "倚天 41 鍵時關閉" {
 		t.Fatalf("倚天停用混打與 Emoji：%v", d)
 	}
 	for _, it := range s.Items() {
@@ -125,7 +125,7 @@ func TestHsuDisablesOnlyMixedInput(t *testing.T) {
 		}
 	}
 	// 不打聲調（#150）只在標準排列有效，許氏時也停用。
-	if strings.Join(disabled, "、") != "mixed-input：許氏排列時關閉、toneless：許氏排列時關閉" {
+	if strings.Join(disabled, "、") != "mixed-input：許氏排列時關閉、mixed-input-policy：許氏排列時關閉、toneless：許氏排列時關閉" {
 		t.Fatalf("許氏只停用混打：%v", disabled)
 	}
 }
