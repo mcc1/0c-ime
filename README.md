@@ -120,8 +120,6 @@ go test ./...
 go run ./cmd/0c-cli -data assets/data
 ```
 
-開啟中英混打時，中文模式下以聲調鍵（3、4、6、7）完成、有對應字詞的注音優先組成中文，數字鍵也一樣；英文後面可直接接注音。前段誤按、組不成字時保留原按鍵，後面的完整注音仍可繼續組字。要照字面輸入英數原文，請先切到英文模式；已組出的中文也可從候選選回原按鍵。
-
 `make assets` 從同版本的 [Release](https://github.com/0c-biggo/0c-ime/releases) 取得原始碼與模型 tarball（合計約 275 MB），驗證後把現成字典放到 `assets/data/`、已配對模型放到 `models/select/` 與 `models/punct/`，和出貨內容相同；0.2.2 起 Release 附的 Source code 壓縮檔也適用。要指定版本用 `make assets RELEASE=v0.2.2`，只取字典用 `make assets MODELS=0`（約 36 MB，以統計選字運作）。
 
 `cmd/` 下工具的旗標、輸入輸出與範例見官網 [CLI 文件](https://0c.biggo.com/docs/cli/)，例如 [0c-cli](https://0c.biggo.com/docs/cli/0c-cli/)、[0c-update](https://0c.biggo.com/docs/cli/0c-update/)、[0c-mcp](https://0c.biggo.com/docs/cli/0c-mcp/)。

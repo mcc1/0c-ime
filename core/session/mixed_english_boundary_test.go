@@ -1,7 +1,6 @@
 package session
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/0c-biggo/0c-ime/core/english"
@@ -30,7 +29,7 @@ func englishBoundarySession() *Session {
 		{"應", "ㄧㄥˋ", 1.7e-4}, {"競", "ㄐㄧㄥˋ", 1.2e-4}, {"呃", "ㄜ˙", 2e-6},
 		{"爾", "ㄦˇ", 1e-4}, {"二", "ㄦˋ", 3e-4}, {"偶", "ㄡˇ", 5e-5}, {"天", "ㄊㄧㄢ", 1e-3}, {"換", "ㄏㄨㄢˋ", 2e-4},
 		{"一", "ㄧ", 2e-3}, {"誒", "ㄟ", 1e-5}, {"資", "ㄗ", 3e-4},
-		{"窄", "ㄓㄞˇ", 2e-5}, {"群", "ㄑㄩㄣˊ", 2e-5},
+		{"群", "ㄑㄩㄣˊ", 2e-5},
 	} {
 		lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
 		sys.SetUni(e.w, e.p)
@@ -77,12 +76,16 @@ func TestMixedEnglishThenZhuyinWithoutSpace(t *testing.T) {
 	}
 }
 
-// 未完成中文音節的英文、網址、識別字與型號照舊原樣；未知英文接空白也不猜切點。
+// #119：英文、網址、識別字、型號與帳號照舊原樣，不被切成中文。不在字典裡的前段只在明確的聲調鍵
+// （3 4 6 7）、後段至少兩個照順序打的注音鍵、而且組成常用字時才切；接空白的未知英文一律是英文。
 func TestMixedUnknownEnglishStaysLiteral(t *testing.T) {
 	for _, keys := range []string{
 		"hello world ", "user_name ", "someNewName ", "okji ", "gmailsu ",
+		"kevin87",            // ㄙㄚ˙ 只有罕用字
+		"nina87", "lisa0304", // 聲調前一鍵是數字：帳號、生日，不是 nin嗎、lis滿
+		"facebookg4",                        // kg 是 ㄜㄕ，順序顛倒：不是 faceboo社
 		"hello4", "zoom3", "step3", "page3", // 完整英文字接數字：不是 hell欸、zoo與、st艮
-		"test4", "win7", "mp3", "ps4", "h264", "abc3", "user4",
+		"test4", "win7", "mp3", "ps4", "gpt4", "h264", "abc3", "user4",
 		"example.com/ji3", "https://example.com/su3",
 	} {
 		s := englishBoundarySession()
@@ -93,67 +96,23 @@ func TestMixedUnknownEnglishStaysLiteral(t *testing.T) {
 	}
 }
 
-func TestMixedCompletedZhuyinAfterEnglishPrefersChinese(t *testing.T) {
+func TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning(t *testing.T) {
 	for _, tc := range []struct{ keys, want string }{
-		{"microsoft593", "microsoft窄"},
-		{"microsoft593fmp6", "microsoft窄群"},
-		{"microsoftsu3cl3", "microsoft你好"},
-		// A valid reading is Chinese evidence even if its frequency is low.
-		{"kevin87", "kevi挱"}, {"nina87", "nin嗎"}, {"lisa0304", "lis滿04"},
-		{"facebookg4", "facebook是"}, {"gpt4", "gp斥"}, {"gpt4o ", "gp斥誒"},
+		{"microsoft5993fmp6su3cl3", "microsoft5993群你好"},
+		{"kevin87", "kevin87"}, {"nina87", "nina87"}, {"lisa0304", "lisa0304"},
+		{"facebookg4", "facebookg4"}, {"gpt4", "gpt4"}, {"gpt4o ", "gpt4o "},
 	} {
 		t.Run(tc.keys, func(t *testing.T) {
 			s := englishBoundarySession()
-			// Unrelated learning must not block an unknown-English boundary either.
 			for i := 0; i < 100; i++ {
 				mixedType(s, "ji3")
 				key(s, proto.KeyEnter)
 			}
 			if got := mixedType(s, tc.keys).Text(); got != tc.want {
-				t.Fatalf("preedit: %q, want %q", got, tc.want)
+				t.Fatalf("preedit after learning: %q, want %q", got, tc.want)
 			}
 			if got := key(s, proto.KeyEnter).Commit; got != tc.want {
 				t.Fatalf("commit: %q, want %q", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestMixedTypoWithDigitsDoesNotSwallowFollowingZhuyin(t *testing.T) {
-	for _, tc := range []struct{ keys, want string }{
-		{"microsoft5993fmp6su3cl3", "microsoft5993群你好"},
-		{"microsoft599fmp6su3cl3", "microsoft599群你好"},
-		{"qji3593fmp6", "qji3窄群"},
-		{"qji3fmp6su3cl3", "qji3群你好"},
-	} {
-		t.Run(tc.keys, func(t *testing.T) {
-			s := englishBoundarySession()
-			if got := mixedType(s, tc.keys).Text(); got != tc.want {
-				t.Fatalf("preedit: %q, want %q", got, tc.want)
-			}
-			if got := key(s, proto.KeyEnter).Commit; got != tc.want {
-				t.Fatalf("commit: %q, want %q", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestMixedChinesePriorityDoesNotApplyInEnglishMode(t *testing.T) {
-	for _, raw := range []string{"593", "1/3", "86", "kevin87", "lisa0304", "gpt4", "microsoft593fmp6"} {
-		t.Run(raw, func(t *testing.T) {
-			s := englishBoundarySession()
-			s.Handle(proto.Request{Type: proto.Mode, On: true})
-			var output strings.Builder
-			for _, k := range raw {
-				snap := key(s, string(k))
-				output.WriteString(snap.Commit)
-				if !snap.Handled {
-					output.WriteRune(k)
-				}
-			}
-			output.WriteString(key(s, proto.KeyEnter).Commit)
-			if got := output.String(); got != raw {
-				t.Fatalf("English mode: %q, want %q", got, raw)
 			}
 		})
 	}
@@ -166,17 +125,18 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 		{"qji3su3cl3", "qji3你好"},
 		{"ju3su3cl3", "ju3你好"},
 		{"qji3su3", "qji3你"},
+		{"microsoft5993su3cl3", "microsoft5993你好"},
 		// 句首機率低、但不是罕用字的音節也切開（個人用字可能讓們、門的句首機率掉到 5e-5）
 		{"qji3ap7su3", "qji3們你"},
-		// 整串已知英文接數字仍照字面，沒有可獨立辨識的新音節。
-		{"hello4", "hello4"},
+		// 照舊：英文字或帳號後的數字不是打錯的注音
+		{"hello4", "hello4"}, {"lisa0304", "lisa0304"}, {"kevin87", "kevin87"},
 		// 只有數字與標點的前段是數字寫法，不切（-3 爾、.3 偶）
 		{"1-4-3", "1-4-3"}, {"2025.3.31", "2025.3.31"}, {"2.7-3.1", "2.7-3.1"}, {"1-2-3-4-5-6", "1-2-3-4-5-6"},
 		// 打錯那段後面的音節以數字鍵結尾（ㄊㄧㄢ 的 0、ㄏㄨㄢ 的 0）也切開；後段要有字母
 		{"qji3wu0 ", "qji3天"}, {"qji3cj04", "qji3換"}, {"qji3cj04su3cl3", "qji3換你好"},
 		// 型號、版本後面的單一字母接空白照字面（0.2.4 的行為）；單一聲母照樣切（ㄗ 資）
 		{"qji3y ", "qji3資"},
-		{"ps4u ", "ps4u "}, {"mp3u ", "mp3u "}, {"win7u ", "win7u "}, {"a4u ", "a4u "},
+		{"gpt4o ", "gpt4o "}, {"ps4u ", "ps4u "}, {"mp3u ", "mp3u "}, {"win7u ", "win7u "}, {"a4u ", "a4u "},
 	} {
 		s := englishBoundarySession()
 		mixedType(s, tc.keys)
