@@ -1,0 +1,47 @@
+{
+  "archive": "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz",
+  "size": 408866223,
+  "sha256": "2d74d9567649df3538e6ad43f9ac8c49f30713f04feca7b4db826046cf0b3ee5",
+  "parts": [
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part00",
+      52428800,
+      "06fc3a14e87367bc054698f0e2254c5ef6beb43e1eef2aad337345072832950b"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part01",
+      52428800,
+      "60a188f0d44c98f353f553b685002d9c045ed91ba2c2f478c0efc474c5e81c41"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part02",
+      52428800,
+      "9c9e9c4150b30105f7e8c28f51c6c9f89b7fec3faf13eb493834d0fe777c9899"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part03",
+      52428800,
+      "8fcb024a09df3d87d13dae3ee0c089e4c362076aa66d3d863c34e03ba3ec720d"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part04",
+      52428800,
+      "d719f8249550ff811e5b30b71bd0589522154f5ca6c62b38eebcfa468e5cc422"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part05",
+      52428800,
+      "cf374e41409dcf1593dea17267b25d81e1c8e059f1624a680fb1bcb01e0794a9"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part06",
+      52428800,
+      "746ff846acd8a7dca4d1a14039cec53f448d2f3a340c8b200e43427f1a41f252"
+    ],
+    [
+      "0c-0.2.8-preview.mixedpolicy.1-linux-amd64-preview.tar.gz.part07",
+      41864623,
+      "d03cbe6ea2650f303a36e944775035647fb052fdf6b1be7063feb80dfc20ca79"
+    ]
+  ]
+}
