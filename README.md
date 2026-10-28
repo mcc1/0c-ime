@@ -9,7 +9,7 @@
 
 ```sh
 sudo apt update
-sudo apt install fcitx5 fcitx5-config-qt fcitx5-frontend-gtk3 fcitx5-frontend-qt5 im-config python3 libwebkit2gtk-4.1-0
+sudo apt install fcitx5 fcitx5-config-qt fcitx5-frontend-gtk3 fcitx5-frontend-qt5 fcitx5-frontend-qt6 im-config python3 libwebkit2gtk-4.1-0
 ```
 
 下載程式會取得固定 commit 的分段檔，校驗每段及完整套件的 SHA256，再解壓縮。下載中斷可重跑，會重用已校驗的分段。
