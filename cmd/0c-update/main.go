@@ -81,6 +81,7 @@ func listSettings(w io.Writer, r settings.Report, path string) {
 	fmt.Fprintf(w, "esc-clear=%s（按 Esc 清除整段組字；off 只清未打完的注音）\n", onOff(s.EscClear))
 	fmt.Fprintf(w, "space-selects=%s（注音打完按空白選字；off 空白輸入空格、↓ 選字）\n", onOff(s.SpaceSelects))
 	fmt.Fprintf(w, "mixed-input=%s（中英混打，試用；off 使用手動中英切換）\n", onOff(s.MixedInput))
+	fmt.Fprintf(w, "neighbor-key-recovery=%s（鄰鍵容錯，僅積極混打，預設關閉）\n", onOff(s.NeighborKeyRecovery))
 	fmt.Fprintf(w, "mixed-input-policy=%s（conservative 保守；aggressive 積極，僅混打開啟時生效）\n", s.MixedInputPolicy)
 	fmt.Fprintf(w, "candidate-cursor=%s（修改游標前方／後方字詞）\n", s.CandidateCursor)
 	fmt.Fprintf(w, "advance-after-select=%s（選字後游標移到下一個字）\n", onOff(s.AdvanceAfterSelect))

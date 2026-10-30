@@ -52,3 +52,19 @@ func TestMixedPolicyContractReportsPendingAndOlderEngine(t *testing.T) {
 		t.Fatalf("parse: %+v %v", o, err)
 	}
 }
+
+func TestNeighborContractReportsPendingAndOlderEngine(t *testing.T) {
+	base := t.TempDir()
+	writeSettings(t, base, `{"mixed_input":true,"mixed_input_policy":"aggressive","neighbor_key_recovery":true}`)
+	for _, value := range []string{"true", "false", ""} {
+		doc := buildSettingsDoc(base, modelStatusDial(map[string]string{"neighbor_key_recovery": value}, true))
+		it := item(t, doc, "neighbor-key-recovery")
+		if it.Value != "on" || it.Pending != (value == "false") || (it.Running != nil) != (value != "") {
+			t.Fatalf("runtime %q: %+v", value, it)
+		}
+	}
+	o, err := parseSetArgs([]string{"neighbor-key-recovery", "on", "-apply", "-json"})
+	if err != nil || len(o.pairs) != 1 || !o.apply || !o.json {
+		t.Fatalf("parse: %+v %v", o, err)
+	}
+}

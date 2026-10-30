@@ -31,15 +31,16 @@ type candState struct {
 	start, length int
 	before        bool // 前方模式：詞長變動仍以原來的尾端為界，向左延伸
 	items         []decode.Candidate
-	cursor        int             // 反白的候選（items 的索引）；頁碼由它推得
-	literal       bool            // 符號選單：插入或替換字面文字，不作為詞彙學習
-	pending       bool            // 選取後消耗尚未完成的注音；取消時保留
-	raw           bool            // 一音節漢字候選的最後一項是原樣注音
-	matched       []string        // 與 items 等長（或 nil）：近音候選在詞庫中的讀音，原音為空字串
-	labels        []string        // 開啟候選時算一次的顯示原因；不隨反白或翻頁改變
-	english       bool            // 英文模式的自動補字候選
-	mixed         bool            // 尚未定案的中英按鍵候選，保留原始按鍵
-	keyLiterals   map[int]string  // candidate index → original physical keys for a phonetic span
+	cursor        int            // 反白的候選（items 的索引）；頁碼由它推得
+	literal       bool           // 符號選單：插入或替換字面文字，不作為詞彙學習
+	pending       bool           // 選取後消耗尚未完成的注音；取消時保留
+	raw           bool           // 一音節漢字候選的最後一項是原樣注音
+	matched       []string       // 與 items 等長（或 nil）：近音候選在詞庫中的讀音，原音為空字串
+	labels        []string       // 開啟候選時算一次的顯示原因；不隨反白或翻頁改變
+	english       bool           // 英文模式的自動補字候選
+	mixed         bool           // 尚未定案的中英按鍵候選，保留原始按鍵
+	keyLiterals   map[int]string // candidate index → original physical keys for a phonetic span
+	neighbors     map[int]neighborSelection
 	mixedChars    map[int]string  // 中英按鍵候選裡的中文字（#146）：candidate index → 字，讀音是 mixedSyl
 	mixedAt       int             // mixedChars 的按鍵從待定按鍵的這個位置起，前段照字面
 	mixedSyl      zhuyin.Syllable // mixedChars 的讀音
@@ -112,6 +113,7 @@ type Session struct {
 	Toneless bool
 	// MixedInput is opt-in; English is a shared, immutable vocabulary.
 	EnglishAutocomplete   bool
+	NeighborKeyRecovery   bool // opt-in physical-neighbor fallback for aggressive mixed input
 	MixedInput            bool
 	MixedInputAggressive  bool // opt-in Chinese-first interpretation; false preserves account/number heuristics
 	English               *english.Dictionary
@@ -127,6 +129,7 @@ type Session struct {
 	englishDismissed      bool
 	englishTokenBlocked   bool // 網址／識別字：到下一個空白或導覽前不重新補字
 	mixed                 pendingKeys
+	neighborKeys          map[int]string      // automatically repaired positions; excluded from learning
 	mixedKeys             map[int]string      // completed phonetic position → original keys, retained until edited/committed
 	mixedOrigins          map[int]mixedOrigin // literal positions: independently typed vs system-assisted
 	pendingToneKey        *toneKeyPending     // 上一鍵是單獨的聲調鍵：緊接著的空白換成聲調符號（#135）
@@ -1316,7 +1319,7 @@ func (s *Session) openAt(pos, length int) bool {
 	if keys := s.originalMixedKeys(pos, length); keys != "" {
 		// 只用數字鍵出的字（#134 的 5 之、#162 的 20 單）：要數字的人多，原按鍵排第二個，第一個仍是目前的字。
 		at := len(items)
-		if length == 1 && at > 1 && s.digitWordKeys(pos) {
+		if at > 1 && (length == 1 && s.digitWordKeys(pos) || s.neighborTouches(pos, pos+length)) {
 			at = 1
 		}
 		keyLiterals[at] = keys
@@ -1418,6 +1421,9 @@ func (s *Session) selectCandidate(id int) bool {
 	}
 	start, length := s.cand.span(id)
 	c, end := s.cand.items[id].Entry, start+length
+	for at := start; at < end; at++ {
+		delete(s.neighborKeys, at)
+	}
 	shown, auto := slices.Clone(s.path), slices.Clone(s.autoLog)
 	for _, g := range s.path {
 		if g.Start <= start && start < g.End && (g.Word != c.Surface || g.Start != start || g.End != end) {
@@ -1500,7 +1506,7 @@ func (s *Session) commit() string {
 			Manual:     locked && l.Word == g.Word && l.Len == g.End-g.Start,
 			Completion: locked && l.Word == g.Word && l.Len == g.End-g.Start && l.Completion,
 			Suggested:  locked && l.Suggested,
-			Fuzzy:      s.fuzzyTouches(g.Start, g.End) || untonedTouches(syls, g.Start, g.End),
+			Fuzzy:      s.fuzzyTouches(g.Start, g.End) || s.neighborTouches(g.Start, g.End) || untonedTouches(syls, g.Start, g.End),
 		})
 	}
 	ev.Selected = s.enclosedSelections(ev.Syls)
@@ -1615,6 +1621,7 @@ func (s *Session) reset() {
 	s.paletteCommit = false
 	s.clearMixed()
 	s.mixedKeys = nil
+	s.neighborKeys = nil
 	s.mixedOrigins = nil
 	s.pendingToneKey, s.literalKeys = nil, nil
 	s.clearDocumentContext()

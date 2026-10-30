@@ -64,6 +64,7 @@ type Settings struct {
 	Punctuation         bool   `json:"punctuation"`
 	DocumentContext     bool   `json:"document_context"`
 	MixedInput          bool   `json:"mixed_input"`
+	NeighborKeyRecovery bool   `json:"neighbor_key_recovery"`
 	MixedInputPolicy    string `json:"mixed_input_policy"`
 	EnglishAutocomplete bool   `json:"english_autocomplete"`
 	LeftShift           bool   `json:"left_shift"` // 舊欄位：ToggleKey 含左 Shift。讀新檔時由 ToggleKey 推出，存檔時一併寫回給舊版讀
@@ -363,7 +364,7 @@ func (s *Settings) UnmarshalJSON(b []byte) error {
 	for _, field := range []struct {
 		key string
 		dst *bool
-	}{{"punctuation", &s.Punctuation}, {"document_context", &s.DocumentContext}, {"mixed_input", &s.MixedInput}, {"english_autocomplete", &s.EnglishAutocomplete}, {"left_shift", &s.LeftShift}, {"esc_clear", &s.EscClear}, {"space_selects", &s.SpaceSelects}, {"advance_after_select", &s.AdvanceAfterSelect}, {"emoji_equals_first", &s.EmojiEqualsFirst}, {"output_simplified", &s.OutputSimplified}, {"simplified_hotkey", &s.SimplifiedHotkey}, {"ctrl_punctuation", &s.CtrlPunctuation}, {"caps_lock_english", &s.CapsLockEnglish}, {"toneless", &s.Toneless}} {
+	}{{"neighbor_key_recovery", &s.NeighborKeyRecovery}, {"punctuation", &s.Punctuation}, {"document_context", &s.DocumentContext}, {"mixed_input", &s.MixedInput}, {"english_autocomplete", &s.EnglishAutocomplete}, {"left_shift", &s.LeftShift}, {"esc_clear", &s.EscClear}, {"space_selects", &s.SpaceSelects}, {"advance_after_select", &s.AdvanceAfterSelect}, {"emoji_equals_first", &s.EmojiEqualsFirst}, {"output_simplified", &s.OutputSimplified}, {"simplified_hotkey", &s.SimplifiedHotkey}, {"ctrl_punctuation", &s.CtrlPunctuation}, {"caps_lock_english", &s.CapsLockEnglish}, {"toneless", &s.Toneless}} {
 		if raw, ok := take(field.key); ok {
 			var v bool
 			if json.Unmarshal(raw, &v) == nil {
@@ -468,7 +469,7 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 	for _, field := range []struct {
 		key   string
 		value any
-	}{{"selection", s.Selection}, {"punctuation", s.Punctuation}, {"document_context", s.DocumentContext}, {"mixed_input", s.MixedInput}, {"mixed_input_policy", s.MixedInputPolicy}, {"english_autocomplete", s.EnglishAutocomplete}, {"left_shift", s.LeftShift}, {"esc_clear", s.EscClear}, {"space_selects", s.SpaceSelects}, {"candidate_cursor", s.CandidateCursor}, {"advance_after_select", s.AdvanceAfterSelect}, {"candidate_layout", s.CandidateLayout}, {"emoji_shortcut", s.EmojiShortcut}, {"emoji_equals_first", s.EmojiEqualsFirst}, {"keyboard_layout", s.KeyboardLayout}, {"selection_keys", s.SelectionKeys}, {"toggle_key", s.ToggleKey}, {"mode_memory", s.ModeMemory}, {"start_mode", s.StartMode}, {"output_simplified", s.OutputSimplified}, {"simplified_hotkey", s.SimplifiedHotkey}, {"ctrl_punctuation", s.CtrlPunctuation}, {"caps_lock_english", s.CapsLockEnglish}, {"toneless", s.Toneless}} {
+	}{{"neighbor_key_recovery", s.NeighborKeyRecovery}, {"selection", s.Selection}, {"punctuation", s.Punctuation}, {"document_context", s.DocumentContext}, {"mixed_input", s.MixedInput}, {"mixed_input_policy", s.MixedInputPolicy}, {"english_autocomplete", s.EnglishAutocomplete}, {"left_shift", s.LeftShift}, {"esc_clear", s.EscClear}, {"space_selects", s.SpaceSelects}, {"candidate_cursor", s.CandidateCursor}, {"advance_after_select", s.AdvanceAfterSelect}, {"candidate_layout", s.CandidateLayout}, {"emoji_shortcut", s.EmojiShortcut}, {"emoji_equals_first", s.EmojiEqualsFirst}, {"keyboard_layout", s.KeyboardLayout}, {"selection_keys", s.SelectionKeys}, {"toggle_key", s.ToggleKey}, {"mode_memory", s.ModeMemory}, {"start_mode", s.StartMode}, {"output_simplified", s.OutputSimplified}, {"simplified_hotkey", s.SimplifiedHotkey}, {"ctrl_punctuation", s.CtrlPunctuation}, {"caps_lock_english", s.CapsLockEnglish}, {"toneless", s.Toneless}} {
 		if err := typed(field.key, field.value); err != nil {
 			return nil, err
 		}
@@ -747,6 +748,15 @@ func (s Settings) disabledReason(key string) string {
 }
 
 func (s Settings) disabledReasonOn(goos, key string) string {
+	if key == "neighbor-key-recovery" {
+		if reason := s.disabledReasonOn(goos, "mixed-input-policy"); reason != "" {
+			return reason
+		}
+		if s.MixedInputPolicy != MixedAggressive {
+			return "僅積極混打時生效"
+		}
+		return ""
+	}
 	if key == "mixed-input-policy" {
 		if reason := s.disabledReasonOn(goos, "mixed-input"); reason != "" {
 			return reason
@@ -802,6 +812,8 @@ func disabledBy(reason string) string {
 		return "toggle-key"
 	case "不打聲調時關閉": // 中英混打（#150）
 		return "toneless"
+	case "僅積極混打時生效":
+		return "mixed-input-policy"
 	case "中英混打關閉時不生效":
 		return "mixed-input"
 	}
@@ -825,6 +837,7 @@ func specs() []spec {
 			func(s Settings) string { return onOff(s.DocumentContext) }},
 		{"mixed-input", "中英混打（試用）", "直接在注音中打英文；提供英文補全與拼字修正，由你確認接受。開啟時空白鍵輸入空白，按 ↓ 選字；數字拼得成注音時，按 Enter 留數字。若已啟用 Shift 中英切換，混打開或關都能單按 Shift 切到英文", "off", []string{"on", "off"},
 			func(s Settings) string { return onOff(s.MixedInput) }},
+		{"neighbor-key-recovery", "鄰鍵容錯（試用）", "僅標準注音、積極混打時生效。完整讀音組字失敗時，嘗試替換一個 QWERTY 鄰鍵；只有一種可用讀音時自動修正，多種時按 ↓ 選字。保留原按鍵，不修正聲調、純數字或已組成的字；英文模式與敏感輸入不使用", "off", []string{"on", "off"}, func(s Settings) string { return onOff(s.NeighborKeyRecovery) }},
 		{"mixed-input-policy", "混打組字傾向", "僅在中英混打開啟時生效。保守：保留帳號、型號與數字判斷；積極：聲調完成且有字詞時優先組成中文，可能把英數帳號或型號轉成中文，需要原文時請切到英文。兩種模式都可在候選選回原按鍵", MixedConservative, []string{MixedConservative, MixedAggressive},
 			func(s Settings) string { return s.MixedInputPolicy }},
 		{"english-autocomplete", "英文模式自動補字", "單按 Shift 切換到英文模式後，輸入至少兩個字母時顯示補全候選，三個字母起也提供拼字修正；按 Tab 補全或修正拼字、Esc 關閉。與中英混打分開設定。空白送出單字並輸入空格；Enter 只送出單字，再按一次才換行或執行", "off", []string{"on", "off"},
@@ -1171,6 +1184,9 @@ func (s *Settings) set(key, value string) error {
 	case "mixed-input":
 		s.MixedInput = value == "on"
 		s.forget("mixed_input")
+	case "neighbor-key-recovery":
+		s.NeighborKeyRecovery = value == "on"
+		s.forget("neighbor_key_recovery")
 	case "mixed-input-policy":
 		s.MixedInputPolicy = value
 		s.forget("mixed_input_policy")

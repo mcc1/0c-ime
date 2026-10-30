@@ -122,6 +122,7 @@ func (s *Session) insertMixedTyped(syl zhuyin.Syllable, keys string) {
 
 func (s *Session) shiftMixedKeys(at, delta int) {
 	s.mixedKeys = shiftKeys(s.mixedKeys, at, delta)
+	s.neighborKeys = shiftKeys(s.neighborKeys, at, delta)
 }
 
 func (s *Session) originalMixedKeys(pos, length int) string {
@@ -281,6 +282,7 @@ func (s *Session) openMixedCandidates() {
 		}
 	}
 	add(s.mixed.raw) // The original keys are always reachable.
+	s.addNeighborCandidates(c, seen)
 	// #146：照字面留下、結尾是聲調鍵的按鍵（句首或空白、英文後的 u1,6、u2,6）有完整讀音時，
 	// 原按鍵後面接著列那個讀音的中文字，選了就是那個字；預設顯示仍是原按鍵。
 	if at, syl, chars := s.mixedToneChars(); len(chars) > 0 {
@@ -312,12 +314,22 @@ func (s *Session) openMixedCandidates() {
 	for _, word := range s.englishCorrections(s.mixed.raw, 3) {
 		add(word.Text)
 	}
+	c.labels = make([]string, len(c.items))
+	for id, n := range c.neighbors {
+		c.labels[id] = "鄰鍵 " + n.choice.keys
+	}
 	s.cand = c
 }
 
 func (s *Session) selectMixed(id int) bool {
 	if s.cand == nil || id < 0 || id >= len(s.cand.items) {
 		return false
+	}
+	if n, ok := s.cand.neighbors[id]; ok {
+		raw := s.mixed.raw
+		s.cand = nil
+		s.acceptNeighbor(n.choice, raw, n.word)
+		return true
 	}
 	if char, ok := s.cand.mixedChars[id]; ok {
 		at, syl, raw := s.cand.mixedAt, s.cand.mixedSyl, s.mixed.raw
@@ -507,6 +519,16 @@ func (s *Session) finishMixedTone(key string) bool {
 	// its digit too (#119: hello4 is not hell欸, zoom3 is not zoo與).
 	if s.mixed.choice == 0 && s.mixedEnglishWord(raw) {
 		return false
+	}
+	// A failed whole syllable (or a failed suffix after a known English word)
+	// gets a bounded repair attempt before guessing an unknown English boundary.
+	if choices := s.neighborChoices(raw, sym); len(choices) > 0 {
+		if len(choices) == 1 {
+			s.acceptNeighbor(choices[0], raw+key, "")
+		} else {
+			s.mixed.raw += key
+		}
+		return true
 	}
 	if at, done, ok := s.mixedBoundary(raw, key, sym); ok {
 		prefix := raw[:at]

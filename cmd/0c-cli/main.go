@@ -41,6 +41,7 @@ func main() {
 	record := flag.String("record", "", "把本次操作的請求錄成 JSONL")
 	fuzzyPairs := flag.String("fuzzy", "", "啟用的模糊音配對，逗號分隔：z-zh、c-ch、s-sh、en-eng；預設是「僅供選字」，寫成 z-zh=auto 則另啟用自動修正；空白為全部關閉。錄製的請求要用相同的設定重播")
 	mixedInput := flag.Bool("mixed-input", false, "中英混打試用；重播需使用相同開關，預設關閉")
+	neighborRecovery := flag.Bool("neighbor-key-recovery", false, "鄰鍵容錯試用；需標準注音、積極混打，重播需相同設定")
 	mixedPolicy := flag.String("mixed-input-policy", "conservative", "混打組字傾向：conservative（保守，預設）或 aggressive（積極）；需搭配 -mixed-input")
 	toneless := flag.Bool("toneless", false, "不打聲調也能選字（#150）：沒打聲調的音節由解碼決定，開啟時停用混打。重播需使用相同開關")
 	candidateLayout := flag.String("candidate-layout", "vertical", "選字排列：vertical 或 grid")
@@ -64,6 +65,7 @@ func main() {
 		check(fmt.Errorf("未知混打組字傾向 %q", *mixedPolicy))
 	}
 	eng.MixedInputAggressive = *mixedPolicy == "aggressive"
+	eng.NeighborKeyRecovery = *neighborRecovery
 	eng.Toneless = *toneless
 	if *candidateLayout != "vertical" && *candidateLayout != "grid" {
 		check(fmt.Errorf("未知選字排列 %q", *candidateLayout))
@@ -138,6 +140,9 @@ func main() {
 		defer rec.Close()
 		if *mixedInput {
 			fmt.Fprintln(rec, "# 重播需要相同的混打設定：0c-cli -mixed-input")
+			if eng.NeighborKeyRecovery {
+				fmt.Fprintln(rec, "# 重播需要相同的鄰鍵設定：-neighbor-key-recovery")
+			}
 			if eng.MixedInputAggressive {
 				fmt.Fprintln(rec, "# 重播需要相同的組字傾向：-mixed-input-policy aggressive")
 			}
