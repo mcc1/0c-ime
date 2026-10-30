@@ -482,12 +482,23 @@
     }
     const emoji = items.find((item) => item.key === 'emoji-shortcut');
     const equalsFirst = items.find((item) => item.key === 'emoji-equals-first');
+    const mixed = items.find((item) => item.key === 'mixed-input');
+    const mixedChildren = mixed ? ['mixed-input-policy', 'neighbor-key-recovery']
+      .map((key) => items.find((item) => item.key === key)).filter(Boolean) : [];
     const order = (item) => (spec.keys.includes(item.key) ? spec.keys.indexOf(item.key) : spec.keys.length);
-    const mine = items.filter((item) => pageOfKey(item.key) === name && !item.key.startsWith('fuzzy-') && !(emoji && item === equalsFirst))
+    const mine = items.filter((item) => pageOfKey(item.key) === name && !item.key.startsWith('fuzzy-') && !(emoji && item === equalsFirst) && !mixedChildren.includes(item))
       .map((item, i) => [order(item), i, item]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , item]) => item);
     const rows = mine.map((item) => {
       const parent = itemRow(item, locked ||
         (item.key === 'emoji-shortcut' && state.busy.has('emoji-equals-first')));
+      if (item === mixed && mixedChildren.length) {
+        const children = mixedChildren.map((child) => {
+          const childRow = itemRow(child, locked || state.busy.has('mixed-input') || state.busy.has('mixed-input-policy'));
+          childRow.classList.add('suboption');
+          return childRow;
+        });
+        return h('div', { class: 'setting-group', role: 'group', 'aria-labelledby': 'label-mixed-input' }, parent, ...children);
+      }
       if (item.key !== 'emoji-shortcut' || !equalsFirst) return parent;
       const child = itemRow(equalsFirst, locked || item.value !== 'equals' || !!item.disabled || state.busy.has(item.key));
       child.classList.add('suboption');
@@ -640,6 +651,8 @@
   function render() {
     // 名稱輸入仍在組字時保留原欄位；背景 refresh 的結果等 compositionend 再畫。
     if (page === 'styles' && styles?.composing()) return;
+    const main = document.querySelector('main');
+    const scroll = { top: main.scrollTop, left: main.scrollLeft };
     const focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.focus : null;
     const selection = focused === 'style-name' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
     const vocabOn = vocabEnabled();
@@ -659,15 +672,22 @@
     if (focused) {
       const again = Array.from(document.querySelectorAll('[data-focus]')).find((node) => node.dataset.focus === focused);
       if (again && !again.disabled) {
-        again.focus();
+        again.focus({ preventScroll: true });
         if (selection && typeof again.setSelectionRange === 'function') again.setSelectionRange(...selection);
       }
     }
+    // Background polling rebuilds controls. Restoring focus must not pull the
+    // reader back to an old control; retain the viewport even if layout clamped
+    // its scroll position while the section was temporarily empty.
+    main.scrollTop = scroll.top;
+    main.scrollLeft = scroll.left;
   }
 
   let vocabActive = false;
   function show(name) {
-    page = pageName(name);
+    const next = pageName(name);
+    if (next !== page) document.querySelector('main').scrollTop = 0;
+    page = next;
     if (page === 'overview' && vocabEnabled()) vocab.refreshOverview().then(() => { if (page === 'overview') render(); });
     if (page === 'models') models.refresh().then(() => { if (page === 'models') render(); });
     render();
