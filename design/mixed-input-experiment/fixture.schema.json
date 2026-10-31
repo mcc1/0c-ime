@@ -1,0 +1,446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:0c-ime:mixed-fixture-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "mixed-fixture-v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "intent": {
+      "enum": [
+        "chinese",
+        "literal",
+        "ambiguous"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "synthetic",
+            "public"
+          ]
+        },
+        "reference": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "reference",
+        "license"
+      ]
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(prefix|word|literal|template|source|context):.+$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "prelude": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "custom_tokens": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]{1,32}$"
+      },
+      "uniqueItems": true
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      },
+      "minItems": 1
+    },
+    "assertions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assertion"
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "version",
+    "id",
+    "intent",
+    "source",
+    "families",
+    "prelude",
+    "custom_tokens",
+    "events",
+    "assertions"
+  ],
+  "$defs": {
+    "event": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "key"
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^[!-_a-~]$"
+            }
+          },
+          "required": [
+            "type",
+            "key"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "finalize"
+            },
+            "reason": {
+              "enum": [
+                "enter",
+                "commit",
+                "space",
+                "punctuation",
+                "cursor",
+                "backspace",
+                "delete",
+                "cancel",
+                "reset",
+                "focus_end",
+                "open_candidates"
+              ]
+            },
+            "text": {
+              "type": "string"
+            },
+            "target": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "commit_visible": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "type",
+            "reason"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "reason": {
+                    "const": "punctuation"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "text"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "reason": {
+                    "const": "cursor"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "target"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "reason": {
+                    "const": "focus_end"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "commit_visible"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "select"
+            },
+            "ref": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "menu_event": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "kind": {
+                  "enum": [
+                    "word",
+                    "original"
+                  ]
+                },
+                "span": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "reading": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "menu_event",
+                "kind",
+                "span",
+                "reading",
+                "text"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "ref"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "environment"
+            },
+            "private": {
+              "type": "boolean"
+            },
+            "paused": {
+              "type": "boolean"
+            },
+            "blocked": {
+              "type": "boolean"
+            },
+            "english": {
+              "type": "boolean"
+            },
+            "toneless": {
+              "type": "boolean"
+            },
+            "layout": {
+              "type": "string"
+            },
+            "generation": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "private",
+            "paused",
+            "blocked",
+            "english",
+            "toneless",
+            "layout",
+            "generation"
+          ]
+        }
+      ]
+    },
+    "segment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "begin": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "begin",
+            "end",
+            "text"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "chinese"
+            },
+            "begin": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reading": {
+              "type": "string",
+              "pattern": "^[ㄅ-ㄩ]+[ˊˇˋ˙]$"
+            }
+          },
+          "required": [
+            "kind",
+            "begin",
+            "end",
+            "reading"
+          ]
+        }
+      ]
+    },
+    "partition": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/segment"
+      },
+      "minItems": 1
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "window": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "policy": {
+          "enum": [
+            "generator",
+            "scripted",
+            "aggressive",
+            "conservative"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "pending",
+            "final"
+          ]
+        },
+        "accepted": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/partition"
+          },
+          "minItems": 1
+        },
+        "absent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/partition"
+          }
+        },
+        "accepted_text": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "state": {
+          "enum": [
+            "Idle",
+            "Collecting",
+            "Open1",
+            "Closed"
+          ]
+        },
+        "closed_reason": {
+          "enum": [
+            "second_tone",
+            "overflow",
+            "enter",
+            "commit",
+            "space",
+            "punctuation",
+            "cursor",
+            "backspace",
+            "delete",
+            "open_candidates",
+            "select",
+            "environment",
+            "generation",
+            "cancel",
+            "reset",
+            "focus_end"
+          ]
+        },
+        "commit": {
+          "type": "string"
+        },
+        "delegate_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "at",
+        "window",
+        "policy",
+        "stage",
+        "accepted"
+      ]
+    }
+  }
+}

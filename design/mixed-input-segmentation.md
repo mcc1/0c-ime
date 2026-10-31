@@ -119,6 +119,8 @@ The EGM readiness review found the following open Major items. This architecture
 
 Phases 2 and 3 remain separate evidence gates. Passing an architecture review does not imply this contract or a live ranker is ready. The consolidated review report records C1–C3 as open rather than resolved.
 
+A delegated Phase 0 draft is now available: [offline experiment plan](mixed-input-experiment-plan.md), [evaluator contract](mixed-input-evaluator-contract.md), and [fixture schema](mixed-input-experiment/fixture.schema.json). These supply proposed decisions for C1–C3 and include format examples. They have not yet received a new independent EGM readiness review; no generator evaluation, fitted ranker or live-session result is implied.
+
 ### Phase 1 — Build an offline comparison, leave product behavior unchanged
 
 Reuse `internal/eval.Provenance`, `ProvenanceData`, `WriteReport` and `Percentile` for report metadata and timing; keep the family-based three-way split because the existing `internal/eval.Split` is a content-based two-way split. The live-engine `Typist` is not the hypothetical-candidate evaluator. Create `core/mixedparse/` (proposed) with pure generation and raw-span validation, and `cmd/0c-mixed-eval/` (proposed) for replaying public key events against a read-only dictionary and isolated stores. No new persisted setting or desktop protocol field is required. Do not call a live `Session.Handle` while evaluating hypothetical candidates. Refactor shared strict key-to-reading checks from `core/session/mixed.go` / `mixed_policy.go` into the new package only after byte-for-byte parity tests; wrappers keep current behavior.
