@@ -98,6 +98,9 @@ func (s *Session) insertMixedReading(syl zhuyin.Syllable, keys string) {
 // insertMixedTyped 收進中英混打以聲調鍵完成的音節。自己沒有字、只能當更長的詞開頭的音節
 // （ㄟ 只有「工口」），和一般注音模式一樣原樣留下注音，下一個音節能和它成詞時再收回（#107）。
 func (s *Session) insertMixedTyped(syl zhuyin.Syllable, keys string) {
+	if mixedEvalObserveInsert != nil {
+		defer mixedEvalObserveInsert(s, syl, keys)()
+	}
 	if s.joinPrefixLiteral(syl) {
 		if s.mixedKeys == nil {
 			s.mixedKeys = map[int]string{}

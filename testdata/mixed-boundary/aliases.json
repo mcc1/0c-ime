@@ -1,0 +1,13 @@
+{
+  "aliases": {
+    "source:manufacturer:ASUSTek Computer, Inc.": "source:manufacturer:ASUSTek Computer Inc.",
+    "source:manufacturer:Advanced Micro Devices, Inc.": "source:manufacturer:Advanced Micro Devices, Inc. [AMD/ATI]",
+    "source:manufacturer:Broadcom Corp.": "source:manufacturer:Broadcom Inc. and subsidiaries",
+    "source:manufacturer:Intel Corp.": "source:manufacturer:Intel Corporation",
+    "source:manufacturer:Microsoft Corp.": "source:manufacturer:Microsoft Corporation",
+    "source:manufacturer:NVIDIA Corp.": "source:manufacturer:NVIDIA Corporation",
+    "source:manufacturer:Realtek Semiconductor Corp.": "source:manufacturer:Realtek Semiconductor Co., Ltd.",
+    "source:manufacturer:Samsung Electronics Co., Ltd": "source:manufacturer:Samsung Electronics Co Ltd"
+  },
+  "version": "mixed-family-v1"
+}
