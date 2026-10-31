@@ -1,0 +1,38 @@
+{
+  "version": "mixed-fit-v1",
+  "purpose": "single exploratory pilot; cannot repair formal literal/category evidence shortage",
+  "seed": "20261101",
+  "features": "mixed-features-v1, indices0..25, no scaling/imputation/clipping",
+  "stability_coefficient": 0,
+  "training_rows": "unambiguous train primary rows only; exclude scripted fixtures and whole rows with unsupported/invalid aggressive ownership or any null feature; retain and report all exclusions",
+  "labels": "fixture final generator accepted partitions projected to the current tone prefix; labels never act as displayed history; exclude ambiguous top-one labels",
+  "pairs": "one exact gold candidate versus each capped non-gold strict/literal candidate at a tone; missing gold events are recorded and excluded from objective, not recall denominators",
+  "objective": "balanced-intent, equal-row, equal-tone, equal-negative pairwise logistic loss plus L2/2 * sum(w_i^2), i !=12",
+  "algorithm": "float64 full-batch gradient descent; zero initialization; 200 iterations; learning rate0.05; L2=0.001; no early stopping; stable logaddexp logistic derivative; coefficient12 reset0 after every update",
+  "ordering": "SHA256(seed+LF+fixture_id) rows ascending, event ascending, candidate identity UTF8 ascending",
+  "budget": {
+    "iterations": 200,
+    "learning_rate": 0.05,
+    "l2": 0.001,
+    "methods": 1
+  },
+  "margin_grid": [
+    0,
+    0.1,
+    0.25,
+    0.5,
+    1,
+    2,
+    4,
+    8
+  ],
+  "dev_selection": "lexicographically minimize dev primary literal-conversion incidence, harmful-revision incidence, Chinese first-boundary error incidence, unnecessary-revision incidence, then margin ascending; all counts use fixed primary rows; no test selection",
+  "replay": "pure causal Machine; generate fresh features from own frozen context; feature12 compares own actual prior shown; coefficient12=0; second-tone compatible-extension incumbent and strict >margin change rule; no compatible extension freezes old partition and appends literal bytes",
+  "ties": "exact float64 equality only; score sum index0..25; prefer current compatible display, legacy exact-equivalent if mapped, firstChinese offset ascending (literal infinity), identity UTF8 ascending",
+  "evaluation": "dev for exactly8 declared margins; freeze coefficients and selected margin; one final test replay; report primary, row and category counts, failures and unavailable paired metrics",
+  "source_phase1_freeze": "169adcffc304d1fa1e8b2b8bc769761248638a0b",
+  "phase1_rows_sha256": "02085b43eab57261cc6c23caa0d0cfa535ae9d11e0e7e21e538361b0cf7aa31d",
+  "numerics": "NumPy float64 pinned runtime; OPENBLAS_NUM_THREADS=1, OMP_NUM_THREADS=1; ranked score accumulation uses Go float64 in feature-index order; nonfinite model scores abort",
+  "python_version": "3.12.14",
+  "numpy_version": "2.3.5"
+}

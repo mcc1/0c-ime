@@ -31,7 +31,10 @@ func run() error {
 	aliases := flag.String("aliases", "testdata/mixed-boundary/aliases.json", "exact family aliases")
 	assignment := flag.String("assignment", "testdata/mixed-boundary/assignment.json", "frozen family assignment")
 	lock := flag.String("lock", "testdata/mixed-boundary/run-lock.json", "frozen run lock")
-	phase := flag.String("phase", "validate", "validate|assign|lock|correctness|enumerate")
+	phase := flag.String("phase", "validate", "validate|assign|lock|correctness|enumerate|ranked")
+	modelPath := flag.String("model", "", "frozen linear coefficient file")
+	phase1 := flag.String("phase1", "", "frozen Phase1 raw-report directory")
+	margin := flag.Float64("margin", -1, "declared development margin; omitted uses frozen model")
 	split := flag.String("split", "all", "all|train|dev|test")
 	out := flag.String("out", "", "new isolated output directory")
 	flag.Parse()
@@ -59,7 +62,7 @@ func run() error {
 	if *phase == "lock" {
 		return mixedeval.FreezeLock(*data, *fixtures, *aliases, *assignment, *lock)
 	}
-	if *phase != "correctness" && *phase != "enumerate" {
+	if *phase != "correctness" && *phase != "enumerate" && *phase != "ranked" {
 		return fmt.Errorf("unfrozen ranking is forbidden; invalid phase %s", *phase)
 	}
 	for _, p := range []string{filepath.Join(*data, "manifest.json"), filepath.Join(*data, "english/manifest.json")} {
@@ -100,6 +103,19 @@ func run() error {
 		}
 		b, _ := json.MarshalIndent(map[string]any{"tiny": tinyResult, "public": r}, "", "  ")
 		return os.WriteFile(filepath.Join(*out, "correctness.json"), append(b, '\n'), 0644)
+	}
+	if *phase == "ranked" {
+		if *split != "dev" && *split != "test" {
+			return fmt.Errorf("ranked split must be dev or final test")
+		}
+		if _, e := mixedeval.VerifyLock(*lock); e != nil {
+			return e
+		}
+		var override *float64
+		if *margin >= 0 {
+			override = margin
+		}
+		return mixedeval.Ranked(engine, *fixtures, *aliases, *assignment, *modelPath, *phase1, *split, *out, override)
 	}
 	_, e = mixedeval.VerifyLock(*lock)
 	if e != nil {
