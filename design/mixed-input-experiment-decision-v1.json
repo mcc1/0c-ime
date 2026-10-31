@@ -1,0 +1,181 @@
+{
+  "version": "mixed-final-adjudication-v1",
+  "outcome": "NO_GO",
+  "interpretation_scope": "negative result for this preregistered estimator/window/data protocol; no product integration, no universal impossibility claim",
+  "gates": {
+    "G1": {
+      "pass": null,
+      "reason": "Executed schema/semantic/split, exhaustive, guard/observer and event subchecks passed; whole evaluator correctness is not established because context presentation omits the frozen prelude from E run-scoped commit.",
+      "status": "unavailable"
+    },
+    "G2": {
+      "pass": true,
+      "reason": "Protected generation/scoring zero in executed protection tests; every hypothetical-store digest unchanged, no persistence API; actual baseline commit learning confined to disposable per-row stores.",
+      "status": "pass"
+    },
+    "G3": {
+      "pass": true,
+      "reason": "Main frozen TEST primary capped strict recall492/492; mandatory10/10; eligible ambiguous150/150 both alternatives. Conditional-on-legacy frozen history limitation is explicit.",
+      "status": "pass"
+    },
+    "G4": {
+      "pass": false,
+      "reason": "A40/492 versus E178/492 errors; relative error reduction=-3.45, below required+0.30.",
+      "status": "fail"
+    },
+    "G5": {
+      "pass": false,
+      "reason": "E1/164 literal any-event conversion; point0.6098% but Wilson95 upper3.3726% exceeds1%;164 literal test groups also below400.",
+      "status": "fail"
+    },
+    "G6": {
+      "pass": false,
+      "reason": "Unnecessary revision10/656=1.5244% exceeds1%; harmful0 and outside-window changes0 do not repair this failure.",
+      "status": "fail"
+    },
+    "G7": {
+      "pass": null,
+      "reason": "Run-owned bytes/Enter/freeze checks zero failures, but E context replay emits only the run and omits frozen prelude visible text from the composition commit. Full original-key/commit preservation is not demonstrated; native editing remains delegated_unverified.",
+      "status": "unavailable"
+    },
+    "G8": {
+      "pass": null,
+      "reason": "Literal test164<400; sparse release categories,3 baseline literal primary ownership paths unsupported, and declared known-prefix category includes unverified pluralized prefixes. Full necessary paired evidence cannot pass.",
+      "status": "unavailable"
+    }
+  },
+  "provenance": {
+    "acceptance_commit": "1c927821b7ae7e4863cf8a783dbffc712429167b",
+    "acceptance_sha256": "dd42aabb1767746bf62b9d7604ac78e9300c693c7f9c6def70448b6303df5b2a",
+    "assignment_sha256": "1352d7a3c59b1dbf378730473f1db3daa96feb91e6638d88eb77fd3840649c3d",
+    "fitting_lock_sha256": "8c790f8ff0fd3663b8eb21589f388c49866a3b7874308d9a44fb38b092e0bff8",
+    "fixture_sha256": "53056950eeb2ed9330fc28cd587038c0d2ee3ea25017d95c8b9afa7e15fb6631",
+    "model_sha256": "f347d8ef562c3b830924693d378de5eab35ae1f53740781f5834d0493db91b21",
+    "numeric_freeze": "9203c4f6aace9c7261ece948fa614fce888976d5",
+    "phase1_freeze": "169adcffc304d1fa1e8b2b8bc769761248638a0b",
+    "prefit_freeze": "1244ee6ba1287562c9c701209d2eb8058e8731e2",
+    "ranked_test_runs": 1,
+    "run_lock_sha256": "290cce924f35f8dc644ac9a794a4020ba26d0e4dd66139179324dd8310f13ba2",
+    "test_rows_sha256": "2f4fe7d09971fa7e6c6b97c7e0b2169619927c874e0e3967890d6a16eba1e45c"
+  },
+  "metrics": {
+    "baseline_aggressive_first_boundary_error_mapped": {
+      "denominator": 492,
+      "numerator": 40,
+      "value": 0.08130081300813008,
+      "wilson95": [
+        0.06027159767219042,
+        0.10881764916106565
+      ]
+    },
+    "benign_revision": {
+      "denominator": 656,
+      "numerator": 0,
+      "value": 0,
+      "wilson95": [
+        0,
+        0.005821790627645309
+      ]
+    },
+    "chinese_first_boundary_error": {
+      "denominator": 492,
+      "numerator": 178,
+      "value": 0.3617886178861789,
+      "wilson95": [
+        0.3205510946349566,
+        0.40516768587310853
+      ]
+    },
+    "commit_failures": 0,
+    "fixed_fallbacks": 1,
+    "harmful_revision": {
+      "denominator": 656,
+      "numerator": 0,
+      "value": 0,
+      "wilson95": [
+        0,
+        0.005821790627645309
+      ]
+    },
+    "key_failures": 0,
+    "literal_any_event_conversion": {
+      "denominator": 164,
+      "numerator": 1,
+      "value": 0.006097560975609756,
+      "wilson95": [
+        0.0010771813904626622,
+        0.03372625073970362
+      ]
+    },
+    "outside_changes": 0,
+    "ownership_revisions": 82,
+    "relative_error_reduction": -3.45,
+    "unnecessary_revision": {
+      "denominator": 656,
+      "numerator": 10,
+      "value": 0.01524390243902439,
+      "wilson95": [
+        0.008300884133482839,
+        0.027831217755514753
+      ]
+    },
+    "useful_revision": {
+      "denominator": 656,
+      "numerator": 72,
+      "value": 0.10975609756097561,
+      "wilson95": [
+        0.08806957248533567,
+        0.13598645922404604
+      ]
+    }
+  },
+  "limitations": [
+    "fixture declares run origin/context; live automatic window discovery is untested",
+    "E context presentation and commit are run-scoped; frozen prelude visibility is not materialized, so full-composition G1/G7 cannot pass",
+    "synthetic Chinese intentions and public hardware identifiers do not estimate natural user typing",
+    "declared known-prefix includes266 pre-quality relabeled pluralized-prefix rows whose exact English membership was not validated; no post-outcome relabeling performed",
+    "full test literal count and category support insufficient",
+    "homophone/surface gold absent for primary test cohort, so surface-error denominator0 remains null",
+    "Windows native TSF/UI/latency and neighbor2x2 remain untested",
+    "fixed-budget objective improved but nonzero gradient does not prove optimizer convergence; this one estimator does not rule out every bounded parser or linear ranker"
+  ],
+  "independent_parent": {
+    "selected_model_sha256": "f347d8ef562c3b830924693d378de5eab35ae1f53740781f5834d0493db91b21",
+    "ranked_rows_sha256": "2f4fe7d09971fa7e6c6b97c7e0b2169619927c874e0e3967890d6a16eba1e45c",
+    "primary_counts": {
+      "chinese": 492,
+      "literal": 164,
+      "unambiguous": 656
+    },
+    "first_boundary": {
+      "aggressive_errors": 40,
+      "aggressive_missing": 0,
+      "proposed_errors": 178,
+      "denominator": 492,
+      "relative_error_reduction": -3.45
+    },
+    "literal": {
+      "conversions": 1,
+      "n": 164,
+      "rate": 0.006097560975609756,
+      "wilson95": [
+        0.0010771813904626622,
+        0.03372625073970362
+      ]
+    },
+    "stability": {
+      "useful_revision": 72,
+      "harmful_revision": 0,
+      "unnecessary_revision": 10,
+      "benign_revision": 0,
+      "revisions": 82,
+      "outside_changes": 0,
+      "key_failures": 0,
+      "commit_failures": 0,
+      "fixed_fallbacks": 1
+    },
+    "false_positive_literal_ids": [
+      "pciids-1402-6144-00"
+    ]
+  }
+}
