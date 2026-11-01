@@ -2,6 +2,8 @@
 
 狀態：事前實驗設計，尚無本實驗品質結果。依[目標文件](shift-english-auto-return-experiment.md)細化。這是離線局部切點研究，不是替換產品 parser 的規格；輸出持有／原生整合另有明確關卡。舊 mixed-eval-v1 只作開發參考，不更改舊資料或宣稱它已驗證本題。
 
+開跑前補充：[組合與決策順序](shift-return-combination-order.md)新增EW（B+W），形成4模型×2封存流程；主要方案仍為EC-revise，其他門檻不改。下文的E0/EL/EC主要資訊比較皆指O-revise，O-fixed只作相同模型下的封存對照。
+
 ## 1. 要回答的問題與介入範圍
 
 使用者 Shift 已標示英文起點；檢查英文結束的位置及中文讀音能否隨後文變準。允許在同一未提交組字段內重估前面的英文／中文 ownership，沒有第二聲調截止或一次改判上限。使用者不再按第二次 Shift，也不手動選字。
@@ -19,9 +21,10 @@
 | C/A | preview2 的保守／積極混打，獨立 Session 重播相同 raw | 行為對照，揭露現有修正收益與帳號誤傷；不是實際 Shift 自動返回 |
 | E0 | 同一局部選擇器，候選初次可辨讀時的資訊固定，不使用後文詞證據重評它 | 主要無後文對照 |
 | EL | E0 資訊，加上當時後續音節／未解按鍵的數量，不加入後文內容分數 | 長度負對照 |
+| EW | E0 資訊，加上後文字詞分數，不使用長度features | context與長度的組合對照 |
 | EC | 同一局部選擇器，後文到達後更新詞與語言證據並重選 | 待驗證的 context 組 |
 
-E0/EL/EC 共用原鍵、候選生成、可見前文、詞庫、decoder、訓練資料、估計器、訓練預算及 margin 清單；feature mask 是唯一研究變因。三者各自因果重播，不讀 gold past state。模型因可用 features 不同分別按同一程序擬合，不能把係數差異當作某個 feature 的獨立因果效應。
+四個feature模型共用原鍵、候選生成、可見前文、詞庫、decoder、訓練資料、估計器、訓練預算及 margin 清單；feature mask 是資訊比較的唯一研究變因。各自因果重播，不讀 gold past state。模型因可用 features 不同分別按同一程序擬合，不能把係數差異當作某個 feature 的獨立因果效應。
 
 另做不訓練、不選模的配對 probe：每個 raw prefix 的同一組候選及凍結 EC 係數，分別輸入正常 context features 與初次觀測 features。只解釋該 EC 對後文是否敏感，不把這種訓練分布外遮蔽當主要成效。若只 EL 改善、EC 沒有額外優勢，不能稱字詞內容已幫助區分。
 
@@ -52,9 +55,9 @@ E0/EL/EC 共用原鍵、候選生成、可見前文、詞庫、decoder、訓練�
 | L，長度 | 後續完成音節數、未解 tail byte 數 | 每個 checkpoint 更新；literal 候選兩值皆0 |
 | W，詞內容 | 起於第一中文音節的最長 exact word 音節數、全完成中文路徑中可由≥2音節 exact words覆蓋的最大音節比例、完整解碼 mean log score、完整解碼缺值flag | 最長詞含單字=1；沒有完成路徑則0。coverage 以不重疊動態規劃求最大值，單字不增加分子。score 用現有 decoder 的完整讀音 Best、prefix=false，除已完成音節數；不將 prefix-only score 混入 |
 
-E0 用 B，EL 用 B+L，EC 用 B+L+W；unused coefficients 強制0。W 只提供可學習的證據，不先設定「有詞一定中文」。原作者 heuristics 的逐項命中另作 audit 輸出，不事後新增特徵。hard modes／lock／privacy 不交給模型投票。
+E0 用 B，EL 用 B+L，EW 用 B+W，EC 用 B+L+W；unused coefficients 強制0。W 只提供可學習的證據，不先設定「有詞一定中文」。原作者 heuristics 的逐項命中另作 audit 輸出，不事後新增特徵。hard modes／lock／privacy 不交給模型投票。
 
-B的snapshot key固定為`(first Chinese byte offset, first exact reading)`，literal另用固定key。時間是首音節按鍵首次完整的prefix，即使當時只有詞庫prefix支持也先記missing／guard資訊；不能等後面成詞後才建立B，否則E0會偷看到後文。後續讀音延伸共用該B；三組共用每個checkpoint的label-free候選，不能只替EC保存正解或提前封存E0原鍵。
+B的snapshot key固定為`(first Chinese byte offset, first exact reading)`，literal另用固定key。時間是首音節按鍵首次完整的prefix，即使當時只有詞庫prefix支持也先記missing／guard資訊；不能等後面成詞後才建立B，否則E0會偷看到後文。後續讀音延伸共用該B；四組共用每個checkpoint的label-free候選，不能只替EC保存正解。同一O-revise下不提前封存E0原鍵；O-fixed的額外封存依補充設計獨立比較。
 
 Decoder 初始 left context 只用當時可確認的中文左文；literal prefix 重設中文延續到 BOS，suffix 內完整解碼使用原統計模型，故後續字詞可改變先前字面與整條 reading 的分數。系統詞庫、LM 與 decoder options 要寫入每個 run。詞組／統計 context 與句子語意理解不同；本輪不宣稱測到了神經語意模型的能力。
 
@@ -62,17 +65,17 @@ Decoder 初始 left context 只用當時可確認的中文左文；literal prefi
 
 ## 5. 擬合與 dev 選擇，結果前固定
 
-三個模型都使用相同 train primary 的完整觀測 checkpoints：每個完成音節及最後一個 key，重複 checkpoint 去重。gold 只作訓練 label，先投影到當時 prefix，不要求未輸入音節出現；未輸入到 intended boundary 前的正解是 literal pending。錯誤候選依 canonical identity 全列，不抽容易 negatives。
+四個模型都使用相同 train primary 的完整觀測 checkpoints：每個完成音節及最後一個 key，重複 checkpoint 去重。gold 只作訓練 label，先投影到當時 prefix，不要求未輸入音節出現；未輸入到 intended boundary 前的正解是literal pending。錯誤候選依canonical identity全列，不抽容易negatives。
 
 目標為 pairwise logistic loss：gold與每個negative的feature差。各 intent、group、row、checkpoint、negative 逐級等權；同一equivalence group的互斥意圖都保留，不當成資料錯誤刪除。gold 不在候選者不能製造 gold candidate：訓練該 checkpoint 不產生pair並記錄，評測仍算失敗。所有無競爭候選列仍計評測分母。
 
-訓練設定：float64、zero init、1000 full-batch gradient steps、learning rate0.05、L2=0.001、無early stopping、無額外模型搜尋。各連續feature以train primary candidate observations的mean/std標準化；std=0時輸出0，missing score先置0並另旗標。標準化統計只存train，三模型共用對應欄位的統計。固定canonical排序，單執行緒數值庫與實際版本入lock；不使用test調整預算。報loss與gradient，沒有收斂不能泛稱線性模型失敗。
+訓練設定：float64、zero init、1000 full-batch gradient steps、learning rate0.05、L2=0.001、無early stopping、無額外模型搜尋。各連續feature以train primary candidate observations的mean/std標準化；std=0時輸出0，missing score先置0並另旗標。標準化統計只存train，四模型共用對應欄位的統計。固定canonical排序，單執行緒數值庫與實際版本入lock；不使用test調整預算。報loss與gradient，沒有收斂不能泛稱線性模型失敗。
 
 literal score作比較基準；對最高分Chinese candidate，只有 `scoreChinese-scoreLiteral > margin` 才顯示中文。其餘literal。同分先literal，再first offset升序、canonical identity升序；沒有額外黏住前次答案的margin。這允許context到達後重新選擇，不加第二個穩定門檻。
 
-三模型各自只從固定margin清單 `[0,0.1,0.25,0.5,1,2,4,8]` 選擇。dev先取literal-final點估≤1%且return成功≥90%的候選，再依return成功率高、literal錯誤低、margin小排序；若無可行候選，按literal錯誤低、return成功率高、margin小選一個作負結果測試，清楚標記dev未達標。不得因test選另一個。正式literal區間門檻仍以test判，不以dev點估代替。
+四模型各自只從固定margin清單 `[0,0.1,0.25,0.5,1,2,4,8]` 選擇。dev先取literal-final點估≤1%且return成功≥90%的候選，再依return成功率高、literal錯誤低、margin小排序；若無可行候選，按literal錯誤低、return成功率高、margin小選一個作負結果測試，清楚標記dev未達標。不得因test選另一個。正式literal區間門檻仍以test判，不以dev點估代替。
 
-code／資料／features凍結後才fit；數值模型、標準化與dev選擇紀錄提交後，三個final test各跑一次。重算既有raw metrics不是新選模；修bug使受影響結果失效，見過的test不再作新方法未見資料。
+code／資料／features凍結後才fit；數值模型、標準化與dev選擇紀錄提交後，四模型×兩流程的final replay各跑一次。O-fixed沿用O-revise選定的相同margin，不另選模。重算既有raw metrics不是新選模；修bug使受影響結果失效，見過的test不再作新方法未見資料。
 
 ## 6. 資料取得與資格
 
@@ -103,7 +106,7 @@ v1及已在對話／既有測試出現的案例作development／mandatory，不�
 
 Literal錯誤包括字母大小寫／標點改寫及英文尾碼被借入中文；不能只看是否出現漢字。return成功要求全部應完成讀音，不只首offset；pending tail未完成與本來任務要完成但未完成分開。字面gold在所有正式primary必備，報同音字錯誤與整段字面成功率；現階段G2主門檻只評意圖／讀音，字面並非可以省略的證據。
 
-Bootstrap使用component作單位、10000次、固定seed `271828`，paired重抽保持三模型同group；不得拆collision。在純獨立primary incidence分母使用Wilson（z=1.959963984540054）；若同group有多個英文primary span則先合成任一錯誤，不當獨立span做Wilson。零分母是null。
+Bootstrap使用component作單位、10000次、固定seed `271828`，paired重抽保持四模型及兩流程同group；不得拆collision。在純獨立primary incidence分母使用Wilson（z=1.959963984540054）；若同group有多個英文primary span則先合成任一錯誤，不當獨立span做Wilson。零分母是null。
 
 過程診斷：第一完成音節、第二音節、每個後續完成音節、gold詞末、final key各記cut/readings/surface；詞末只供評分。報首次正確、最後穩定、context修好／改壞、暫時literal誤轉的持續鍵數、boundary反覆數。**中途錯但自動修好不算final失敗；中途對最後改壞算失敗。** 一旦錯誤被送入應用程式則屬G5，不是可逆暫時顯示。
 
@@ -119,7 +122,7 @@ Bootstrap使用component作單位、10000次、固定seed `271828`，paired重�
 
 ## 9. 預定產物與開始順序
 
-新增獨立 `shiftreturneval` 實驗版本，不能原地修改舊mixed-eval-v1；具體package／CLI需在code freeze manifest列齊。產物為schema與範例、source map、候選／worked feature vectors、資料取得manifest／family assignment、run lock、train設定、三個模型及dev選擇、逐鍵rows／candidates／events、gate report與錯誤分類。
+新增獨立 `shiftreturneval` 實驗版本，不能原地修改舊mixed-eval-v1；具體package／CLI需在code freeze manifest列齊。產物為schema與範例、source map、候選／worked feature vectors、資料取得manifest／family assignment、run lock、train設定、四個模型及dev選擇、八個conditions的逐鍵rows／candidates／events、gate report與錯誤分類。
 
 先實作並驗證工具→凍結資料與code→做候選召回→按本規格fit/dev→凍結數值模型→一次final test→主agent獨立重算。任何新模型、feature、窗口或門檻變更先版本化；已看過test轉為回歸，不再當未見資料。
 
