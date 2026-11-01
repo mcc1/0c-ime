@@ -1,0 +1,203 @@
+{
+  "purpose": "virtual contract cases, not evaluator replay",
+  "cases": [
+    {
+      "event": "enter",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "commit",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "shift",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "focus",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "cursor",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "mode",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "caps",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "protect",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "pause",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲中x窄",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄",
+        "commit": "中x窄",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "paste",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "貼",
+      "expected": {
+        "app": "甲中x窄貼",
+        "prelude": "",
+        "display": "",
+        "view": "甲中x窄貼",
+        "commit": "中x窄貼",
+        "eligible": false,
+        "closed": true
+      }
+    },
+    {
+      "event": "cancel",
+      "before": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "x窄"
+      },
+      "append_text": "",
+      "expected": {
+        "app": "甲",
+        "prelude": "中",
+        "display": "",
+        "view": "甲中",
+        "commit": "",
+        "eligible": false,
+        "closed": true
+      }
+    }
+  ]
+}

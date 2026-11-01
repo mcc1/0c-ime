@@ -1,0 +1,68 @@
+{
+  "version": "shift-return-v2",
+  "kind": "bank_task",
+  "demo": true,
+  "id": "41a551913c224390c88908b7",
+  "prototype_id": "41a551913c224390c88908b7",
+  "variant_index": 0,
+  "source_ref": "synthetic:contract-demo",
+  "source_priority": 1,
+  "prompt": "輸入品牌 microsoft，再接中文片語「窄小」。",
+  "intent": "return",
+  "category": "known",
+  "stratum": "2-4",
+  "context_class": "identical_collision",
+  "raw": "microsoft593vul3",
+  "gold": [
+    {
+      "segments": [
+        {
+          "kind": "literal",
+          "begin": 0,
+          "end": 9,
+          "reading": ""
+        },
+        {
+          "kind": "chinese",
+          "begin": 9,
+          "end": 12,
+          "reading": "ㄓㄞˇ"
+        },
+        {
+          "kind": "chinese",
+          "begin": 12,
+          "end": 16,
+          "reading": "ㄒㄧㄠˇ"
+        }
+      ],
+      "accepted_surfaces": [
+        "microsoft窄小"
+      ]
+    }
+  ],
+  "families": [
+    "prefix:microsoft"
+  ],
+  "prelude_events": [],
+  "expected_prelude": "",
+  "designated_typo_spans": [],
+  "source_edits": [],
+  "annotations": [
+    {
+      "annotator_id": "demo-annotator-1",
+      "intent": "return",
+      "reading_verified": true,
+      "accepted": true,
+      "labels_sha256": "1a8caa5c2352f26f4513d269e4da07668fde6d569dfa1480b28dbfb7dc8c2024",
+      "adjudication_ref": "demo-only-hypothetical-annotation"
+    },
+    {
+      "annotator_id": "demo-annotator-2",
+      "intent": "return",
+      "reading_verified": true,
+      "accepted": true,
+      "labels_sha256": "1a8caa5c2352f26f4513d269e4da07668fde6d569dfa1480b28dbfb7dc8c2024",
+      "adjudication_ref": "demo-only-hypothetical-annotation"
+    }
+  ]
+}

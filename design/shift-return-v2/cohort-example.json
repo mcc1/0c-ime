@@ -1,0 +1,40 @@
+{
+  "purpose": "primary metadata selection unit example; not a collected assignment",
+  "components": [
+    {
+      "id": "demo-component-1",
+      "primary_return": {
+        "id": "B",
+        "category": "known",
+        "context_class": "none",
+        "contrast_eligible": false
+      },
+      "other_return_tasks": [
+        {
+          "id": "A",
+          "category": "typo",
+          "context_class": "contrast",
+          "contrast_eligible": true
+        }
+      ]
+    },
+    {
+      "id": "demo-component-2",
+      "primary_return": {
+        "id": "C",
+        "category": "unknown",
+        "context_class": "contrast",
+        "contrast_eligible": true
+      },
+      "other_return_tasks": []
+    }
+  ],
+  "expected_contrast_components": [
+    "demo-component-2"
+  ],
+  "expected_primary_categories": {
+    "known": 1,
+    "unknown": 1,
+    "typo": 0
+  }
+}

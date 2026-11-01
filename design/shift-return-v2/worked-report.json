@@ -371,14 +371,132 @@
   "paired": [
     {
       "baseline": "E0-revise",
+      "challenger": "EL-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": 0.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "E0-revise",
+      "challenger": "EW-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 1,
+      "worsened": 0,
+      "net": 1,
+      "discordant_components": 1,
+      "relative_error_reduction": 1.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EL-revise",
       "challenger": "EC-revise",
       "cohort": "all_return",
       "n": 2,
       "repaired": 1,
       "worsened": 0,
       "net": 1,
+      "discordant_components": 1,
       "relative_error_reduction": 1.0,
-      "bootstrap95": null,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EW-revise",
+      "challenger": "EC-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": null,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "E0-fixed",
+      "challenger": "E0-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": 0.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EL-fixed",
+      "challenger": "EL-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": 0.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EW-fixed",
+      "challenger": "EW-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 1,
+      "worsened": 0,
+      "net": 1,
+      "discordant_components": 1,
+      "relative_error_reduction": 1.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EC-fixed",
+      "challenger": "EC-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 1,
+      "worsened": 0,
+      "net": 1,
+      "discordant_components": 1,
+      "relative_error_reduction": 1.0,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "E0-revise",
+      "challenger": "EC-revise",
+      "cohort": "context_contrast",
+      "n": 0,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": null,
+      "absolute_error_reduction_ci95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "baseline": "EL-revise",
+      "challenger": "EC-revise",
+      "cohort": "context_contrast",
+      "n": 0,
+      "repaired": 0,
+      "worsened": 0,
+      "net": 0,
+      "discordant_components": 0,
+      "relative_error_reduction": null,
+      "absolute_error_reduction_ci95": null,
       "valid_bootstrap": 0
     }
   ],
@@ -395,13 +513,13 @@
   "models_sha256": {},
   "diagnostics_path": "hypothetical-only-no-run",
   "safety": {
-    "key_failures": 0,
-    "commit_failures": 0,
-    "app_rewrites": 0,
-    "lock_violations": 0,
-    "hypothetical_learning_updates": 0,
-    "persistent_writes": 0,
-    "protected_calls": 0
+    "key_failures": null,
+    "commit_failures": null,
+    "app_rewrites": null,
+    "lock_violations": null,
+    "hypothetical_learning_updates": null,
+    "persistent_writes": null,
+    "protected_calls": null
   },
   "derived": [
     {
@@ -452,5 +570,7 @@
       "bootstrap95": null,
       "valid_bootstrap": 0
     }
-  ]
+  ],
+  "safety_status": "not_run",
+  "safety_reason": "No replay was performed; safety counts are unknown, not zero."
 }

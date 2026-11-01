@@ -23,5 +23,48 @@
   "probe_loss": 0.5981438693815918,
   "probe_gradient": -0.9002320053750443,
   "zero_error_n": 400,
-  "zero_error_wilson_upper": 0.009512294334296508
+  "zero_error_wilson_upper": 0.009512294334296508,
+  "canonical_model_sha256": "05a8daf00ffc3bd3ea1cd59b281e539798b334148563339a14b44395e152ff4b",
+  "ordered_observations": [
+    {
+      "intent": "return",
+      "component_id": "b",
+      "fixture_id": "r2",
+      "event_index": 4,
+      "candidate_identity": "z",
+      "x": 2.0
+    },
+    {
+      "intent": "literal",
+      "component_id": "a",
+      "fixture_id": "r1",
+      "event_index": 1,
+      "candidate_identity": "a",
+      "x": 0.0
+    }
+  ],
+  "expected_observation_order": [
+    "r1",
+    "r2"
+  ],
+  "sparse_bootstrap": {
+    "baseline_errors": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "new_errors": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "valid_replicates": 10000,
+    "baseline_zero_replicates": 3165,
+    "absolute_error_reduction_ci95": [
+      0.0,
+      0.75
+    ]
+  }
 }

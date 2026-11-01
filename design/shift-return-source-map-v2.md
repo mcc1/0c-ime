@@ -20,7 +20,7 @@
 
 baseline每列新建 `personal.NewModel(loaded.Model.Lex,loaded.Model.LM)`、Store新、Now=nil、`session.New(model)`；`MixedInput=true`、C的`MixedInputAggressive=false`、A=true、M/R=false；Preview02=true、English=loaded.English、EnglishAutocomplete=false、NeighborKeyRecovery=false；Opt.DocumentContextWeight=0。Fuzzy、rerank、punctuator、Simplified皆nil／零值，standard、toneless=false，所有其餘Session constructor預設不改。來源parity測試需比較同一constructor／設定與wrapper on/off，不聲稱上游v0.2.7等同此baseline。
 
-正式品質custom_tokens必須空。compat自訂英文token以 [vocab.New／Add](../core/vocab/vocab.go)建立，Readings空、SourceManual、weight0，步驟與現有 [NewMixedEvalBaseline](../core/session/mixed_eval_adapter.go)相同，但不重用它不支援空白的ledger。顯式literal／candidate lock先於score，protected狀態每個key檢查，不能靠feature值代替禁呼叫。
+正式品質custom_tokens必須空。compat自訂英文token以 [vocab.New／Add](../core/vocab/vocab.go)建立，Readings空、SourceManual、now=0（第三參數是timestamp，不是weight），步驟與現有 [NewMixedEvalBaseline](../core/session/mixed_eval_adapter.go)相同，但不重用它不支援空白的ledger。顯式literal／candidate lock先於score，protected狀態每個key檢查，不能靠feature值代替禁呼叫。
 
 ## 固定worked feature vectors（tiny，不是public品質）
 

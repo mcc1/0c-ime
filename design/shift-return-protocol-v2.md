@@ -25,23 +25,30 @@ Shift 指定英文起點；在一個未提交片段內，判斷何處恢復中�
 
 | 路徑 | 職責／公開介面 |
 | --- | --- |
-| `internal/shiftreturn/{types,validate,assign}.go` | schema 對應 values；`Validate(Fixture) error`、`Assign([]Fixture) Assignment` |
+| `internal/shiftreturn/{types,validate,assign}.go` | schema 對應 values；`Validate(Fixture) error`、`Assign([]Fixture,Sources) Assignment` |
 | `internal/shiftreturn/{candidate,features,render}.go` | `Generate(Query) (Result,error)`、`Features(Query,Hypothesis) Vector`、`Render(Query,Hypothesis) Display`；不接 Session |
 | `internal/shiftreturn/{state,baseline}.go` | `Step(State,Event,Policy) (State,Observation,error)`；真實 M/R/C/A Session 與 application ledger；不試打 hypothetical 候選 |
 | `internal/shiftreturn/{metrics,report,lock}.go` | `Summarize([]Row,Assignment) Report`、`VerifyLock(path) error` |
 | `internal/shiftreturn/*_test.go` | 下列各階段對應 assertions |
 | `cmd/0c-shift-eval/main.go` | `validate/assign/verify/enumerate/replay/summarize` 子命令 |
 | `internal/shiftreturn/fit.py` | `fit/select`，只讀已凍結候選／feature observations |
-| `internal/shiftreturn/reduce.py` | 獨立Python report reducer，只讀凍結rows／assignment；不重新選模或重播 |
+| `internal/shiftreturn/reduce.py` | 獨立Python report reducer，讀凍結fixtures／sources／bank／assignment／rows／events／candidate_occurrences及lock；不重新選模或重播 |
 | `testdata/shift-return-v2/{fixtures.jsonl,assignment.json,sources.json,run-lock.json,fit-lock.json}` | 凍結未見資料、分配、來源與來源程式／工具 hashes；不存日常輸入 |
+| `testdata/shift-return-v2/bank.jsonl` | 人工任務與annotation的凍結bank；其gold／prompt不可傳進Query |
 
 所有 Go 檔使用 `//go:build shiftreturneval`，不改 production package。Query=`{raw,eligible,context_units,custom_tokens}`，Hypothesis／Vector／Observation／Model／Row／Report 依 schema；State 還包含 `fragment_id,raw,app,prelude,eligible,closed,selection,freeze,observations`，片段內 raw offset 從0起。app 是已提交字串，prelude 是當時已有的 composition，不包含研究片段。字串比較以 Unicode codepoints，raw offsets 以 ASCII bytes。hash採UTF8、SHA256小寫hex。
 
-CLI全接受 `--fixtures --assignment --lock --out`，資料目錄另用 `--data`（預設 `assets/data`）；`--out` 必須不存在，不覆寫。`assign` 只讀 fixtures；`validate` 不評分；`verify` 跑 tiny／parity 不讀正式品質；`enumerate` 產候選召回；`replay` 加 `--model` 和 `--flow fixed|revise --split train|dev|test`；`summarize` 加 `--rows`。錯誤 exit2，資料資格不足 exit3，品質未過 exit4，通過 exit0；不以成功寫檔等於品質通過。unsupported／耗盡寫出明確狀態後 exit3，保留先前證據。
+CLI全接受 `--fixtures --sources --bank --assignment --lock --out`，資料目錄另用 `--data`（預設 `assets/data`）；`--out` 必須不存在，不覆寫。`assign` 讀 fixtures與sources的seen欄位；`validate` 不評分；`verify` 跑 tiny／parity 不讀正式品質；`enumerate` 產候選召回；`replay` 加 `--model` 和 `--flow fixed|revise --split train|dev|test`；`summarize` 加 `--rows --events --candidates`。錯誤 exit2，資料資格不足 exit3，品質未過 exit4，通過 exit0；不以成功寫檔等於品質通過。unsupported／耗盡寫出明確狀態後 exit3，保留先前證據。
 
-commands的完整呼叫前綴為 `go run -tags=shiftreturneval ./cmd/0c-shift-eval <command>`；具體資料路徑固定 `--fixtures testdata/shift-return-v2/fixtures.jsonl --assignment testdata/shift-return-v2/assignment.json --lock testdata/shift-return-v2/run-lock.json --data assets/data`，各phase的out另用尚不存在的 `/workspace/scratch/shift-return-v2/<phase>`。assign忽略尚不存在的assignment／lock，只產`assignment.json`；validate可先不驗source-lock但必驗schema／labels／assignment。verify及後續必驗lock，source／data或版本不符即exit2，不修改lock。fit呼叫 `python3 internal/shiftreturn/fit.py fit --observations <enumerate-out>/train.jsonl --assignment testdata/shift-return-v2/assignment.json --lock testdata/shift-return-v2/fit-lock.json --out <new-train-out>`，select改子命令為select並傳 `--dev <dev-replays-dir> --models <train-out>`，不接test。verify-numerical只接一個例子檔。
+commands的完整呼叫前綴為 `go run -tags=shiftreturneval ./cmd/0c-shift-eval <command>`；資料路徑固定 `--fixtures testdata/shift-return-v2/fixtures.jsonl --sources testdata/shift-return-v2/sources.json --bank testdata/shift-return-v2/bank.jsonl --assignment testdata/shift-return-v2/assignment.json --lock testdata/shift-return-v2/run-lock.json --data assets/data`，各phase的out另用尚不存在的 `/workspace/scratch/shift-return-v2/<phase>`。assign不讀尚未產生的assignment／lock，但必讀sources，輸出含fixtures_sha256與seen_sha256的assignment；validate可先不驗source-lock但必驗schema／labels／assignment。verify及後續必驗lock，source／data或版本不符即exit2，不修改lock。fit呼叫 `python3 internal/shiftreturn/fit.py fit --observations <enumerate-out>/train.jsonl --assignment testdata/shift-return-v2/assignment.json --lock testdata/shift-return-v2/fit-lock.json --out <new-train-out>`，select改子命令為select並傳 `--dev <dev-replays-dir> --models <train-out>`，不接test。verify-numerical只接一個例子檔。
 
-Generate結果為`{candidates,uncapped_identities,calls,overflow,status}`；Vector是13個finite float64；Display為`{text,segments}`。Step每次由同一State+Event+固定Policy得相同Observation；不得讀全fixture／gold。serialized shapes依schema；內部State不可序列化成額外未定義的模型輸入。out固定含`report.json`（Report）、`rows.jsonl`（Row）、`events.jsonl.gz`（Snapshot）、`candidates.jsonl.gz`（Candidate）；enumerate另產`train.jsonl/dev.jsonl/test.jsonl` observations，各列是candidate、fixture_id、component_id、event_index、raw prefix、gold hypothesis id集合，fit只可讀train檔。canonical JSON皆UTF8、keys字典序、無空白、禁止NaN/Inf；hash不含尾端LF，JSONL每列加LF。
+Generate結果為`{candidates,uncapped_identities,calls,overflow,status}`；Vector是13個finite float64；Display為`{text,segments}`。Step每次由同一State+Event+固定Policy得相同Observation；不得讀全fixture／gold。serialized shapes依schema；內部State不可序列化成額外未定義的模型輸入。out固定含`report.json`（Report）、`rows.jsonl`（Row）、`events.jsonl.gz`（Snapshot）、`candidates.jsonl.gz`（CandidateOccurrence，非裸Candidate）；enumerate另產`train.jsonl/dev.jsonl/test.jsonl` observations，帶candidate、fixture_id、component_id、event_index、raw prefix、gold IDs，fit只可讀train檔。
+
+CandidateOccurrence固定`fixture_id,component_id,condition,event_index,key_offset,raw,query_id,candidate,score,allowed,exclusion_reason`；enum condition="shared"，replay用八個condition名。query_id=`"q:"+SHA256(canonical JSON{fixture_id,condition,event_index,raw})`。Snapshot帶相同query_id，selected_id僅在該query內唯一；不能用局部hypothesis ID跨episode join。未評分的score=null，exclusion_reason為none/freeze。gold僅存訓練Observation或獨立grade步驟，不傳進Query。
+
+occurrence stream只寫cap後的保留hypotheses及literal；被cap剪去者只記Result.uncapped_identities／counts，不填假features。allowed是該流程相容性，score未執行才null；cap狀態屬Result診斷。Snapshot在未產生query的生命週期事件query_id=null。見[同局部ID不同query例](shift-return-v2/occurrences.jsonl)。
+
+canonical JSON使用Python參考writer：UTF8、keys升序、`json.dumps(...,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False)`。schema number型的model浮點欄位先轉float64，−0統一0.0；integer欄位維持integer。Go只驗／讀模型，不另序列化同一模型當canonical writer。fit-lock固定實際Python版本；模型byte重現針對同一writer／版本，跨語言數值核對用1e-12。object identity／query／seen／prototype等canonical-object hashes不含檔尾LF；lock.files、source cache、report.models_sha256等**檔案hash一律對全部原bytes，包括LF**。JSONL每列加LF；[canonical-model-sample.json](shift-return-v2/canonical-model-sample.json)及numerical.json中的canonical_model_sha256是object hash例，不冒充含LF檔案hash。
 
 | 階段 | 必須留下的可建置產物與命令 | 完成條件 |
 | --- | --- | --- |
@@ -59,6 +66,8 @@ Generate結果為`{candidates,uncapped_identities,calls,overflow,status}`；Vect
 
 eligible只由中文狀態收到shift產生，且opt-in實驗開啟、standard、非toneless、非private/paused/blocked、無CapsLock。generic mode=English及啟動英文不產生eligible。hard gate先於任何generator／score；不藉修改Session英文旗標繞過。純Query的eligible代表研究片段，與真實Session英文模式分離。
 
+formal fixture的custom tokens固定空；compat unit直接建立Query.custom_tokens（固定例為ipv6、ls）。raw仍是某自訂token前綴時只顯示literal、不評分；raw已完整以某自訂token開頭時鎖定最長該token的bytes，僅允許cut≥其長度的候選。此明確詞保護先於線性模型，單元測試同時以source map的vocab factory驗原版；不把未知一般英文都當成自訂詞。
+
 | 事件 | 實驗State轉移（初次Shift前走原版） |
 | --- | --- |
 | shift，中文→英文 | 保留當時prelude可見字串與原鍵；研究raw清空；開eligible，開始虛擬未提交片段 |
@@ -72,6 +81,8 @@ eligible只由中文狀態收到shift產生，且opt-in實驗開啟、standard�
 | protect=true／pause=true | 封存最後顯示、清eligible／暫存特徵；其後實驗generate/score=0；交原版保護狀態。解除不自動恢復eligible |
 
 每次保存完整view=`app+prelude+display`。已送app的字不可改。虛擬研究片段由evaluator持有，尚不是實際Windows英文直通的解法。
+
+關閉操作統一精確定義為`Close(append_text)`：`commit=prelude+display+append_text; app'=app+commit; prelude'=""; display'=""; raw'=""; freeze'=null; eligible'=false; closed'=true; view'=app'`。Enter/commit/再次Shift/focus/cursor/mode/caps/protect/pause使用Close("")；paste使用Close(pasted_text)。其handoff事件按原事件保留，第二Shift指定handoff中文，focus清context，mode/caps/protect/pause攜原on；不再在已closed虛擬episode處理新key。cancel例外：丟raw，`app'=app,prelude'=prelude,display'="",eligible'=false,closed'=true,commit="",view'=app+prelude`，handoff恢復原prelude composition；不得把它移到app後方。另見[lifecycle例](shift-return-v2/lifecycle.json)。
 
 M收到原始 `proto.Toggle`、key、Enter；R同M，但在gold首中文body key前額外Toggle（只有R可見gold）；C/A只省略該任務的第一個Shift，強制其餘初始中文、MixedInput=true，各用保守／積極，其餘raw／prelude／Enter不改。C/A是行為參考，不是自動Shift回切方案。設定其他欄位依source map。
 
@@ -123,11 +134,15 @@ B snapshot時間是cut後第一完整音節tone key事件，早於後續字；�
 
 四個models用同一train標準化統計與程序、不同mask：E0=0..6，EL=0..8，EW=0..6,9..12，EC=0..12。遮蔽probe使用同一EC係數，只將W替換為首音節時的W快照，L維持當前值；單列敏感度，不混成真正訓練對照。
 
+EW是「不使用顯式L7/L8」而非完全沒有長度資訊：W的詞長與覆蓋率本身含長度結構。四組是指定feature masks的消融，不能聲稱資訊理論上已把字串長度與語言內容完全獨立。
+
 ## 6. Gold投影、數值與選模
 
 主要品質episode最後raw固定完整，不用故意未完成尾音湊成功；incomplete tail僅compatibility例。每個完整音節事件及最後key為fit checkpoints，依key offset去重。gold hypotheses先投影已出現raw；若尚未完成首Chinese音節，gold={literal}；一旦完成，保留所有可接受完整gold readings的當前前綴；預定literal之後才打中文的prefix仍為literal。多個可接受gold去重，各自等權，不把另一個gold當negative。gold absent記miss，不製造候選。不得把未來字面傳給features。
 
 數值定義：對train全部primary observations（包括無pair者）計continuous indices={5,7,8,9,10,11}的population mean/std，每個checkpoint的每個candidate各一次，重複candidate在不同checkpoint仍各一次；missing indices5/11排除該欄mean/std，轉換後缺值固定0；std=0或無有效值→全0。flags不標準化。四模型共用統計。population variance=`sum((x-mean)^2)/count`，不用n-1。
+
+Observation排序tuple固定`(intent literal<return,component_id UTF8,fixture_id UTF8,event_index整數,candidate.identity UTF8)`；mean按此順序float64從0逐次相加／count，variance第二遍同序加平方差／count；不用平行或補償加總。flags記means=0,stds=1,counts=0；continuous無有效值記mean=0,std=0,count=0。Pair排序沿前述intent/component/fixture/event，再gold.identity、negative.identity UTF8；每個gradient分量按pair序逐次相加，最後加λw，所有13分量完成後才同時更新。若shuffle檔案不恢復此序，verification必失敗；I或有效pair集合空則fit exit3，不輸出零模型。
 
 有pair的intent集合I等權；每intent的component等權；每component／intent的一個primary row；有效checkpoint等權；checkpoint內各gold等權；各negative等權。無pair checkpoint不分配權重，仍入coverage及評測；無有效pair row/component不參與fit權重並逐一報數，不改quality分母。collision相反意圖保留，但同split。
 
@@ -145,6 +160,10 @@ score按index0..12累加。最高Chinese score−literal score嚴格大於margin
 
 只允許取得phase建立來源bank；bank凍結後依`SHA256("acquire-v2:"+prototype_id)`排序取到各類budget，策略結果不可見。原型ID=`SHA256(canonical JSON{source_ref,intent,prompt,raw,gold})`前24hex；candidate id不得來自此gold。已在v1／對話／測試出現的英文prefix、目標content word/reading原型與完整raw建立seen list，只作dev/mandatory，不計新test；bank及seen來源hash入lock。若budget內不足資格則INCONCLUSIVE，不看品質後換seed／補到過關。
 
+bank持久形狀為schema的BankTask，檔案`testdata/shift-return-v2/bank.jsonl`：canonical prompt用Unicode NFC、CRLF→LF，其餘空白保留；包含source_ref、intent、raw、gold、prototype_id、variant_index(0..4)、families、category/stratum/context_class、designated_typo_spans、source_edits及兩個annotation記錄。annotation含annotator_id、intent、reading_verified、accepted、labels_sha256及adjudication_ref；兩ID不同，labels_sha256固定為canonical `{intent,raw,gold}` hash，兩accepted且同labels才產fixture，否則拒收或經adjudication後重標。prototype_id就是variant0上述hash，variant>0須指向已存在variant0原型。
+
+bank→fixture只複製凍結label／families／metadata，id="task:"+BankTask.id，events固定Shift＋raw keys＋Enter，prelude另複製；prompt、annotation、typo spans不進Query。category=typo須有非空合法raw spans；其他category typo spans必空。source_edits含原公開段落的begin/end及replacement，synthetic為空。依variant0的category/stratum消耗取得budget，variants最多4個追加、與原型同family。例子與ID計算在[bank-example.json](shift-return-v2/bank-example.json)。
+
 return主類按以下優先順序唯一指定：typo（首中文前有指定誤按span）、identifier（欲保留prefix含數字或標點）、digit_initial（首reading聲母鍵是數字）、uppercase（prefix含大寫）、unknown（English.Has(prefix)=false）、known。每類取得budget500，總3000。literal主類固定各375：ordinary_english、account、phonetic_account、model_version、numeric_date_time、url_path、identifier、random_ascii。主類由任務prompt規則決定；不能按classifier輸出分類。
 
 return每主類的length配額固定為音節數1/2–4/5–16/17–64各125；length不要求每個dependency component都有四層。literal沒有Chinese syllable strata，按raw長1–8/9–32/33–128/129–512分層，375依94/94/94/93分配。raw>512及>64音節另作compat，不進此取得budget，capacity行為仍必測。return空白一聲至少20% primary；每主類test至少20個independent components。這些是資格不是品質，不能用容易子類稀釋稀有類。
@@ -155,7 +174,15 @@ component_id=`SHA256(JSON(sorted row IDs))`；JSON無空白、UTF8、ensure_asci
 
 若component含任一seen原型，整component標為regression，不進formal train/dev/test。其餘按上述hash分配。seen list列出來源檔、版本和匹配依據；不得只刪難列而讓同component剩下列留test。每個synthetic/public任務都需要兩個獨立標註者ID；第二人只見prompt及raw/gold、不見第一人的理由或模型輸出；不一致記adjudication後修正或拒收，來源bank和adjudication在quality前凍結。
 
+seen輸入就是`--sources`的seen_prefixes/seen_contents/seen_raw，seen_sha256為這三欄排序去重後canonical JSON hash。prefix匹配指定literal前段的ASCII lowercase完整字串；contents匹配完整content原型的NFC surface或空格正規化reading（trim並以單一空格join）；raw匹配大小寫及尾空白完全相同的ASCII字串。任一命中傳遞到整component。assign API須收Sources；只改seen manifest就必須能把整component由hash split改為regression。
+
+Source entries的cached_path是實際可讀的凍結來源檔（synthetic用bank.jsonl，public用授權可存的原文快取），sha256對該檔原bytes驗證。source_complete僅在所有primary source_ref存在、快取hash及license欄齊、bank annotation鏈與labels都通過時為true；無網路也不能用URL存在代替內容驗證。seen例見[seen-example.json](shift-return-v2/seen-example.json)。formal模式拒收任何demo=true記錄；本設計例子永不算正式資料。
+
 context-contrast的預定predicate：在已完成首音節的raw prefix存在至少兩個不同gold boundary／literal intent的任務（先按source gold建pair），後續raw不同；return continuation至少再完成一個音節並含一個跨首音節的≥2音節exact content word；相反literal continuation由prompt明定為literal。此規則只用gold與固定字典，不按模型能否修好選列。它估計「指定成詞延續」的效果，不涵蓋所有句子context。相同完整raw／setting而相反意圖是identical_collision，不算有區別隊列，但留在各intent主表／challenge表，報可達上限。
+
+資格及分層統一使用**已選primary自身**的category/stratum/context predicate；不因component中另一variant屬contrast就把非contrast primary算進100，也不另外選容易的cohort-specific primary。Assignment保存primary_return_metadata與primary_literal_metadata（id/category/stratum/context_class/contrast_eligible），Row複製primary metadata以供audit；metadata必須與frozen fixture／bank predicate一致。某component的A是contrast/typo而B是ordinary/known且B獲選，該component只能計known，不能計contrast或typo；A仍報variant。
+
+此例的機讀qualification預期在[cohort-example.json](shift-return-v2/cohort-example.json)。它是metadata選擇單元例，不是已取得的Assignment；formal assignment仍須完整component hash／split驗證。
 
 正式test至少400個return components、400 literal-only components、400含return-English primary的components；context-contrast至少100個return components；train/dev各至少100return及100literal components。return primary的英文prefix全部作一次英文字串保留檢查，不能一字串拆多個獨立spans。每intent n=component數，兩intent可共用component，但不得相加假稱獨立樣本。
 
@@ -175,18 +202,24 @@ Wilson使用各intent中獨立component的binary primary outcome，z=1.959963984
 
 配對bootstrap在固定test component union上等概率有放回抽同樣數目，10000 replicates，Python `random.Random(271828)`；抽樣用 `randrange(N)`重複N次，不用NumPy RNG。每次對所有模型／流程同步抽。子群分母為0的replicate記invalid，不填0；有效replicates<9500該區間unavailable、G0不足。區間為排序有效樣本的2.5／97.5百分位，使用linear quantile index=(m−1)*p內插；資料／工具lock記Python版本。Wilson gate不以bootstrap代替。
 
+paired唯一區間欄位名為`absolute_error_reduction_ci95`，statistic固定 `(repaired-worsened)/n = errorBase-errorNew`，不對relative reduction做區間。replicate的baseline errors=0但n>0仍有效：Δ可為0或負值；只有觀測的relative_error_reduction在base=0時null。空cohort n=0的paired counts為0、relative與CI皆null、valid_bootstrap=0。稀疏例基準errors=[1,0,0,0]、新errors全0，seed與10000次抽樣固定：Δ的95%區間=[0,0.75]，包含零；有許多baseline-zero replicates但valid_bootstrap仍10000。不得丟棄它們來抬高改善區間。
+
 bootstrap母體component IDs先字典序排序；同component兩intent的primary與所有conditions一起重抽。report.conditions固定8個`{E0,EL,EW,EC}-{fixed,revise}`，每條件metrics固定`return_boundary,return_surface,literal_only,return_english`；metric.errors/n是相應component的binary primary計數，value是errors/n，不用success命名誤導。逐類及variants診斷另存diagnostics_path，格式同metric並以category分層。safety固定彙總key_failures、commit_failures、app_rewrites、lock_violations、hypothetical_learning_updates、persistent_writes、protected_calls；unknown不可填0，任一必要row unsupported使G0 unavailable。derived表固定interaction_I、各model的flow_gain、context_extra_revision_gain及其component bootstrap區間。paired表包含四種feature對照（均revise）、四model的fixed→revise，以及主要EC相對E0在context-contrast的修好／改壞；沒有此隊列不能用all-return補。
+
+新增EC相對EL在相同context-contrast的paired entry，故required paired清單共10條，worked report即使無cohort也要有空entry。safety每個counter可為null，Row及Report皆有safety_status=`complete|incomplete|not_run`與reason；任一row該counter未知則aggregate該counter=null，完整可觀察counter可獨立求和。not_run例全部null，不是0；任何必要unknown使G5 unavailable並禁止GO，不將unknown視作已證明有副作用。
+
+獨立reducer呼叫 `python3 internal/shiftreturn/reduce.py --fixtures <frozen-fixtures> --sources <frozen-sources> --bank <frozen-bank> --assignment <frozen-assignment> --rows <rows> --events <events.gz> --candidates <candidate-occurrences.gz> --lock <run-lock> --out <new-out>`。先驗全部hash，再按fixture id加入component/primary metadata及gold；從final Snapshot及CandidateOccurrence重算error flags，與Row交叉核對，不信任Row自己宣稱的cohort／正確性。資料／source／annotation資格由frozen bank及Sources驗證；缺檔或不一致是exit2，尚未完成證據是exit3，不補假值。G3只篩primary_return_metadata.contrast_eligible=true的test components。
 
 | Gate | 固定要求 |
 | --- | --- |
 | G0 工具／資料 | P0–P3及來源／gold／split／樣本資格全過，必要paired metrics可用；不靠未來gold或反覆held-out調整 |
-| G1 召回 | test primary完整gold在capped候選≥99%；mandatory全存活；overflow／unsupported仍算miss；未過停止fit |
+| G1 召回 | test return primary components的完整gold在capped候選≥99%；literal不進此分母；mandatory全存活；overflow／unsupported仍算miss；未過停止fit |
 | G2 恢復 | EC-revise final boundary_reading_success≥90%；surface另完整報告，不含糊稱選字全對 |
-| G3 context | 預定contrast EC錯誤相對E0下降≥30%，EC對EL的net修好>0；EL長度效果及EW獨立報；base零時無可量測改善，不報通過30% |
+| G3 context | 預定contrast EC錯誤相對E0下降≥30%，EC相對E0與EL兩個paired絕對error reduction的95%區間下界皆>0；各比較至少20個discordant components。這是在新品質結果前增加的證據要求，不降低原門檻。EL與EW獨立報；base零／discordant不足時效果INCONCLUSIVE |
 | G4 literal | EC兩個風險分母各點估及Wilson95上限≤1%；相對E0及EL最終錯誤不增加；所有指定作者保留例全過 |
 | G5 不破壞 | 假設候選評估期間learning updates／persistent writes=0；protected generate/score=0；zero掉鍵／重複／改寫app／越明確lock；Enter=最後完整view；正常中文regression零新增失敗 |
 
-G3 base零且EC零只能寫「無可量測改善」，不是H1得到支持；整輪結論為context效果INCONCLUSIVE，不能拿G2成功率代替G3。所有對照報相同門檻表，但不要求E0/fixed達EC成效門檻。
+G3 base零、discordant不足20只能寫「改善證據不足」，不是H1得到支持；context效果INCONCLUSIVE，不能拿G2成功率代替G3。滿足資料／discordance資格而區間包含零或點估未達標則NO_GO_METHOD，並不證明真實效果等於零。兩個必要paired改善的CI同時下界>0才支持聯合主張，其他組合與interaction區間作診斷、不事後挑顯著者。所有對照報同門檻表，但不要求E0/fixed達EC成效門檻。
 
 dev模型／margin固定後八個test各只跑一次；主要方案不因test挑最高分換名。EC全過→GO_OUTPUT_EXPERIMENT，允許再研究輸出持有與UX，非產品GO。有效主品質失敗→NO_GO_METHOD；必要工具／資料缺失或無法量改善→INCONCLUSIVE，已有負證據仍保留。不得用這一個探針否定所有context方法。
 

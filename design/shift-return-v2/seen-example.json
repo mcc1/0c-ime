@@ -1,0 +1,42 @@
+{
+  "purpose": "whole-component seen matching unit example, not collected assignment",
+  "component_id": "0acb4ab2051bf2822ed9af111baa7f911a1e720e44e2b91d217c08a72acdc6c0",
+  "row_ids": [
+    "demo-seen-a",
+    "demo-seen-b"
+  ],
+  "members": [
+    {
+      "id": "demo-seen-a",
+      "prefix": "HELLO",
+      "contents": [
+        "窄小"
+      ],
+      "raw": "HELLO593vul3"
+    },
+    {
+      "id": "demo-seen-b",
+      "prefix": "world",
+      "contents": [
+        "其他"
+      ],
+      "raw": "worldraw"
+    }
+  ],
+  "sources_empty": {
+    "seen_prefixes": [],
+    "seen_contents": [],
+    "seen_raw": []
+  },
+  "sources_seen": {
+    "seen_prefixes": [
+      "hello"
+    ],
+    "seen_contents": [],
+    "seen_raw": []
+  },
+  "seen_empty_sha256": "fcfc2ca31ec93a6f0baa22f67a5fb8699feac24e7d9f15afc310c7b31f6f5822",
+  "seen_nonempty_sha256": "fc7da8c12bda4267cfdbb1f49a9f3960017416002be4175dfccb46e11508b2ff",
+  "expected_empty_split": "train",
+  "expected_seen_split": "regression"
+}

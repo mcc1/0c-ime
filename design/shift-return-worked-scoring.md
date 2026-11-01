@@ -29,6 +29,8 @@ a/b同component、不同intent；c/d各自一component。return分母為a/c的2c
 
 [numerical.json](shift-return-v2/numerical.json)固定mean/std、pair差向量、loss、gradient與第一步更新；是手算核對，不是正式fit。[check_examples.py](shift-return-v2/check_examples.py)驗證schema、原鍵spans、例子reading及數值，並拒絕缺key、ownership缺口與錯誤reading。正式完整SpellExact仍由未來Go P0/P1驗證，不把此小映射檢查當成語音合法性測試。
 
+補充可重算例包括：canonical模型bytes/hash、same-hypothesis不同query的occurrences、seen名單使整component排除、非空prelude在每個關閉事件只輸出一次、primary自身而非variant的contrast資格，以及baseline-zero bootstrap replicates仍有效。稀疏errors=[1,0,0,0]修好唯一錯誤時，點估雖改善100%，絕對改善區間[0,.75]仍包含零，不能通過新的證據門檻。worked report包含全部10個paired entries，沒有contrast隊列時用n=0/null明列；未重播的安全計數全部null而非0。
+
 ```sh
 python3 design/shift-return-v2/check_examples.py
 ```
