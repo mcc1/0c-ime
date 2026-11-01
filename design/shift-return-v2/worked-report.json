@@ -1,0 +1,456 @@
+{
+  "version": "shift-return-v2",
+  "kind": "report",
+  "demo": true,
+  "outcome": "INCONCLUSIVE",
+  "primary_condition": "EC-revise",
+  "gates": {
+    "G0": {
+      "status": "unavailable",
+      "reason": "Hypothetical example; only two components per intent, not a quality run."
+    },
+    "G1": {
+      "status": "unavailable",
+      "reason": "No candidate evaluation executed."
+    },
+    "G2": {
+      "status": "pass",
+      "reason": "Hypothetical boundary/reading successes 2/2; surface is named separately."
+    },
+    "G3": {
+      "status": "unavailable",
+      "reason": "Same-complete-raw collision provides no distinguishing context cohort."
+    },
+    "G4": {
+      "status": "fail",
+      "reason": "Hypothetical literal error 1/2, and Wilson upper exceeds1%."
+    },
+    "G5": {
+      "status": "unavailable",
+      "reason": "No event replay executed."
+    }
+  },
+  "conditions": {
+    "E0-fixed": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "E0-revise": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EL-fixed": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EL-revise": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EW-fixed": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EW-revise": {
+      "return_boundary": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EC-fixed": {
+      "return_boundary": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    },
+    "EC-revise": {
+      "return_boundary": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "return_surface": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      },
+      "literal_only": {
+        "errors": 1,
+        "n": 2,
+        "value": 0.5,
+        "wilson95": [
+          0.09453120573423074,
+          0.9054687942657693
+        ],
+        "independent_components": true
+      },
+      "return_english": {
+        "errors": 0,
+        "n": 2,
+        "value": 0.0,
+        "wilson95": [
+          0,
+          0.6576197724933469
+        ],
+        "independent_components": true
+      }
+    }
+  },
+  "paired": [
+    {
+      "baseline": "E0-revise",
+      "challenger": "EC-revise",
+      "cohort": "all_return",
+      "n": 2,
+      "repaired": 1,
+      "worsened": 0,
+      "net": 1,
+      "relative_error_reduction": 1.0,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    }
+  ],
+  "qualification": {
+    "test_return_components": 2,
+    "test_literal_components": 2,
+    "test_english_components": 2,
+    "contrast_components": 0,
+    "category_components": {},
+    "source_complete": false,
+    "surface_gold_complete": true
+  },
+  "source_lock_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "models_sha256": {},
+  "diagnostics_path": "hypothetical-only-no-run",
+  "safety": {
+    "key_failures": 0,
+    "commit_failures": 0,
+    "app_rewrites": 0,
+    "lock_violations": 0,
+    "hypothetical_learning_updates": 0,
+    "persistent_writes": 0,
+    "protected_calls": 0
+  },
+  "derived": [
+    {
+      "name": "interaction_I",
+      "model": null,
+      "cohort": "all_return",
+      "value": 0.0,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "name": "flow_gain",
+      "model": "E0",
+      "cohort": "all_return",
+      "value": 0.0,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "name": "flow_gain",
+      "model": "EL",
+      "cohort": "all_return",
+      "value": 0.0,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "name": "flow_gain",
+      "model": "EW",
+      "cohort": "all_return",
+      "value": 0.5,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "name": "flow_gain",
+      "model": "EC",
+      "cohort": "all_return",
+      "value": 0.5,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    },
+    {
+      "name": "context_extra_revision_gain",
+      "model": null,
+      "cohort": "all_return",
+      "value": 0.5,
+      "bootstrap95": null,
+      "valid_bootstrap": 0
+    }
+  ]
+}

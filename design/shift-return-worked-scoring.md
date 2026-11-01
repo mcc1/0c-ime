@@ -1,36 +1,34 @@
-# Shift-return 計分演練（假設輸出，非實驗結果）
+# Shift-return v2：計分與獨立樣本演練
 
-本文件用來檢查[protocol](shift-return-protocol-v1.md)是否會獎勵正確行為、懲罰誤傷。下列選擇全部是假設，不是程式實跑成績；不能算進正式資料。
+以下全部是假設輸出，不是實驗結果。機讀例子在 [examples.jsonl](shift-return-v2/examples.jsonl)，完整假設報表在 [worked-report.json](shift-return-v2/worked-report.json)，精確規則見 [protocol v2](shift-return-protocol-v2.md)。
 
-每列的完整任務從中文模式開始，先按Shift，再逐鍵輸入raw，最後Enter。E0不以後文更新切點證據；EC使用後文。策略看不到「意圖」欄。所有同一raw的列有相同可見設定／前文，不能假裝系統可以同時猜對。
+## 1. 改善與誤傷一起計
 
-| 任務 | raw | 欲輸出 | E0假設最終顯示 | EC假設最終顯示 |
+| 任務 | 相同可見raw | 欲輸出 | E0-revise假設 | EC-revise假設 |
 | --- | --- | --- | --- | --- |
-| a，中文 | `microsoft593vul3` | microsoft窄小 | `microsoft593vul3` | microsoft窄小 |
-| b，注音式帳號 | `microsoft593vul3` | `microsoft593vul3` | `microsoft593vul3` | microsoft窄小 |
-| c，中文 | `WQ5j04fu06` | WQ賺錢 | WQ賺錢 | WQ賺錢 |
-| d，型號 | `gpt4` | `gpt4` | `gpt4` | `gpt4` |
+| a 中文 | `microsoft593vul3` | microsoft窄小 | 原raw | microsoft窄小 |
+| b 注音式帳號 | `microsoft593vul3` | 原raw | 原raw | microsoft窄小 |
+| c 中文 | `x593gp ` | x窄身 | x窄身 | x窄身 |
+| d 型號 | `gpt4` | 原raw | 原raw | 原raw |
 
-假設EL和E0同結果。a/b同一collision component，c/d各一component。a/b不能拆train/test，也不能因中文詞籍存在就刪掉b。
+a/b同component、不同intent；c/d各自一component。return分母為a/c的2components，E0錯1/2→EC錯0/2；literal分母為b/d的2components，E0錯0/2→EC錯1/2。不能只摘中文100%改善。這些數量不符正式資料資格，所以完整toy報告outcome為INCONCLUSIVE，並保留G4失敗。x窄身只示範空白一聲的形狀，不是自然語料。
 
-## 逐鍵怎麼看a
+到`microsoft593`仍顯示raw，後來`vul3`到達才自動組成窄小，可算a的最終repair；同一操作卻使b誤轉。系統看不到意圖欄，完全相同觀測不能同時猜對；同component等權兩intent可達上限為1/2。
 
-| raw prefix | EC暫時顯示 | 計分解釋 |
-| --- | --- | --- |
-| `microsoft593` | `microsoft593` | 此時仍有兩種意圖，不要求永久定案；記首音節尚未成功 |
-| `microsoft593v` | `microsoft593v` | 後字未完成，不能偷用未來的`ul3` |
-| `microsoft593vul3` | microsoft窄小 | 後文到達後自動修好，記context repair、最終成功；仍需記恢復花了4鍵 |
-| Enter | commit=microsoft窄小 | 必須等於上一個顯示，Enter不能再換另一個答案 |
+## 2. 三種正確性不能混用
 
-同一份EC在b也會顯示「microsoft窄小」，因此b是最終literal誤轉。即使這是一個正常中文字詞，也不能當帳號任務的成功。這正是要測的取捨。
+若顯示microsoft窄筱，切點／讀音可正確，但字面不是指定窄小，surface_success失敗。若影子判斷選窄小，但首字raw已送出而真正提交只剩小，materialization失敗。Enter時才另選答案違反提交契約。中途pending raw後來完成Chinese屬resolution，不直接當作先前literal誤轉。
 
-## 這四列的手算
+## 3. 相關variants不灌分母
 
-- return意圖a/c：E0錯1/2，EC錯0/2，錯誤下降100%；a是淨修好，c維持正確。
-- literal-only意圖b/d：E0錯0/2，EC錯1/2。即使中文看起來有進步，仍不通過literal限制；樣本2也完全不具正式資格。
-- a/b完整觀測相同且兩意圖等權，對該component最多同時命中1/2；若改為全保留literal，只會把成功與失敗交換，不是解決歧義。
-- a中途literal後自動組中文，不能算最終失敗；若a在第二音節曾顯示正確、後來變回literal而最後仍錯，則算最終失敗。
-- 假如cut/readings正確但字面是「microsoft窄筱」（小／筱同讀音），意圖／讀音項可成功，整段字面項失敗；不得把兩項混為一個90%成功率。
-- 若EC直到Enter才從literal改中文，即使commit看似正確，亦違反Enter不得排名的條件；若首字raw早已送入應用程式、只能轉後一字，不能拿shadow預測當輸出成功。
+若10個帳號原型因相同prefix／alias連成一個component，只選一literal primary進主風險率，Wilson n=1；其餘9列報variants/worst-case。即使有400個字串，只合成150components，資格及Wilson分母仍為150。不能用對字串做bootstrap來補救相依性。
 
-正式報告須同時提供return、literal、英文span保留、context修好／改壞、讀音及字面的分母與結果。這份演練說明為何不能只選a這類改善案例，也不能要求所有早期暫時顯示一次就猜中。
+0錯／400獨立components的two-sided Wilson95上限約0.9512%，仍只是指定benchmark條件下的區間，不代表真實使用者的意圖分布。若有錯誤，上限可能不達1%，不追加案例直到過關。
+
+## 4. 可重算的數值例
+
+[numerical.json](shift-return-v2/numerical.json)固定mean/std、pair差向量、loss、gradient與第一步更新；是手算核對，不是正式fit。[check_examples.py](shift-return-v2/check_examples.py)驗證schema、原鍵spans、例子reading及數值，並拒絕缺key、ownership缺口與錯誤reading。正式完整SpellExact仍由未來Go P0/P1驗證，不把此小映射檢查當成語音合法性測試。
+
+```sh
+python3 design/shift-return-v2/check_examples.py
+```

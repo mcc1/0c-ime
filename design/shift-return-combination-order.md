@@ -1,65 +1,33 @@
-# 資訊組合與決策順序：開跑前補充設計
+# Shift-return：資訊組合與決策順序
 
-狀態：尚未取得新品質結果。此補充將[protocol](shift-return-protocol-v1.md)的三個資訊對照擴成完整的組合比較，並獨立測決策封存時機；其他資料、每模型訓練預算與品質門檻不變。此處「三種」依前文解讀為首段資訊B、長度L、後文字詞W。
+正式定義與門檻以 [protocol v2](shift-return-protocol-v2.md)為準。B是初始訊號，L是已輸入的後續長度，W是後文字詞與統計解碼證據。資訊固定與ownership封存是兩個不同變因。
 
-## 1. 組合不是三選一
+## 1. 四種資訊組合
 
-B是基礎判斷，始終存在；另外兩個訊號採2×2對照：
-
-| ID | 首段B | 後續長度L | 後文字詞W |
+| 模型 | 初始B | 長度L | 字詞W |
 | --- | --- | --- | --- |
 | E0 | 有 | 無 | 無 |
 | EL | 有 | 有 | 無 |
-| EW，新增 | 有 | 無 | 有 |
-| EC | 有 | 有 | 有 |
+| EW | 有 | 無 | 有 |
+| EC（主要） | 有 | 有 | 有 |
 
-E0/EL/EC原本是逐步加入資訊的組合；新增EW才能回答「context是否需要長度一起用」「長度是否反而干擾context」。沒有獨立的純長度分類器去取代B，也不預設三項全開最好。
+E0固定B的初次資訊，不表示必然封存決策；它是否可改判由下面的流程決定。四模型同資料、訓練程序與預算，各自擬合係數，unused係數為0；不要把它們說成同一係數的主實驗。
 
-主表報每種意圖的final error。分別比較EL−E0、EW−E0、EC−EL及EC−EW，並報修好／改壞paired groups。另報error尺度的交互作用 `I = error(EC) - error(EL) - error(EW) + error(E0)`：負值表示聯用的錯誤下降超過兩個單獨增益相加，正值表示增益重疊或互相干擾。這是指定尺度的描述，不單靠I宣稱因果或統計顯著；同component paired bootstrap區間一起報。
+在相同revise流程比較EL−E0、EW−E0、EC−EL與EC−EW。error尺度交互作用 I=errorEC−errorEL−errorEW+errorE0，報paired component bootstrap，不用負I單獨宣稱因果。EW可檢查長度是否與詞訊號重疊或干擾。
 
-所有組仍用相同candidate generator與訓練程序；EW的L係數固定0。四組同時事前固定，不能看結果才新增缺少的組合。
+## 2. 兩種封存流程
 
-## 2. 順序要測的是何時定案
-
-同一prefix、相同features與係數若以同一線性公式共同評分，改變「先算B還是先算W」沒有新的資訊含義。固定float64累加順序避免數值差；不將這種程式計算順序誤當使用情境的順序效果。
-
-真正可能改變結果的是先作選擇後，有沒有讓後續資訊修正它。因此每個模型固定同一份係數與margin，再比較兩個流程，不因流程重新訓練：
-
-| 流程 | 第一個可判斷時點 | 後文到達後 |
+| 流程 | 首次有可辨首音節候選時 | 後續資訊 |
 | --- | --- | --- |
-| O-fixed：先選後封存 | 使用已出現資訊選暫時答案，並封存已處理bytes的ownership／reading | 只能在相容路徑上延伸；不能重切封存部分 |
-| O-revise：先暫選、後文可回修 | 使用同一資訊選暫時答案，不封存 | 重新比較全部未手選鎖定的解釋，可改前面的切點／reading |
+| fixed | 選擇後封存當時display的ownership／reading，pending視literal | 只能相容延伸；同音字面仍可更新 |
+| revise | 暫選，不封存原鍵 | 重新比較同段所有未明確鎖定的拆法 |
 
-O-fixed的封存時點固定為Shift後第一次存在完整exact spelling首音節候選的key事件；不按gold中文起點、模型信心或未來是否成詞選時點。若選literal，就將此時已顯示bytes視為literal封存；若只支持prefix而未能顯示完成中文字，也不能假裝已完成。沒有這類事件的任務全程literal。只封存一次；後續同音字字面仍可由decoder更新，不改先前reading／ownership。
+封存時點不讀gold。兩流程使用同一份模型與margin，不重訓、不重選門檻。共同generator先產候選，fixed只在selection層篩除不相容者；「存在但被封存排除」不能算generator沒找到。
 
-封存是離線流程對照，不等於真的把字送進應用程式。兩流程仍生成同一套未刪候選，O-fixed在選擇層篩選與封存projection相容的候選，獨立記錄「存在但被封存排除」；若沒有相容延伸，保留舊顯示並原鍵附加，記fallback，所有錯誤照算。搜尋recall不能用O-fixed的篩選後集合冒充generator能力。
+## 3. 實驗矩陣及解釋
 
-實際按鍵順序完全相同，不能把未來context搬到前面。英文模式、privacy、明確手選／literal lock等硬約束兩流程皆先遵守；這不是研究是否可以讓context越過使用者明確選擇。
+四個模型×兩流程共8個test replays，模型只有4份。margin先在dev-revise選定並凍結，八個final conditions各跑一次；主要仍EC-revise，不在看test後改挑最高分。
 
-## 3. 事前固定的實驗矩陣
+同一模型比fixed/revise，回答提早定案的影響；同一流程比模型，回答資訊組合的影響。不能把EC-revise與E0-fixed之差全歸因於context。共享候選、固定向量累加順序下，先計算B或W沒有額外語意；本輪研究的是封存時機，而非全部soft-rule優先排列。
 
-四種feature模型×兩種流程，共8個replay conditions。只有4份模型；各模型margin依原固定dev程序在O-revise上選好，再不變地套到兩流程。流程對照不是8次模型搜尋。每個condition的final test只跑一次，所有結果都報。
-
-| | O-fixed | O-revise |
-| --- | --- | --- |
-| E0 | E0-fixed | E0-revise |
-| EL | EL-fixed | EL-revise |
-| EW | EW-fixed | EW-revise |
-| EC | EC-fixed | EC-revise |
-
-資訊組合效果在同一O-revise下比較；決策封存效果在同一模型下比較。再報EC的回修增益與E0的回修增益之差，檢查context是否特別需要保留重判空間。不能拿EC-revise對E0-fixed的差值，全部歸因於context。
-
-主要待驗證方案仍固定為EC-revise，沿用原G0–G5門檻，不在test後挑8組中最高分當主方案。EW若更好，構成減少長度訊號的下一版假說；保留本次完整證據，不能改主方案名義宣稱本次通過。EW-revise亦報同門檻成績以供評估，但事後改用它需新的確認實驗。
-
-不是要求所有對照都達到EC的成效門檻：G0／共同generator的G1及執行安全G5必須有效；G2–G4以指定EC-revise及其必要paired比較判定。對照組因無context或早封存而品質較差，本身就是待觀測結果，不能據此宣布整個實驗工具失效。
-
-## 4. 預先定義怎麼解讀
-
-- EC優於EL且EW也優於E0：有支持後文字詞內容的證據。
-- EL改善、EC沒有優於EL：可能只是長度線索，尚未支持詞內容有效。
-- EW優於EC：L可能與W重疊、造成偏差；不能假定資訊越多越好。
-- 同一模型O-revise優於O-fixed：過早封存會阻止恢復；另看暫時誤轉、反覆與穩定延遲的成本。
-- context只在O-revise有效：須把「保留未提交替代解釋」列為該方法必要條件，不能只換評分卻沿用原來的早期定案。
-- 中文改善但literal超標：組合或順序仍未解決意圖取捨；任何一種都不能只摘中文成功率。
-
-本補充只更改事前設計，沒有新模型、資料、品質結果或產品行為變更。若之後要測「先由格式規則阻擋，還是先讓context提出替代」等soft-rule優先序，必須另列具體非交換分支與獨立對照，不能從這次封存實驗推論全部規則排列。
+若EC只在revise改善，保留重判空間是該方法必要條件；若EW更好，記為下一版假說而非事後改本次主方案。中文改善但literal超標仍不通過；字面改善但切點沒改善，亦只證明選字改善。
