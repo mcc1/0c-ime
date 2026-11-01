@@ -204,6 +204,50 @@ def main():
     assert expected_split == seen["expected_empty_split"]
     assert seen["expected_seen_split"] == "regression"
 
+    runtime = [json.loads(x) for x in (ROOT / "runtime-snapshots.jsonl").read_text().splitlines()]
+    for snapshot in runtime:
+        VALIDATOR.validate(snapshot)
+        assert snapshot["kind"] == "snapshot"
+        assert snapshot["query_id"] is None
+        assert "gold_ids" not in snapshot and "candidate" not in snapshot
+    assert runtime[0]["handoff"] is None
+    assert runtime[1]["handoff"]["action"] == "commit_only"
+    invalid_runtime = copy.deepcopy(runtime[0])
+    invalid_runtime["gold_ids"] = []
+    assert not VALIDATOR.is_valid(invalid_runtime)
+
+    metadata_fixtures = [json.loads(x) for x in (ROOT / "metadata-fixtures.jsonl").read_text().splitlines()]
+    metadata_rows = [json.loads(x) for x in (ROOT / "metadata-rows.jsonl").read_text().splitlines()]
+    for f in metadata_fixtures:
+        fixture_semantics(f)
+    for row in metadata_rows:
+        VALIDATOR.validate(row)
+        assert row["primary_metadata"]["stratum"] == "1"
+        assert row["primary_metadata"]["id"] == metadata_fixtures[0]["id"]
+        assert row["primary_category"] == row["primary_metadata"]["category"]
+        assert row["contrast_eligible"] == row["primary_metadata"]["contrast_eligible"]
+    assert metadata_fixtures[1]["stratum"] == "17-64"
+    assert metadata_rows[1]["fixture_id"] != metadata_rows[1]["primary_metadata"]["id"]
+
+    diagnostic_cases = json.loads((ROOT / "generator-examples.json").read_text())["cases"]
+    for case in diagnostic_cases:
+        diagnostic = case["diagnostic"]
+        VALIDATOR.validate(diagnostic)
+        assert "gold_id" not in diagnostic  # Grader owns the expected label.
+        assert diagnostic["kept_count"] == len(diagnostic["kept_ids"])
+        if diagnostic["status"] != "ok":
+            outcome = "unavailable"
+            assert diagnostic["uncapped_ids"] is None
+            assert diagnostic["uncapped_count"] is None
+            assert diagnostic["probe_lex_queries"] == 250000
+        else:
+            assert diagnostic["uncapped_count"] == len(diagnostic["uncapped_ids"])
+            assert diagnostic["kept_ids"] == diagnostic["uncapped_ids"][:256]
+            outcome = "cap_loss" if case["gold_id"] in diagnostic["uncapped_ids"] else "generator_miss"
+            assert case["gold_id"] not in diagnostic["kept_ids"]
+        assert outcome == case["name"]
+    assert diagnostic_cases[0]["diagnostic"]["kept_ids"] == diagnostic_cases[1]["diagnostic"]["kept_ids"]
+
     sparse = n["sparse_bootstrap"]
     rng = random.Random(271828)
     values, zero_baselines = [], 0
@@ -226,6 +270,7 @@ def main():
 
     print(f"Design checks passed: {len(fixtures)} fixtures, 3 rejected cases, analytic arithmetic, 8-condition/10-comparison hypothetical report.")
     print("Canonical bytes/hash, bank labels, primary cohorts, seen exclusion, query occurrences, unavailable safety, prelude lifecycle and sparse-error bootstrap verified.")
+    print("Runtime/training separation, handoff shape, primary/variant strata and generator cap-loss versus search-miss/exhaustion evidence verified.")
     print("No public-dictionary quality replay, model fitting or product change was performed.")
 
 

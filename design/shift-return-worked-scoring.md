@@ -23,7 +23,7 @@ a/b同component、不同intent；c/d各自一component。return分母為a/c的2c
 
 若10個帳號原型因相同prefix／alias連成一個component，只選一literal primary進主風險率，Wilson n=1；其餘9列報variants/worst-case。即使有400個字串，只合成150components，資格及Wilson分母仍為150。不能用對字串做bootstrap來補救相依性。
 
-0錯／400獨立components的two-sided Wilson95上限約0.9512%，仍只是指定benchmark條件下的區間，不代表真實使用者的意圖分布。若有錯誤，上限可能不達1%，不追加案例直到過關。
+0錯／400獨立components的two-sided Wilson95上限約0.9512%，仍只是指定benchmark條件下的區間，不代表真實使用者的意圖分布。若有錯誤，Wilson95上限可能超過1%，不追加案例直到過關。
 
 ## 4. 可重算的數值例
 

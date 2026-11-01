@@ -33,13 +33,16 @@
       "$ref": "#/$defs/sources"
     },
     {
-      "$ref": "#/$defs/observation"
+      "$ref": "#/$defs/training_observation"
     },
     {
       "$ref": "#/$defs/candidate_occurrence"
     },
     {
       "$ref": "#/$defs/bank_task"
+    },
+    {
+      "$ref": "#/$defs/generator_diagnostic"
     }
   ],
   "$defs": {
@@ -462,7 +465,8 @@
               "literal",
               "original_keys"
             ]
-          }
+          },
+          "maxItems": 0
         },
         "custom_tokens": {
           "type": "array",
@@ -699,6 +703,16 @@
             "string",
             "null"
           ]
+        },
+        "handoff": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/handoff"
+            }
+          ]
         }
       },
       "required": [
@@ -728,7 +742,8 @@
         "revision_count",
         "safety_status",
         "safety_reason",
-        "query_id"
+        "query_id",
+        "handoff"
       ]
     },
     "model": {
@@ -1291,6 +1306,48 @@
         },
         "safety_reason": {
           "type": "string"
+        },
+        "primary_metadata": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "stratum": {
+                  "type": "string"
+                },
+                "context_class": {
+                  "enum": [
+                    "none",
+                    "contrast",
+                    "identical_collision"
+                  ]
+                },
+                "contrast_eligible": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "category",
+                "stratum",
+                "context_class",
+                "contrast_eligible"
+              ]
+            }
+          ]
+        },
+        "generators_path": {
+          "type": "string"
         }
       },
       "required": [
@@ -1325,7 +1382,9 @@
         "context_class",
         "contrast_eligible",
         "safety_status",
-        "safety_reason"
+        "safety_reason",
+        "primary_metadata",
+        "generators_path"
       ],
       "allOf": [
         {
@@ -1955,61 +2014,6 @@
         "seen_raw"
       ]
     },
-    "observation": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "version": {
-          "const": "shift-return-v2"
-        },
-        "kind": {
-          "const": "observation"
-        },
-        "demo": {
-          "type": "boolean"
-        },
-        "fixture_id": {
-          "type": "string"
-        },
-        "component_id": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
-        "event_index": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "key_offset": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "raw": {
-          "type": "string"
-        },
-        "candidate": {
-          "$ref": "#/$defs/candidate"
-        },
-        "gold_ids": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
-        }
-      },
-      "required": [
-        "version",
-        "kind",
-        "demo",
-        "fixture_id",
-        "component_id",
-        "event_index",
-        "key_offset",
-        "raw",
-        "candidate",
-        "gold_ids"
-      ]
-    },
     "derived": {
       "type": "object",
       "additionalProperties": false,
@@ -2337,6 +2341,313 @@
         "designated_typo_spans",
         "source_edits",
         "annotations"
+      ]
+    },
+    "training_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "shift-return-v2"
+        },
+        "kind": {
+          "const": "training_observation"
+        },
+        "demo": {
+          "type": "boolean"
+        },
+        "fixture_id": {
+          "type": "string"
+        },
+        "component_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "event_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "key_offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "raw": {
+          "type": "string"
+        },
+        "candidate": {
+          "$ref": "#/$defs/candidate"
+        },
+        "gold_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "version",
+        "kind",
+        "demo",
+        "fixture_id",
+        "component_id",
+        "event_index",
+        "key_offset",
+        "raw",
+        "candidate",
+        "gold_ids"
+      ]
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "$ref": "#/$defs/event"
+        },
+        "action": {
+          "enum": [
+            "delegate",
+            "commit_only",
+            "restore_prelude"
+          ]
+        },
+        "target_mode": {
+          "enum": [
+            "zhuyin",
+            "english",
+            "retain"
+          ]
+        },
+        "prelude": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "event",
+        "action",
+        "target_mode",
+        "prelude"
+      ]
+    },
+    "generator_diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "shift-return-v2"
+        },
+        "kind": {
+          "const": "generator_diagnostic"
+        },
+        "demo": {
+          "type": "boolean"
+        },
+        "fixture_id": {
+          "type": "string"
+        },
+        "component_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "condition": {
+          "enum": [
+            "shared",
+            "E0-fixed",
+            "E0-revise",
+            "EL-fixed",
+            "EL-revise",
+            "EW-fixed",
+            "EW-revise",
+            "EC-fixed",
+            "EC-revise"
+          ]
+        },
+        "event_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "key_offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "raw": {
+          "type": "string"
+        },
+        "query_id": {
+          "type": "string"
+        },
+        "generation_performed": {
+          "type": "boolean"
+        },
+        "uncapped_ids": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^h:[0-9a-f]{64}$"
+              }
+            }
+          ]
+        },
+        "kept_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^h:[0-9a-f]{64}$"
+          }
+        },
+        "uncapped_count": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        },
+        "kept_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "literal_id": {
+          "type": "string",
+          "pattern": "^h:[0-9a-f]{64}$"
+        },
+        "cap_pruned": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "raw_overflow": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "capacity_failure",
+            "resource_exhausted",
+            "unsupported"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "limit_hit": {
+          "enum": [
+            "none",
+            "raw_bytes",
+            "probe_lex_queries",
+            "best_calls"
+          ]
+        },
+        "generate_calls": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        },
+        "probe_lex_queries": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        },
+        "best_calls": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "kind",
+        "demo",
+        "fixture_id",
+        "component_id",
+        "condition",
+        "event_index",
+        "key_offset",
+        "raw",
+        "query_id",
+        "generation_performed",
+        "uncapped_ids",
+        "kept_ids",
+        "uncapped_count",
+        "kept_count",
+        "literal_id",
+        "cap_pruned",
+        "raw_overflow",
+        "status",
+        "reason",
+        "limit_hit",
+        "generate_calls",
+        "probe_lex_queries",
+        "best_calls"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ok"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "uncapped_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^h:[0-9a-f]{64}$"
+                }
+              },
+              "uncapped_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cap_pruned": {
+                "type": "boolean"
+              },
+              "generate_calls": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "probe_lex_queries": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "best_calls": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
       ]
     }
   }

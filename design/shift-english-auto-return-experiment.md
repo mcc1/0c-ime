@@ -24,7 +24,7 @@ S1為手動Shift起點＋自動中文終點；S2才研究自動進英文。S1通
 
 ## 成敗與資料
 
-主要EC-revise要求意圖／讀音≥90%、預定context隊列相對E0錯誤下降≥30%，且相對E0與長度對照的配對絕對改善95%區間下界皆>0、各至少20個discordant components；兩種最終literal風險點估與Wilson95上限各≤1%，以及零不可逆原鍵／提交／保護狀態破壞。完整surface成績必報，不用讀音門檻代替字面成績。
+主要EC-revise要求意圖／讀音≥90%、預定context隊列相對E0錯誤下降≥30%，且相對E0與長度對照的配對絕對改善95%區間下界皆>0、各至少20個discordant components；兩種最終literal風險點估與Wilson95上限各≤1%，以及G5的原鍵、提交與保護狀態檢查全部通過。完整surface成績必報，不用讀音門檻代替字面成績。
 
 獨立單位統一為family傳遞閉包component，一component每intent一個primary，相關variants不增加Wilson分母。至少400return、400literal及400return-English components；完全相同觀測的相反意圖都保留並列出可達上限。
 
