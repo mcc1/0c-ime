@@ -4,6 +4,8 @@ package shiftreturn
 
 import (
 	"encoding/json"
+	"github.com/0c-biggo/0c-ime/core/lexicon"
+	"github.com/0c-biggo/0c-ime/core/zhuyin"
 	"os"
 	"strings"
 	"testing"
@@ -184,5 +186,78 @@ func TestFlowTieOverflowBackspace(t *testing.T) {
 	}
 	if len(s.Raw) != 512 || len(snap.Display) != 512 || s.LastResult.Status != "ok" {
 		t.Fatal("backspace did not recover bounded query")
+	}
+}
+func TestFlowExplicitSurfaceLockAndFixedHomophones(t *testing.T) {
+	lex := lexicon.NewMem()
+	lex.Add(lexicon.Entry{Surface: "窄", Reading: zhuyin.ParseReading("ㄓㄞˇ"), PRW: 1})
+	lex.Add(lexicon.Entry{Surface: "寨小", Reading: zhuyin.ParseReading("ㄓㄞˇ ㄒㄧㄠˇ"), PRW: 1})
+	for _, explicit := range []bool{false, true} {
+		p := tinyPolicy(true, "fixed")
+		p.Probe = &Probe{Lex: lex, Score: toyScore{"窄": .1, "寨小": .9}}
+		s := startFragment(t, p)
+		s, snap := typeRaw(t, s, p, "x593")
+		if snap.Display != "x窄" {
+			t.Fatal(snap.Display)
+		}
+		if explicit {
+			var e error
+			s, _, e = Step(s, Event{Type: "select_candidate", CandidateID: s.Selection.ID}, p)
+			if e != nil {
+				t.Fatal(e)
+			}
+		}
+		_, snap = typeRaw(t, s, p, "vul3")
+		want := "x寨小"
+		if explicit {
+			want = "x窄vul3"
+		}
+		if snap.Display != want {
+			t.Fatalf("explicit=%v got%q want%q", explicit, snap.Display, want)
+		}
+	}
+}
+func TestFlowChineseTieCanonicalCut(t *testing.T) {
+	lex := lexicon.NewMem()
+	scores := toyScore{}
+	for i, reading := range []string{"ㄓㄨㄢˋ", "ㄨㄢˋ", "ㄢˋ"} {
+		word := []string{"轉", "萬", "案"}[i]
+		lex.Add(lexicon.Entry{Surface: word, Reading: zhuyin.ParseReading(reading), PRW: 1})
+		scores[word] = 1
+	}
+	p := tinyPolicy(false, "revise")
+	p.Probe = &Probe{Lex: lex, Score: scores}
+	s := startFragment(t, p)
+	s, snap := typeRaw(t, s, p, "5j04")
+	if s.Selection == nil || s.Selection.Cut != 0 || snap.Display != "轉" {
+		t.Fatal("Chinese tie did not use canonical earliest cut")
+	}
+}
+
+func TestLockedBudgetFailurePreservesShownSurface(t *testing.T) {
+	for _, flow := range []string{"fixed", "revise"} {
+		p := tinyPolicy(true, flow)
+		s := startFragment(t, p)
+		s, _ = typeRaw(t, s, p, "x593")
+		if s.Selection == nil || s.Selection.K != 1 {
+			t.Fatal("missing real Chinese selection")
+		}
+		if flow == "revise" {
+			var err error
+			s, _, err = Step(s, Event{Type: "select_candidate", CandidateID: s.Selection.ID}, p)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		shown, scores := s.Display, s.ScoreCalls
+		p.Probe.ProbeLexQueries = MaxLexQueries
+		s, snap := typeRaw(t, s, p, "v")
+		if s.Raw != "x593v" || s.Display != shown+"v" || s.ScoreCalls != scores || s.LastResult.Status != "resource_exhausted" || snap.SelectedID != nil {
+			t.Fatalf("%s failed preservation: %+v", flow, s)
+		}
+		_, closed, err := Step(s, Event{Type: "enter"}, p)
+		if err != nil || closed.Commit != shown+"v" || closed.Handoff.TargetMode != "zhuyin" {
+			t.Fatalf("handoff %+v err%v", closed, err)
+		}
 	}
 }

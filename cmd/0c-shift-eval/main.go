@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -29,8 +30,9 @@ func run(args []string, stderr io.Writer) int {
 	lock := flags.String("lock", "", "run lock")
 	out := flags.String("out", "", "new output directory")
 	data := flags.String("data", "assets/data", "dictionary directory")
+	extra := map[string]*string{}
 	for _, k := range []string{"model", "flow", "split", "rows", "events", "candidates", "generators"} {
-		flags.String(k, "", k)
+		extra[k] = flags.String(k, "", k)
 	}
 	if e := flags.Parse(args[1:]); e != nil {
 		return 2
@@ -38,7 +40,6 @@ func run(args []string, stderr io.Writer) int {
 	if flags.NArg() != 0 {
 		return fail(fmt.Errorf("unexpected positional arguments"))
 	}
-	_, _, _ = bank, lock, data
 	switch command {
 	case "assign", "validate", "verify", "enumerate", "replay", "summarize":
 	default:
@@ -76,16 +77,42 @@ func run(args []string, stderr io.Writer) int {
 	if e = sr.ValidateAssignment(fs, src, a, hash); e != nil {
 		return fail(e)
 	}
-	// P0 provides the exchange/assignment commands. Later stages must supply all
-	// source qualification and locked execution before these paths can succeed.
-	if command != "validate" {
-		return fail(fmt.Errorf("%s execution is not implemented at P0", command))
+	options := sr.RunOptions{Command: command, Fixtures: *fixtures, Sources: *sources, Bank: *bank, Assignment: *assignment, Lock: *lock, Out: *out, Data: *data, Model: *extra["model"], Flow: *extra["flow"], Split: *extra["split"], Args: args}
+	if *bank == "" {
+		if command != "validate" {
+			return fail(fmt.Errorf("--bank is required"))
+		}
+		if e = sr.NewOutput(*out); e != nil {
+			return fail(e)
+		}
+		if e = sr.WriteRecord(filepath.Join(*out, "validation.json"), map[string]any{"version": sr.Version, "fixtures": len(fs), "assignment_valid": true, "qualification": "unavailable", "reason": "frozen bank/dictionary qualification missing"}); e != nil {
+			return fail(e)
+		}
+		return 3
 	}
-	if e = sr.NewOutput(*out); e != nil {
-		return fail(e)
+	if command != "validate" && *lock == "" {
+		return fail(fmt.Errorf("--lock is required"))
 	}
-	if e = sr.WriteRecord(filepath.Join(*out, "validation.json"), map[string]any{"version": sr.Version, "fixtures": len(fs), "assignment_valid": true, "qualification": "not_run", "reason": "P0 exchange validation; bank/dictionary qualification not executed"}); e != nil {
-		return fail(e)
+	var code int
+	if command == "summarize" {
+		for _, key := range []string{"rows", "events", "candidates", "generators"} {
+			if *extra[key] == "" {
+				return fail(fmt.Errorf("--%s is required", key))
+			}
+		}
+		code, e = sr.SummarizeFiles(options, *extra["rows"], *extra["events"], *extra["candidates"], *extra["generators"])
+	} else {
+		code, e = sr.Execute(options)
 	}
-	return 0
+	if e != nil {
+		var insufficient *sr.InsufficientError
+		if errors.As(e, &insufficient) {
+			code = 3
+		}
+		fmt.Fprintln(stderr, e)
+		if code == 0 {
+			code = 2
+		}
+	}
+	return code
 }

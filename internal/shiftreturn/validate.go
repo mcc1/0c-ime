@@ -100,6 +100,8 @@ func Validate(f Fixture) error {
 	}
 	for _, g := range f.Gold {
 		at, n, phase := 0, 0, 0
+		literalSegments := 0
+		prefixEnd := -1
 		for _, s := range g.Segments {
 			if s.Begin != at || s.End <= s.Begin || s.End > len(f.ExpectedRaw) {
 				return fmt.Errorf("%s: span gap/overlap/range", f.ID)
@@ -107,6 +109,10 @@ func Validate(f Fixture) error {
 			at = s.End
 			switch s.Kind {
 			case "literal":
+				literalSegments++
+				if f.Intent != "compat" && literalSegments > 1 {
+					return fmt.Errorf("formal literal prefix must be one span")
+				}
 				if phase > 0 {
 					return fmt.Errorf("literal after Chinese/pending")
 				}
@@ -118,6 +124,9 @@ func Validate(f Fixture) error {
 					return fmt.Errorf("Chinese after pending")
 				}
 				phase = 1
+				if prefixEnd < 0 {
+					prefixEnd = s.Begin
+				}
 				n++
 				keys := f.ExpectedRaw[s.Begin:s.End]
 				tone, ok := layout.Standard.Symbol(rune(keys[len(keys)-1]))
@@ -140,6 +149,13 @@ func Validate(f Fixture) error {
 		}
 		if f.Intent == "literal" && n != 0 {
 			return fmt.Errorf("literal with Chinese")
+		}
+		if f.Intent == "return" && prefixEnd >= 0 {
+			for _, surface := range g.AcceptedSurfaces {
+				if !strings.HasPrefix(surface, f.ExpectedRaw[:prefixEnd]) {
+					return fmt.Errorf("gold surface rewrites declared literal prefix")
+				}
+			}
 		}
 		if f.Intent == "literal" {
 			for _, surface := range g.AcceptedSurfaces {

@@ -111,9 +111,24 @@ def main():
     close(n["zero_error_wilson_upper"], z*z/(400+z*z))
     assert n["zero_error_wilson_upper"] < .01
 
+    errata = json.loads((ROOT / "errata-examples.json").read_text())
+    assert errata['observed_api_case']['n'] == 2 and errata['invalid_body_case']['raw'] == 'x593vv3'
+    assert errata['temporal_case']['first_correct'] == 3
+    metric_validator = Draft202012Validator(SCHEMA['$defs']['metric'])
+    metric_validator.validate(errata['unavailable_metric'])
+    wrong = copy.deepcopy(errata['unavailable_metric']); wrong['value'] = .4
+    assert not metric_validator.is_valid(wrong)
+    manifest = json.loads((ROOT / "selected-model-manifest-example.json").read_text())
+    VALIDATOR.validate(manifest)
+
     report = json.loads((ROOT / "worked-report.json").read_text())
     VALIDATOR.validate(report)
     assert len(report["conditions"]) == 8
+    for metrics in report['conditions'].values():
+        for metric in metrics.values():
+            assert metric['errors'] == metric['observed_errors'] + metric['unavailable_components']
+            assert metric['status'] == ('complete' if metric['n'] else 'unavailable')
+
     ec = report["conditions"]["EC-revise"]
     assert ec["return_boundary"]["errors"] == 0
     assert ec["literal_only"]["errors"] == 1

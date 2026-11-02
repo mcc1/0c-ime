@@ -219,6 +219,9 @@ type Row struct {
 }
 
 type Metric struct {
+	Status                string    `json:"status"`
+	ObservedErrors        int       `json:"observed_errors"`
+	UnavailableComponents int       `json:"unavailable_components"`
 	Errors                int       `json:"errors"`
 	N                     int       `json:"n"`
 	Value                 *float64  `json:"value"`
@@ -245,20 +248,8 @@ type Report struct {
 		G4 Gate `json:"G4"`
 		G5 Gate `json:"G5"`
 	} `json:"gates"`
-	Conditions map[string]map[string]Metric `json:"conditions"`
-	Paired     []struct {
-		Baseline                   string    `json:"baseline"`
-		Challenger                 string    `json:"challenger"`
-		Cohort                     string    `json:"cohort"`
-		N                          int       `json:"n"`
-		Repaired                   int       `json:"repaired"`
-		Worsened                   int       `json:"worsened"`
-		Net                        int       `json:"net"`
-		RelativeErrorReduction     *float64  `json:"relative_error_reduction"`
-		ValidBootstrap             int       `json:"valid_bootstrap"`
-		AbsoluteErrorReductionCi95 []float64 `json:"absolute_error_reduction_ci95"`
-		DiscordantComponents       int       `json:"discordant_components"`
-	} `json:"paired"`
+	Conditions    map[string]map[string]Metric `json:"conditions"`
+	Paired        []PairedComparison           `json:"paired"`
 	Qualification struct {
 		TestReturnComponents  int            `json:"test_return_components"`
 		TestLiteralComponents int            `json:"test_literal_components"`
@@ -326,7 +317,7 @@ type CandidateOccurrence struct {
 	KeyOffset       int        `json:"key_offset"`
 	Raw             string     `json:"raw"`
 	QueryID         string     `json:"query_id"`
-	Hypothesis      Hypothesis `json:"candidate"`
+	Candidate       Hypothesis `json:"candidate"`
 	Score           *float64   `json:"score"`
 	Allowed         bool       `json:"allowed"`
 	ExclusionReason string     `json:"exclusion_reason"`
@@ -379,7 +370,7 @@ type TrainingObservation struct {
 	EventIndex  int        `json:"event_index"`
 	KeyOffset   int        `json:"key_offset"`
 	Raw         string     `json:"raw"`
-	Hypothesis  Hypothesis `json:"candidate"`
+	Candidate   Hypothesis `json:"candidate"`
 	GoldIDs     []string   `json:"gold_ids"`
 }
 
@@ -428,3 +419,30 @@ type Event struct {
 type Vector = [13]float64
 
 const Version = "shift-return-v2"
+
+type PairedComparison struct {
+	Baseline                   string    `json:"baseline"`
+	Challenger                 string    `json:"challenger"`
+	Cohort                     string    `json:"cohort"`
+	N                          int       `json:"n"`
+	Repaired                   int       `json:"repaired"`
+	Worsened                   int       `json:"worsened"`
+	Net                        int       `json:"net"`
+	RelativeErrorReduction     *float64  `json:"relative_error_reduction"`
+	ValidBootstrap             int       `json:"valid_bootstrap"`
+	AbsoluteErrorReductionCi95 []float64 `json:"absolute_error_reduction_ci95"`
+	DiscordantComponents       int       `json:"discordant_components"`
+}
+
+type SelectedModelEntry struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
+}
+type SelectedModelManifest struct {
+	Version          string                        `json:"version"`
+	Kind             string                        `json:"kind"`
+	Demo             bool                          `json:"demo"`
+	SourceLockSHA256 string                        `json:"source_lock_sha256"`
+	FitLockSHA256    string                        `json:"fit_lock_sha256"`
+	Models           map[string]SelectedModelEntry `json:"models"`
+}

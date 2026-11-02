@@ -47,7 +47,7 @@ func TestAssignmentCLI(t *testing.T) {
 		t.Fatal("overwrote earlier output")
 	}
 	args = []string{"validate", "--fixtures", fixtures, "--sources", src, "--assignment", filepath.Join(out, "assignment.json"), "--out", filepath.Join(root, "validate")}
-	if code := run(args, &stderr); code != 0 {
+	if code := run(args, &stderr); code != 3 {
 		t.Fatalf("validate exit %d: %s", code, stderr.String())
 	}
 	if code := run([]string{"enumerate", "--fixtures", fixtures, "--sources", src, "--assignment", filepath.Join(out, "assignment.json"), "--out", filepath.Join(root, "quality")}, &stderr); code != 2 {

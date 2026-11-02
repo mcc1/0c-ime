@@ -2,7 +2,7 @@
 
 package shiftreturn
 
-// Frozen exchange schema, copied byte-for-byte from the reviewed design.
+// Exchange schema including parent-approved pre-quality errata.
 const schemaJSON = `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:0c-ime:shift-return-v2",
@@ -48,6 +48,9 @@ const schemaJSON = `{
     },
     {
       "$ref": "#/$defs/generator_diagnostic"
+    },
+    {
+      "$ref": "#/$defs/selected_model_manifest"
     }
   ],
   "$defs": {
@@ -1504,6 +1507,20 @@ const schemaJSON = `{
         },
         "independent_components": {
           "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "unavailable"
+          ]
+        },
+        "observed_errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unavailable_components": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": [
@@ -1511,7 +1528,62 @@ const schemaJSON = `{
         "n",
         "value",
         "wilson95",
-        "independent_components"
+        "independent_components",
+        "status",
+        "observed_errors",
+        "unavailable_components"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "null"
+              },
+              "wilson95": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "n": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "value": {
+                "type": "number"
+              },
+              "wilson95": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "number"
+                }
+              },
+              "unavailable_components": {
+                "const": 0
+              }
+            }
+          }
+        }
       ]
     },
     "gate": {
@@ -2653,6 +2725,121 @@ const schemaJSON = `{
             }
           }
         }
+      ]
+    },
+    "selected_model_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "shift-return-v2"
+        },
+        "kind": {
+          "const": "selected_model_manifest"
+        },
+        "demo": {
+          "type": "boolean"
+        },
+        "source_lock_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fit_lock_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "E0": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            },
+            "EL": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            },
+            "EW": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            },
+            "EC": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            }
+          },
+          "required": [
+            "E0",
+            "EL",
+            "EW",
+            "EC"
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "kind",
+        "demo",
+        "source_lock_sha256",
+        "fit_lock_sha256",
+        "models"
       ]
     }
   }

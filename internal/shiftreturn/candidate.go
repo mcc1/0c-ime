@@ -235,7 +235,7 @@ func (p *Probe) Generate(q Query) (result Result, err error) {
 		}
 		if k > 0 && text == "" {
 			result.Status = "unsupported"
-			result.Reason = "exact lexical coverage has no finite complete decoder path"
+			result.Reason = "exact lexical coverage has no complete decoder surface/path"
 			result.Candidates = []Hypothesis{lit}
 			result.KeptIDs = []string{}
 			result.KeptCount = 0
@@ -267,4 +267,16 @@ func (p *Probe) Generate(q Query) (result Result, err error) {
 	}
 	result.KeptCount = len(result.KeptIDs)
 	return
+}
+func completeSpellingAtEnd(raw string) bool {
+	if len(raw) < 2 || !strings.ContainsRune(" 3467", rune(raw[len(raw)-1])) {
+		return false
+	}
+	tone, _ := layout.Standard.Symbol(rune(raw[len(raw)-1]))
+	for n := 1; n <= 3 && n < len(raw); n++ {
+		if _, ok := mixedparse.SpellExact(raw[len(raw)-1-n:len(raw)-1], tone); ok {
+			return true
+		}
+	}
+	return false
 }

@@ -100,3 +100,61 @@ func TestAssignmentImplicitCollision(t *testing.T) {
 		t.Fatal("same observable input split despite opposite intents")
 	}
 }
+func TestAssignmentDerivedDependenciesAndNormalizedSeen(t *testing.T) {
+	makeEvents := func(raw string) []Event {
+		events := []Event{{Type: "shift"}}
+		for _, key := range raw {
+			events = append(events, Event{Type: "key", Key: string(key)})
+		}
+		return append(events, Event{Type: "enter"})
+	}
+	first := demoFixtures(t)[0]
+	first.Families = []string{"unrelated-a"}
+	second := first
+	second.ID = "another"
+	second.PrototypeID = "another-prototype"
+	second.Families = []string{"unrelated-b"}
+	second.ExpectedRaw = "abcdefghi593vul3"
+	second.Events = makeEvents(second.ExpectedRaw)
+	second.Gold = []Gold{{Segments: append([]Segment{}, first.Gold[0].Segments...), AcceptedSurfaces: []string{"abcdefghi窄筱"}}}
+	if e := ValidateFixtures([]Fixture{first, second}); e != nil {
+		t.Fatal(e)
+	}
+	if len(Assign([]Fixture{first, second}, emptySources()).Components) != 1 {
+		t.Fatal("same target readings escaped family closure")
+	}
+	second.ExpectedRaw = "MICROSOFTgp "
+	second.Events = makeEvents(second.ExpectedRaw)
+	second.Gold = []Gold{{Segments: []Segment{{Kind: "literal", Begin: 0, End: 9}, {Kind: "chinese", Begin: 9, End: 12, Reading: "ㄕㄣ"}}, AcceptedSurfaces: []string{"MICROSOFT身"}}}
+	if e := Validate(second); e != nil {
+		t.Fatal(e)
+	}
+	if len(Assign([]Fixture{first, second}, emptySources()).Components) != 1 {
+		t.Fatal("case-normalized exact prefix escaped closure")
+	}
+	for _, s := range []Sources{func() Sources { s := emptySources(); s.SeenPrefixes = []string{"MICROSOFT"}; return s }(), func() Sources { s := emptySources(); s.SeenContents = []string{" ㄓㄞˇ  ㄒㄧㄠˇ "}; return s }()} {
+		if Assign([]Fixture{first}, s).Components[0].Split != "regression" {
+			t.Fatal("normalized prefix/reading seen match failed")
+		}
+	}
+	first.Gold = []Gold{{Segments: first.Gold[0].Segments, AcceptedSurfaces: []string{"microsoftÅ"}}}
+	s := emptySources()
+	s.SeenContents = []string{"A\u030a"}
+	if Assign([]Fixture{first}, s).Components[0].Split != "regression" {
+		t.Fatal("NFC surface seen match failed")
+	}
+}
+func TestAssignmentSeenDeclaredContentAndLiteralPrefix(t *testing.T) {
+	f := demoFixtures(t)[4]
+	f.Families = []string{"prefix:KEVIN", "word:窄"}
+	s := emptySources()
+	s.SeenPrefixes = []string{"kevin"}
+	if Assign([]Fixture{f}, s).Components[0].Split != "regression" {
+		t.Fatal("literal task reused a declared seen English prefix")
+	}
+	s = emptySources()
+	s.SeenContents = []string{"窄"}
+	if Assign([]Fixture{f}, s).Components[0].Split != "regression" {
+		t.Fatal("declared target content prototype escaped seen exclusion")
+	}
+}

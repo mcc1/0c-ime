@@ -5,9 +5,11 @@ package shiftreturn
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 type State struct {
+	ExplicitLock                                                      bool
 	FrozenDisplay                                                     string
 	FragmentID, Raw, App, Prelude, Display, Mode                      string
 	Eligible, Closed, Protected, Paused, Caps, LiteralLock            bool
@@ -18,6 +20,7 @@ type State struct {
 	EventIndex, KeyOffset, ScoreCalls, ResolutionCount, RevisionCount int
 }
 type Policy struct {
+	Enumerate         bool
 	Probe             *Probe
 	Model             Model
 	Flow              string
@@ -103,6 +106,7 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 	if p.Flow != "fixed" && p.Flow != "revise" {
 		return s, Snapshot{}, fmt.Errorf("flow must be fixed/revise")
 	}
+	oldRaw, oldDisplay, oldSelection := s.Raw, s.Display, s.Selection
 	lastResult := s.LastResult
 	s.LastResult = nil
 	snap := Snapshot{Version: Version, Kind: "snapshot", EpisodeID: s.FragmentID, Condition: p.Condition, EventIndex: s.EventIndex, Handled: true, SafetyStatus: "complete", LearningUpdates: ptr(0), PersistentWrites: ptr(0)}
@@ -115,9 +119,13 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 		s.Raw = ""
 		s.Freeze = nil
 		s.FrozenDisplay = ""
+		s.ExplicitLock = false
 		s.Eligible = false
 		s.Closed = true
 		s.Selection = nil
+		if p.Probe != nil {
+			p.Probe.bSnapshots = nil
+		}
 		snap.Handoff = &Handoff{Event: e, Action: action, TargetMode: target, Prelude: ""}
 	}
 	if s.Closed {
@@ -156,6 +164,7 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 			if len(s.Freeze) > 0 && s.Freeze[len(s.Freeze)-1].End > len(s.Raw) {
 				s.Freeze = nil
 				s.LiteralLock = false
+				s.ExplicitLock = false
 			}
 			recompute = true
 		} else {
@@ -183,6 +192,7 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 				s.Display = h.Display
 				s.Freeze = freezeProjection(h.DisplaySegments)
 				s.FrozenDisplay = h.Display
+				s.ExplicitLock = true
 				found = true
 				break
 			}
@@ -192,6 +202,9 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 		}
 
 	case "cancel":
+		if p.Probe != nil {
+			p.Probe.bSnapshots = nil
+		}
 		oldPrelude := s.Prelude
 		s.Raw = ""
 		s.Display = ""
@@ -205,6 +218,11 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 		target := "english"
 		if s.Selection != nil && s.Selection.K > 0 {
 			target = "zhuyin"
+		}
+		for _, span := range s.Freeze {
+			if span.Kind == "chinese" {
+				target = "zhuyin"
+			}
 		}
 		if s.Eligible {
 			closeEpisode("", "commit_only", target)
@@ -248,7 +266,18 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 		s.LastResult = &r
 		snap.QueryID = ptr(queryID(s.FragmentID, p.Condition, snap.EventIndex, s.Raw))
 		prev := s.Selection
-		if r.Status != "ok" || s.LiteralLock {
+		if r.Status != "ok" && len(s.Freeze) > 0 && !s.LiteralLock {
+			if oldSelection != nil {
+				s.Freeze = freezeProjection(oldSelection.DisplaySegments)
+				s.FrozenDisplay = oldDisplay
+			}
+			if len(s.Raw) >= len(oldRaw) && strings.HasPrefix(s.Raw, oldRaw) {
+				s.Display = oldDisplay + s.Raw[len(oldRaw):]
+			} else {
+				s.Display = s.FrozenDisplay + s.Raw[min(prevEnd(s.Freeze), len(s.Raw)):]
+			}
+			s.Selection = nil
+		} else if r.Status != "ok" || s.LiteralLock || p.Enumerate {
 			h := r.Candidates[0]
 			s.Selection = &h
 			s.Display = h.Display
@@ -267,7 +296,7 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 			bestScore := math.Inf(-1)
 			found := compatible(s.Freeze, selected.DisplaySegments)
 			for _, h := range r.Candidates[1:] {
-				if !compatible(s.Freeze, h.DisplaySegments) {
+				if !compatible(s.Freeze, h.DisplaySegments) || s.ExplicitLock && !strings.HasPrefix(h.Display, s.FrozenDisplay) {
 					continue
 				}
 				value, err := score(p.Model, h)
@@ -292,7 +321,15 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 				if len(s.Freeze) > 0 {
 					oldEnd = s.Freeze[len(s.Freeze)-1].End
 				}
-				s.Display = s.FrozenDisplay + s.Raw[min(oldEnd, len(s.Raw)):]
+				if len(s.Raw) >= len(oldRaw) && strings.HasPrefix(s.Raw, oldRaw) {
+					if oldSelection != nil {
+						s.Freeze = freezeProjection(oldSelection.DisplaySegments)
+						s.FrozenDisplay = oldDisplay
+					}
+					s.Display = oldDisplay + s.Raw[len(oldRaw):]
+				} else {
+					s.Display = s.FrozenDisplay + s.Raw[min(oldEnd, len(s.Raw)):]
+				}
 				s.Selection = nil
 			}
 			if p.Flow == "fixed" && len(s.Freeze) == 0 && len(r.Candidates) > 1 && s.Selection != nil {
@@ -302,15 +339,7 @@ func Step(s State, e Event, p Policy) (State, Snapshot, error) {
 		}
 		if prev != nil && s.Selection != nil {
 			n := min(len(s.Raw), prevEnd(prev.DisplaySegments))
-			a, b := projection(prev.DisplaySegments, n, false), projection(s.Selection.DisplaySegments, n, false)
-			revision, resolution := false, false
-			for i := range a {
-				if a[i].Kind == "pending" && b[i].Kind == "chinese" {
-					resolution = true
-				} else if a[i] != b[i] {
-					revision = true
-				}
-			}
+			revision, resolution := transitionCounts(prev.DisplaySegments, s.Selection.DisplaySegments, n)
 			if resolution {
 				s.ResolutionCount++
 			}

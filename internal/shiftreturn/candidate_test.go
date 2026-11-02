@@ -101,8 +101,15 @@ func TestCandidateWorkedAndFeatures(t *testing.T) {
 		{"x593vul3", "x窄小", false, 2, Vector{0, 0, 0, 0, 0, -2, 0, 1, 0, 2, 1, -1, 0}},
 		{"x593v", "x593v", false, 0, Vector{0, 0, 0, 0, 0, -2, 0, 0, 1, 0, 0, 0, 1}},
 		{"x593v", "x窄v", true, 1, Vector{0, 0, 0, 0, 0, -2, 0, 0, 1, 1, 0, -2, 0}},
+		{"x593v3", "x窄v3", true, 1, Vector{0, 0, 0, 0, 0, -2, 0, 1, 0, 1, 0, -2, 0}},
+		{"x593vv3", "x窄vv3", true, 1, Vector{0, 0, 0, 0, 0, -2, 0, 0, 3, 1, 0, -2, 0}},
 	}
 	for _, c := range cases {
+		if c.raw == "x593v3" {
+			tone, _ := layout.Standard.Symbol('3')
+			reading, valid := mixedparse.SpellExact("v", tone)
+			t.Logf("Frozen worked-tail conflict: SpellExact(v,tone3)=(%q,%v); contract table calls v3 invalid", reading, valid)
+		}
 		p := tinyProbe(c.single)
 		r, e := p.Generate(query(c.raw))
 		if e != nil {
@@ -238,6 +245,28 @@ func TestCandidateSpaceAndCanonicalCap(t *testing.T) {
 	for _, h := range r.Candidates[1:] {
 		if h.ID != "h:"+HashBytes([]byte(h.Identity)) {
 			t.Fatal("identity hash")
+		}
+	}
+}
+func TestFeatureEnglishAndNumberSources(t *testing.T) {
+	for _, c := range []struct {
+		prefix                      string
+		known, digit, punct, number float64
+	}{
+		{"a", 1, 0, 0, 0}, {"I", 1, 0, 0, 0}, {"x", 0, 0, 0, 0}, {"HELLO", 1, 0, 0, 0}, {"unknown", 0, 0, 0, 0}, {"593", 0, 1, 0, 1}, {"x593", 0, 1, 0, 0}, {"2.4", 0, 1, 1, 1},
+	} {
+		p := tinyProbe(true)
+		r, e := p.Generate(query(c.prefix + "593"))
+		if e != nil {
+			t.Fatal(e)
+		}
+		h := cutCandidate(t, r, len(c.prefix))
+		v := h.Features
+		if v[1] != c.known || v[2] != c.digit || v[3] != c.punct || v[4] != c.number {
+			t.Fatalf("%s source feature: %v", c.prefix, v[:7])
+		}
+		if (v[4] == 1) != mixedparse.NumberLike(c.prefix) {
+			t.Fatal("number source mismatch")
 		}
 	}
 }

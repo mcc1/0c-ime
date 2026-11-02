@@ -40,7 +40,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -50,7 +53,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -60,7 +66,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -70,7 +79,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "E0-revise": {
@@ -82,7 +94,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -92,7 +107,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -102,7 +120,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -112,7 +133,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EL-fixed": {
@@ -124,7 +148,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -134,7 +161,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -144,7 +174,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -154,7 +187,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EL-revise": {
@@ -166,7 +202,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -176,7 +215,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -186,7 +228,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -196,7 +241,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EW-fixed": {
@@ -208,7 +256,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -218,7 +269,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -228,7 +282,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -238,7 +295,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EW-revise": {
@@ -250,7 +310,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 0,
@@ -260,7 +323,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 1,
@@ -270,7 +336,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -280,7 +349,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EC-fixed": {
@@ -292,7 +364,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 1,
@@ -302,7 +377,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 0,
@@ -312,7 +390,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -322,7 +403,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     },
     "EC-revise": {
@@ -334,7 +418,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "return_surface": {
         "errors": 0,
@@ -344,7 +431,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       },
       "literal_only": {
         "errors": 1,
@@ -354,7 +444,10 @@
           0.09453120573423074,
           0.9054687942657693
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 1,
+        "unavailable_components": 0
       },
       "return_english": {
         "errors": 0,
@@ -364,7 +457,10 @@
           0,
           0.6576197724933469
         ],
-        "independent_components": true
+        "independent_components": true,
+        "status": "complete",
+        "observed_errors": 0,
+        "unavailable_components": 0
       }
     }
   },

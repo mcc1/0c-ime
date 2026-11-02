@@ -1,0 +1,25 @@
+{
+  "version": "shift-return-v2",
+  "kind": "selected_model_manifest",
+  "demo": true,
+  "source_lock_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "fit_lock_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "models": {
+    "E0": {
+      "path": "/workspace/scratch/shift-return-v2/demo-only/E0.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "EL": {
+      "path": "/workspace/scratch/shift-return-v2/demo-only/EL.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "EW": {
+      "path": "/workspace/scratch/shift-return-v2/demo-only/EW.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "EC": {
+      "path": "/workspace/scratch/shift-return-v2/demo-only/EC.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}

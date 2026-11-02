@@ -1,0 +1,43 @@
+{
+  "purpose": "2026-11-02 pre-quality errata; no formal data/quality",
+  "observed_api_case": {
+    "raw": "x593v3",
+    "n": 2,
+    "k": 1,
+    "L7": 1,
+    "L8": 0,
+    "display": "x窄v3"
+  },
+  "invalid_body_case": {
+    "raw": "x593vv3",
+    "n": 1,
+    "k": 1,
+    "L7": 0,
+    "L8": 3,
+    "display": "x窄vv3"
+  },
+  "temporal_case": {
+    "events": [
+      "shift",
+      "x",
+      "5",
+      "9",
+      "3",
+      "enter"
+    ],
+    "first_correct": 3,
+    "last_stable": 3,
+    "snapshot_event_index": 4,
+    "snapshot_key_offset": 4
+  },
+  "unavailable_metric": {
+    "status": "unavailable",
+    "observed_errors": 1,
+    "unavailable_components": 1,
+    "errors": 2,
+    "n": 5,
+    "value": null,
+    "wilson95": null,
+    "independent_components": true
+  }
+}

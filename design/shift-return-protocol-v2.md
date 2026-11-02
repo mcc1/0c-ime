@@ -1,6 +1,6 @@
 # Shift 後自動回中文：實驗契約 v2
 
-狀態：EGM 修正稿；尚未收新資料、實作 evaluator 或跑品質評測。此文件與同目錄的 [source map](shift-return-source-map-v2.md)、[schemas](shift-return-v2/schema.json)、[例子](shift-return-v2/examples.jsonl)、[數值例子](shift-return-v2/numerical.json)共同構成契約，取代舊 v1。舊審查版本保留於 Git `e91bbd7`。JSON schema 固定交換形狀，本文件固定跨欄位語意；兩者衝突即工具錯誤，不能任選其一。
+狀態：EGM 修正稿及2026-11-02 pre-quality errata；工具實作與交換契約errata驗證中；尚未取得正式新資料或跑品質評測。此文件與同目錄的 [source map](shift-return-source-map-v2.md)、[schemas](shift-return-v2/schema.json)、[例子](shift-return-v2/examples.jsonl)、[數值例子](shift-return-v2/numerical.json)共同構成契約，取代舊 v1。舊審查版本保留於 Git `e91bbd7`。JSON schema 固定交換形狀，本文件固定跨欄位語意；兩者衝突即工具錯誤，不能任選其一。
 
 ## 1. 問題、方法與替代方案
 
@@ -21,7 +21,7 @@ Shift 指定英文起點；在一個未提交片段內，判斷何處恢復中�
 
 產品基準固定 preview2 `e754019571573051d8c29e06526802c31d5172e2`。舊 `core/mixedparse`、`internal/mixedeval`、`cmd/0c-mixed-eval` 不改。重用 API 逐一列於 source map；執行 lock 固定來源 hashes，禁止用「舊 helper 同名」代替契約。
 
-以下全部為**未來 Create**；目前只建立設計檔及範例驗證器，不建立下列 evaluator：
+以下為原Create計畫與已新建待審工具的對照；路徑存在不表示G0通過或正式品質已執行：
 
 | 路徑 | 職責／公開介面 |
 | --- | --- |
@@ -135,7 +135,7 @@ revise每個key重比全部未手選鎖定候選。fixed在第一次存在首音
 | `x593`，只有「窄小」無單字窄 | n=1,k=0；顯示`x593`，hyp有ㄓㄞˇ，display suffix pending | fixed將此pending封為literal；revise可待續 |
 | `x593vul3`，同上 | n=2,k=2；顯示x窄小，兩Chinese spans | revise能回修，fixed排除此projection |
 | `x593v`，另有單字窄 | n=1,k=1；顯示x窄v，尾v為pending | W只評已完成窄；不能偷用ul3 |
-| `x593v3`，v3解析不合法 | n=1,k=1；顯示x窄v3，tail pending | G2不當成完整兩字；原鍵仍齊 |
+| `x593vv3`，vv3重複class，解析不合法 | n=1,k=1；顯示x窄vv3，tail pending | G2不當成完整兩字；原鍵仍齊 |
 
 以上是候選render例，不假設該候選一定勝出。最終G2要求expected literal spans、Chinese spans與readings完全符合、預定完成部分無pending。字面同音字另計，不把render能出字等於指定字面正確。
 
@@ -233,7 +233,7 @@ Wilson使用各intent中獨立component的binary primary outcome，z=1.959963984
 
 paired唯一區間欄位名為`absolute_error_reduction_ci95`，statistic固定 `(repaired-worsened)/n = errorBase-errorNew`，不對relative reduction做區間。replicate的baseline errors=0但n>0仍有效：Δ可為0或負值；只有觀測的relative_error_reduction在base=0時null。空cohort n=0的paired counts為0、relative與CI皆null、valid_bootstrap=0。稀疏例基準errors=[1,0,0,0]、新errors全0，seed與10000次抽樣固定：Δ的95%區間=[0,0.75]，包含零；有許多baseline-zero replicates但valid_bootstrap仍10000。不得丟棄它們來抬高改善區間。
 
-bootstrap母體component IDs先字典序排序；同component兩intent的primary與所有conditions一起重抽。report.conditions固定8個`{E0,EL,EW,EC}-{fixed,revise}`，每條件metrics固定`return_boundary,return_surface,literal_only,return_english`；metric.errors/n是相應component的binary primary計數，value是errors/n，不用success命名誤導。逐類及variants診斷另存diagnostics_path，格式同metric並以category分層。safety固定彙總key_failures、commit_failures、app_rewrites、lock_violations、hypothetical_learning_updates、persistent_writes、protected_calls；unknown不可填0，任一必要row unsupported使G0 unavailable。derived表固定interaction_I、各model的flow_gain、context_extra_revision_gain及其component bootstrap區間。paired表包含四種feature對照（均revise）、四model的fixed→revise，以及主要EC相對E0在context-contrast的修好／改壞；沒有此隊列不能用all-return補。
+bootstrap母體component IDs先字典序排序；同component兩intent的primary與所有conditions一起重抽。report.conditions固定8個`{E0,EL,EW,EC}-{fixed,revise}`，每條件metrics固定`return_boundary,return_surface,literal_only,return_english`；完整metric的errors/n是相應component的binary primary計數，value是errors/n；缺失時依第10節保守charge且value/CI=null，不用success命名誤導。逐類及variants診斷另存diagnostics_path，格式同metric並以category分層。safety固定彙總key_failures、commit_failures、app_rewrites、lock_violations、hypothetical_learning_updates、persistent_writes、protected_calls；unknown不可填0，任一必要row unsupported使G0 unavailable。derived表固定interaction_I、各model的flow_gain、context_extra_revision_gain及其component bootstrap區間。paired表包含四種feature對照（均revise）、四model的fixed→revise，以及主要EC相對E0在context-contrast的修好／改壞；沒有此隊列不能用all-return補。
 
 新增EC相對EL在相同context-contrast的paired entry，故required paired清單共10條，worked report即使無cohort也要有空entry。safety每個counter可為null，Row及Report皆有safety_status=`complete|incomplete|not_run`與reason；任一row該counter未知則aggregate該counter=null，完整可觀察counter可獨立求和。not_run例全部null，不是0；任何必要unknown使G5 unavailable並禁止GO，不將unknown視作已證明有副作用。
 
@@ -263,3 +263,17 @@ lookup計數邊界：probe_lex_queries只計evaluator直接請求的Lex.Exact／
 必測case及assertion：standard所有1–3body×五tone的SpellExact roundtrip；tiny窄/窄小的prefix轉完整；第一聲空白不被丟；prelude+Shift+raw+Enter完整輸出；再Shift/焦點/貼上/mode/caps/private pause生命週期；literal/Chinese ties；無候選；63/64/65及511/512/513bytes；canonical cap與無gold依賴；future suffix／gold替換不改B；firstreading多gold均非negative；無pair階層權重重分配；數值worked gradient；component分組／seen／split可重現；Wilson n=400零錯上限約0.9512%；相依variants不加n；bootstrap空子群；全部八條件metrics用獨立Python reducer重算；正常Mode／manual literal／原鍵還原parity；old evaluator來源檔hash不變。
 
 本文件不宣稱實作已存在。完成上述契約驗證才可凍結正式資料／工具；輸出持有、實際英文延遲、Windows TSF與安裝包仍另立原生階段，本階段不實作。
+
+## 10. 2026-11-02 pre-quality errata（品質前契約修訂）
+
+此修訂不是原c512578凍結契約未變的宣稱。原版及P3失敗證據保留於Git c512578及 `/workspace/scratch/shift-return-v2/p3/tagged-tests.log`。原表將v3稱為invalid，但指定API `mixedparse.SpellExact("v",tone3)` 實回`ㄒˇ,true`，因其驗class順序而非Mandarin phonotactics。保留x593v3作語意反例：n=2,k=1,L7=1,L8=0，render=x窄v3；真正invalid-body例改x593vv3（重複class），n=1,k=1,L7=0,L8=3，render=x窄vv3。不增加phonotactics guard，不改production或指定來源API。
+
+`first_correct`／`last_stable`固定為zero-based raw research key ordinal：Shift後第一個研究key為0；Shift/Enter等非key不增加ordinal。例Shift,x,5,9,3,Enter若首次正確在3，欄位為3，該Snapshot另有event_index=4/key_offset=4。不是用event_index或key_offset代替。
+
+明確手選surface lock優先保留已顯示文字與原鍵延伸。fixed ownership/reading lock在無相容延伸或budget故障時保留先前shown display、附加新raw；停止評分並保留全部raw/resource failure；無鎖時保留整段raw literal。這些fallback不算成功，必要品質為unavailable，不繞過cap或budget。
+
+每筆metric增加`status=complete|unavailable`、`observed_errors`與`unavailable_components`。固定全component分母n；`errors=observed_errors+unavailable_components`暫作保守failure charge，**不能稱為觀察到的真實error rate**。unavailable時value/wilson95=null，paired/derived不可用；完整時unavailable_components=0且errors=observed_errors，value才是實測errors/n。n=0也status=unavailable，不捏造rate。schema固定狀態形狀，跨欄等式由兩個reducers及checker驗證。G0對必要缺失仍unavailable，所有門檻不變。
+
+鎖傳遞明定為initial immutable source run-lock → fit-lock → execution/evidence lock；models內code_lock_sha256及fit_lock_sha256仍指initial source/fit檔案原bytes，不重寫祖先locks。source_commit可為metadata-only freeze後HEAD的ancestor，但全部來源檔coverage/hash、工具版本及dirty差異仍必驗。
+
+final summarize沿用既有`--lock <final-evidence-lock.json>`；Go及Python各自只接受該lock.files中**basename恰為selected-model-manifest.json的一個條目**（零個或多個皆exit2），不按任意E0.json檔名discover模型。manifest為schema的selected_model_manifest，四個固定模型entry各帶absolute path及原檔sha256，另帶共同source_lock_sha256/fit_lock_sha256。manifest本身與四模型各檔都必在該lock.files驗hash；模型name、demo及兩個祖先hash必與entry/manifest一致。fit.py select在新的selected-out產manifest；parent審核後才將manifest、四模型、祖先locks、資料和最終streams寫入新的final evidence lock。replay依既有--model明確給單一模型，仍驗其鎖祖先；未新增CLI旗標。此精確transport仍待parent核對後正式freeze，不能據本修訂開始正式品質。

@@ -35,7 +35,7 @@ func Decode(data []byte, out any) error {
 	if err = checkSchema(exchangeSchema, v, "$"); err != nil {
 		return err
 	}
-	kinds := map[reflect.Type]string{
+	kinds := map[reflect.Type]string{reflect.TypeOf((*SelectedModelManifest)(nil)): "selected_model_manifest",
 		reflect.TypeOf((*Fixture)(nil)): "fixture", reflect.TypeOf((*Sources)(nil)): "sources", reflect.TypeOf((*Query)(nil)): "query", reflect.TypeOf((*Hypothesis)(nil)): "candidate", reflect.TypeOf((*Snapshot)(nil)): "snapshot", reflect.TypeOf((*Model)(nil)): "model", reflect.TypeOf((*Assignment)(nil)): "assignment", reflect.TypeOf((*Lock)(nil)): "lock", reflect.TypeOf((*Row)(nil)): "row", reflect.TypeOf((*Report)(nil)): "report", reflect.TypeOf((*BankTask)(nil)): "bank_task", reflect.TypeOf((*TrainingObservation)(nil)): "training_observation", reflect.TypeOf((*CandidateOccurrence)(nil)): "candidate_occurrence", reflect.TypeOf((*GeneratorDiagnostic)(nil)): "generator_diagnostic",
 	}
 	if expected, ok := kinds[reflect.TypeOf(out)]; ok {
@@ -45,7 +45,19 @@ func Decode(data []byte, out any) error {
 	} else if _, ok := out.(*any); !ok {
 		return fmt.Errorf("unsupported exchange target %T", out)
 	}
-	return json.Unmarshal(data, out)
+	if err := json.Unmarshal(data, out); err != nil {
+		return err
+	}
+	if report, ok := out.(*Report); ok {
+		for condition, metrics := range report.Conditions {
+			for name, m := range metrics {
+				if err := validateMetric(m); err != nil {
+					return fmt.Errorf("%s/%s: %w", condition, name, err)
+				}
+			}
+		}
+	}
+	return nil
 }
 func jsonValue(d *json.Decoder) (any, error) {
 	t, e := d.Token()
