@@ -114,7 +114,8 @@ func TestMixedPoliciesKeepSensitiveInputPrivate(t *testing.T) {
 }
 
 // A high-frequency shorter syllable must not push a digit-key initial into
-// English in aggressive mode. Keep conservative account heuristics unchanged.
+// English in aggressive mode. Conservative follows upstream rules: since 0.2.8
+// (#241) an uppercase or two-letter prefix is itself a boundary (WQ賺錢, wq賺錢).
 func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
 	for _, prefix := range []string{"hello", "WQ", "wq", "WD5"} {
 		for _, neighbor := range []bool{false, true} {
@@ -153,7 +154,7 @@ func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
 						t.Fatalf("%s neighbor=%v: %q want %q", keys, neighbor, got, want)
 					}
 				} else {
-					want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ5j04fu06", "wq": "wq5j04錢", "WD5": "WD55j04fu06"}[prefix]
+					want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ賺錢", "wq": "wq賺錢", "WD5": "WD55萬錢"}[prefix]
 					if got != want {
 						t.Fatalf("conservative %s: %q want %q", keys, got, want)
 					}
@@ -161,6 +162,31 @@ func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
 				if commit := key(s, proto.KeyEnter).Commit; commit != got {
 					t.Fatalf("commit %q != preedit %q", commit, got)
 				}
+			}
+		}
+	}
+}
+
+// 積極模式自己的切法切不開時，照舊走保守的 #241 大寫邊界（V了、G盤），積極不會比保守少切；
+// #249 照字面的英數詞（ps4、x86）在兩種模式都先於積極切法。
+func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
+	for _, tc := range []struct{ keys, want string }{
+		{"Vxk7", "V了"}, {"Gq06", "G盤"}, {"GCP187", "GCP吧"}, {"OKa87", "OK嗎"}, {"oka87", "ok嗎"},
+		{"OKg4", "OK是"}, {"Q2h96", "Q2財"}, {"CoWoSq06", "CoWoS盤"}, {"GCP187ji3", "GCP吧我"},
+	} {
+		s := tokenBoundarySession()
+		s.MixedInputAggressive = true
+		mixedType(s, tc.keys)
+		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
+			t.Errorf("aggressive %q: %q, want %q", tc.keys, got, tc.want)
+		}
+	}
+	for _, aggressive := range []bool{false, true} {
+		for _, raw := range []string{"ps4", "x86"} {
+			s := englishBoundarySession()
+			s.MixedInputAggressive = aggressive
+			if got := mixedType(s, raw).Text(); got != raw {
+				t.Errorf("policy=%t %q: %q", aggressive, raw, got)
 			}
 		}
 	}
