@@ -53,6 +53,15 @@ func (s *Session) mixedAggressiveBoundary(raw, key string, tone rune) (int, zhuy
 	if at, done, ok := s.mixedAfterTypo(raw, tone); ok {
 		return at, done, true
 	}
+	// 字典不認得的前段：大寫字母不是注音鍵，先照上游 #241 從大寫後面切（Vxk7 是 V了、Gq06 是 G盤，不是 Vx呃、Gq玵）；
+	// 沒有大寫邊界時才在下面比較各種切法。
+	// 大寫邊界的切點前一鍵是數字聲母時，一樣讓給後段（WD55j04 是 WD5賺，不是 WD55萬）。
+	if at, done, ok := s.mixedAfterToken(raw, key, tone); ok {
+		return s.mixedDigitInitialYield(raw, at, done, tone)
+	}
+	if at, done, ok := s.mixedAfterLetter(raw, key, tone); ok {
+		return s.mixedDigitInitialYield(raw, at, done, tone)
+	}
 	for at := len(raw) - 1; at >= 2; at-- {
 		prefix, rest := raw[:at], raw[at:]
 		if !strings.ContainsFunc(prefix, unicode.IsLetter) ||
@@ -78,4 +87,15 @@ func (s *Session) mixedAggressiveBoundary(raw, key string, tone rune) (int, zhuy
 // readings must already have passed exact spelling and dictionary checks.
 func (s *Session) mixedDigitInitialExtension(raw string, at, best int) bool {
 	return best == at+1 && unicode.IsDigit(rune(raw[at])) && s.keyIsInitial(rune(raw[at]))
+}
+
+// mixedDigitInitialYield moves a cut one key left when that key is a digit-key
+// initial and the longer rest still spells a reachable reading in key order.
+func (s *Session) mixedDigitInitialYield(raw string, at int, done zhuyin.Syllable, tone rune) (int, zhuyin.Syllable, bool) {
+	if at >= 2 && s.mixedDigitInitialExtension(raw, at-1, at) && s.keysInSyllableOrder(raw[at-1:]) {
+		if longer, ok := s.mixedExactReading(raw[at-1:], tone); ok {
+			return at - 1, longer, true
+		}
+	}
+	return at, done, true
 }

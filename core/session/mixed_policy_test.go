@@ -177,6 +177,12 @@ func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
 	} {
 		s := tokenBoundarySession()
 		s.MixedInputAggressive = true
+		// 真實字典裡有的罕用切法（Vx＋呃、Gq＋玵）也要輸給大寫邊界。
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, e := range []struct{ w, r string }{{"呃", "ㄜ˙"}, {"玵", "ㄢˊ"}} {
+			lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
+			sys.SetUni(e.w, 1e-4)
+		}
 		mixedType(s, tc.keys)
 		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
 			t.Errorf("aggressive %q: %q, want %q", tc.keys, got, tc.want)
