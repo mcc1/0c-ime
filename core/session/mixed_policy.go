@@ -28,7 +28,10 @@ func (s *Session) mixedAggressiveBoundary(raw, key string, tone rune) (int, zhuy
 	for at := len(raw) - 1; at >= 1; at-- {
 		// 後段的按鍵要照聲母、介音、韻母的順序（#176：hello13 的 o1 是 ㄟㄅ，不是 hell北）。真的在打注音時照順序打，
 		// 把英文字尾借去組字時常顛倒；跟 #175 英文後面的反序數字留數字一樣。
-		if !s.mixedLiteralPrefix(raw[:at], raw[at:], key) || !s.keysInSyllableOrder(raw[at:]) {
+		// 把字面前段最後一個數字聲母鍵讓給後段（學過的 wq5 接 j04 → wq＋5j04 賺）時，較短的前段不必自己是英文詞：
+		// 積極模式中文優先，要整段照字面請先按 Shift 切英文。
+		extend := best == at+1 && s.mixedDigitInitialExtension(raw, at, best)
+		if !extend && !s.mixedLiteralPrefix(raw[:at], raw[at:], key) || !s.keysInSyllableOrder(raw[at:]) {
 			continue
 		}
 		done, ok := s.mixedExactReading(raw[at:], tone)

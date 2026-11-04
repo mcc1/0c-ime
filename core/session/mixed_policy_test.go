@@ -6,6 +6,7 @@ import (
 
 	"github.com/0c-biggo/0c-ime/core/lexicon"
 	"github.com/0c-biggo/0c-ime/core/lm"
+	"github.com/0c-biggo/0c-ime/core/personal"
 	"github.com/0c-biggo/0c-ime/core/proto"
 	"github.com/0c-biggo/0c-ime/core/zhuyin"
 )
@@ -188,6 +189,34 @@ func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
 			if got := mixedType(s, raw).Text(); got != raw {
 				t.Errorf("policy=%t %q: %q", aggressive, raw, got)
 			}
+		}
+	}
+}
+
+// 學過的英數詞（英文模式打過的 wq5）以數字聲母鍵結尾時，積極模式把那個鍵讓給後面完整的讀音（wq＋賺），
+// 保守模式照上游 #249 留字面前段。要照字面請先按 Shift 切英文。
+func TestMixedAggressiveLearnedTokenYieldsDigitInitial(t *testing.T) {
+	for _, aggressive := range []bool{false, true} {
+		s := englishBoundarySession()
+		s.MixedInputAggressive = aggressive
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, entry := range []struct {
+			w, r string
+			p    float64
+		}{{"賺", "ㄓㄨㄢˋ", 1e-5}, {"萬", "ㄨㄢˋ", 1e-2}} {
+			lex.Add(lexicon.Entry{Surface: entry.w, Reading: zhuyin.ParseReading(entry.r), PRW: 1})
+			sys.SetUni(entry.w, entry.p)
+		}
+		s.model.Store.English = map[string]personal.EnglishEvidence{"wq5": {Text: "wq5", Confirmed: 5, Days: 3, Usage: 5}}
+		if !s.literalToken("wq5") {
+			t.Fatal("fixture: wq5 not learned")
+		}
+		want := "wq5萬"
+		if aggressive {
+			want = "wq賺"
+		}
+		if got := mixedType(s, "wq5j04").Text(); got != want {
+			t.Fatalf("policy=%t: %q want %q", aggressive, got, want)
 		}
 	}
 }
