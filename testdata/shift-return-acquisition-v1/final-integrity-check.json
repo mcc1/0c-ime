@@ -1,0 +1,16 @@
+{
+  "accepted_bank_tasks": 1500,
+  "two_actual_AI_signatures_each": true,
+  "canonical_ids_and_labels": true,
+  "fixture_schema_and_ownership": true,
+  "mandatory_compat_static": 3,
+  "eight_retired_replaced_preserving_budget": true,
+  "source_cache_and_adjudication_paths": true,
+  "qualification_tool_exit": 3,
+  "components": 372,
+  "test_contrast": 69,
+  "tracked_checkout_clean": true,
+  "formal_quality": "NOT_RUN",
+  "checks_scope": "final acquisition artifact integrity only; no generator/scoring/replay/fit",
+  "historical_seen_audit": "397of398 exact historical input copies; gap retained"
+}

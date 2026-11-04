@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/tmp/0c-shift-eval-parent",
+    "validate",
+    "--fixtures",
+    "/workspace/scratch/shift-return-v2/acquisition-v1/parent-accepted/through09-corrected/fixtures.jsonl",
+    "--sources",
+    "/workspace/scratch/shift-return-v2/acquisition-v1/parent-accepted/through09-corrected/sources.json",
+    "--bank",
+    "/workspace/scratch/shift-return-v2/acquisition-v1/parent-accepted/through09-corrected/bank.jsonl",
+    "--assignment",
+    "/workspace/scratch/shift-return-v2/acquisition-v1/parent-accepted/through09-corrected/closure/assignment.json",
+    "--data",
+    "assets/data",
+    "--out",
+    "/workspace/scratch/shift-return-v2/acquisition-v1/parent-accepted/through09-corrected/validation-direct"
+  ],
+  "exit_code": 3,
+  "stdout": "",
+  "stderr": "fixed return acquisition quota incomplete/exceeded\n",
+  "phase": "data validation only; no candidate enumeration or model quality",
+  "gate": "G0 incomplete acquisition",
+  "formal_quality_run": false
+}

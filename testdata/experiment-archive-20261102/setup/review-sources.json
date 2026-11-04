@@ -1,0 +1,31 @@
+{
+  "egm_commit": "403d8881d62022490637d740657b33f01e321ea8",
+  "claude_plugins_commit": "a7ba5b93db0c7c8d17f3f1d25853adca79598a1a",
+  "resources": [
+    {
+      "path": "vendor/egm.tar.gz",
+      "url": "https://codeload.github.com/google/elephant-goldfish-model/tar.gz/403d8881d62022490637d740657b33f01e321ea8",
+      "sha256": "d56d762e0a06cc498fa3552d54d5bc2fab8bed548bd1cb6641fac3e90f7a435c"
+    },
+    {
+      "path": "vendor/claude-code-review/commands/code-review.md",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/a7ba5b93db0c7c8d17f3f1d25853adca79598a1a/plugins/code-review/commands/code-review.md",
+      "sha256": "3f02ea6eed996590348264777b2e324859a6e2c0c5f7dd298617ea21deb3b1b2"
+    },
+    {
+      "path": "vendor/claude-code-review/README.md",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/a7ba5b93db0c7c8d17f3f1d25853adca79598a1a/plugins/code-review/README.md",
+      "sha256": "8ba1b98f4537d70347ec982691a8fc8a1ee4153189877d028375fb644ddc3071"
+    },
+    {
+      "path": "vendor/claude-code-review/LICENSE",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/a7ba5b93db0c7c8d17f3f1d25853adca79598a1a/plugins/code-review/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "vendor/claude-code-review/.claude-plugin/plugin.json",
+      "url": "https://raw.githubusercontent.com/anthropics/claude-plugins-official/a7ba5b93db0c7c8d17f3f1d25853adca79598a1a/plugins/code-review/.claude-plugin/plugin.json",
+      "sha256": "0c5d2784bc1ab85b14e578132c141e9e0bb52dbc041f8a9094f8564cd370ffce"
+    }
+  ]
+}
