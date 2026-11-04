@@ -108,3 +108,28 @@ func TestMixedPoliciesKeepSensitiveInputPrivate(t *testing.T) {
 		}
 	}
 }
+
+// 積極模式自己的切法切不開時，照舊走保守的 #241 大寫邊界（V了、G盤），積極不會比保守少切；
+// #249 照字面的英數詞（ps4、x86）在兩種模式都先於積極切法。
+func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
+	for _, tc := range []struct{ keys, want string }{
+		{"Vxk7", "V了"}, {"Gq06", "G盤"}, {"GCP187", "GCP吧"}, {"OKa87", "OK嗎"}, {"oka87", "ok嗎"},
+		{"OKg4", "OK是"}, {"Q2h96", "Q2財"}, {"CoWoSq06", "CoWoS盤"}, {"GCP187ji3", "GCP吧我"},
+	} {
+		s := tokenBoundarySession()
+		s.MixedInputAggressive = true
+		mixedType(s, tc.keys)
+		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
+			t.Errorf("aggressive %q: %q, want %q", tc.keys, got, tc.want)
+		}
+	}
+	for _, aggressive := range []bool{false, true} {
+		for _, raw := range []string{"ps4", "x86"} {
+			s := englishBoundarySession()
+			s.MixedInputAggressive = aggressive
+			if got := mixedType(s, raw).Text(); got != raw {
+				t.Errorf("policy=%t %q: %q", aggressive, raw, got)
+			}
+		}
+	}
+}
