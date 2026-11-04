@@ -827,7 +827,7 @@ func specs() []spec {
 			func(s Settings) string { return onOff(s.MixedInput) }},
 		{"mixed-input-policy", "混打組字傾向", "僅在中英混打開啟時生效。保守：保留帳號、型號與數字判斷；積極：聲調完成且有字詞時優先組成中文，可能把英數帳號或型號轉成中文，需要原文時請切到英文。兩種模式都可在候選選回原按鍵", MixedConservative, []string{MixedConservative, MixedAggressive},
 			func(s Settings) string { return s.MixedInputPolicy }},
-		{"english-autocomplete", "英文模式自動補字", "單按 Shift 切換到英文模式後，輸入至少兩個字母時顯示補全候選，三個字母起也提供拼字修正；按 Tab 補全或修正拼字、Esc 關閉。與中英混打分開設定。空白送出單字並輸入空格；Enter 只送出單字，再按一次才換行或執行", "off", []string{"on", "off"},
+		{"english-autocomplete", "英文模式自動補字", "單按 Shift 切換到英文模式後，輸入至少兩個字母時顯示補全候選，三個字母起也提供拼字修正；按 Tab 補全或修正拼字、Esc 關閉。「我的詞彙」的英文詞排在最前面；自己打過幾次的英文單字會記在本機，之後也會建議（私人欄位與暫停學習時不記）。與中英混打分開設定。空白送出單字並輸入空格；Enter 只送出單字，再按一次才換行或執行", "off", []string{"on", "off"},
 			func(s Settings) string { return onOff(s.EnglishAutocomplete) }},
 		{"toggle-key", "中英切換鍵", toggleKeyDescription(runtime.GOOS), Default().ToggleKey, []string{ToggleRight, ToggleBoth, ToggleLeft, ToggleNone},
 			func(s Settings) string { return s.ToggleKey }},
