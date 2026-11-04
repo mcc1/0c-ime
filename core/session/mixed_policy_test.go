@@ -226,3 +226,25 @@ func TestMixedAggressiveLearnedTokenYieldsDigitInitial(t *testing.T) {
 		}
 	}
 }
+
+// 積極模式只把數字、標點鍵併進後段的音節（WQ5j04 → WQ賺）；字母鍵不併，英文字尾的聲母鍵不被吃掉：
+// page 的 e 是 ㄍ，pageji3 是 page我，不是 pag果（真實字典的 iPhone我、mac我、python我 同理）。
+func TestMixedAggressiveAbsorbsOnlyNonLetterKeys(t *testing.T) {
+	for _, tc := range []struct{ keys, want string }{
+		{"pageji3", "page我"}, {"lineji3", "line我"}, {"WQ5j04", "WQ賺"}, {"hello5j04", "hello賺"},
+	} {
+		s := englishBoundarySession()
+		s.MixedInputAggressive = true
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, e := range []struct {
+			w, r string
+			p    float64
+		}{{"果", "ㄍㄨㄛˇ", 2e-3}, {"賺", "ㄓㄨㄢˋ", 1e-6}, {"萬", "ㄨㄢˋ", 1e-2}} {
+			lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
+			sys.SetUni(e.w, e.p)
+		}
+		if got := mixedType(s, tc.keys).Text(); got != tc.want {
+			t.Errorf("%q: %q want %q", tc.keys, got, tc.want)
+		}
+	}
+}
