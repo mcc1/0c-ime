@@ -52,15 +52,26 @@ func receiptPath() string { return filepath.Join(basePath(), "install-receipt.js
 
 const restartHint = "完成組字後執行 killall 0c-server，下一個按鍵會以新設定啟動引擎；或登出再登入。"
 
+// activateTimeout：--activate-input-source 最久跑多久。0.2.7 起的工具會依序等使用者在父項與模式的系統詢問按「允許」
+// （各約 60 秒）並自己在約 156 秒時結束（InputSourceApproval.deadline）；更早的工具沒有上限，系統設定卡住時會一直等
+// （#238：登入後的排程 40 秒還沒結束）。這裡再加一層，安裝程式與排程不會無限期等下去。
+var activateTimeout = 3 * time.Minute
+
 // activateInputSource 以 App 內附的工具登記並啟用 app 的輸入來源，停用另一個名稱的舊來源。
-// 失敗時回傳錯誤，由呼叫端提示手動加入。
+// 失敗或逾時時回傳錯誤，由呼叫端提示手動加入、記下登入後補做。
 func activateInputSource(tool, app string, force ...bool) error {
 	args := []string{"--activate-input-source", app}
 	if len(force) > 0 && force[0] {
 		args = append(args, "--force")
 	}
-	cmd := exec.Command(tool, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), activateTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, tool, args...)
+	cmd.WaitDelay = 5 * time.Second // 工具被結束後，它留下的子行程拿著輸出也不再等
 	out, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("%s（啟用輸入來源超過 %v 仍未結束）", strings.TrimSpace(string(out)), activateTimeout)
+	}
 	if err != nil {
 		return fmt.Errorf("%s (%w)", strings.TrimSpace(string(out)), err)
 	}
@@ -68,9 +79,6 @@ func activateInputSource(tool, app string, force ...bool) error {
 }
 
 func install(bundle string, release *update.Release) error {
-	if runtime.GOARCH != "arm64" {
-		return fmt.Errorf("目前 macOS 套件只支援 Apple Silicon（arm64）")
-	}
 	// The matched engine must load its dictionary before the installed app changes.
 	app := filepath.Join(bundle, update.MacApp)
 	probe := exec.Command(filepath.Join(app, "Contents/MacOS/0c-server"), "-check-data", "-data", filepath.Join(app, "Contents/Resources/data"))

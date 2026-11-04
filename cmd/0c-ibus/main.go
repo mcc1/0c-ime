@@ -1,13 +1,15 @@
 //go:build linux
 
+//go:debug default=go1.26
+
 // 0c-ibus 是靈犀注音的 IBus 外殼：由 ibus-daemon 依元件描述檔啟動，透過 IBus 的私有 D-Bus
 // 提供 engine，按鍵與畫面交給 0c-server（與 Fcitx5 外殼共用同一個引擎與個人資料）。
 //
 //	0c-ibus --ibus        由 ibus-daemon 啟動
 //	0c-ibus --component   印出 IBus 元件描述檔
-//	0c-ibus register      登錄到目前使用者的 IBus（元件檔、環境、GNOME 輸入來源）；-gtk-module=false／-qt-module=false 停用 GTK／Qt 輸入設定
+//	0c-ibus register      登錄到目前使用者的 IBus（元件檔、環境、GNOME／Cinnamon 輸入來源）；-gtk-module=false／-qt-module=false 停用 GTK／Qt 輸入設定
 //	0c-ibus unregister    移除登錄
-//	0c-ibus toolkits      已登錄時補上缺少的 GTK／Qt 輸入設定（更新器在換外殼後呼叫），不碰 IBus
+//	0c-ibus toolkits      已登錄時補上缺少的 GTK／Qt 輸入設定與 X11 工作階段設定（更新器在換外殼後呼叫），不重啟 IBus
 package main
 
 import (

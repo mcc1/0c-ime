@@ -91,8 +91,16 @@ func (s *Session) englishKey(k string) (handled bool, commit string, active bool
 			}
 		}
 	}
+	// Enter 只送出畫面上的英文（#235），同注音組字與中英混打：組字區有底線時按 Enter 是確認這段字；
+	// 連 Enter 一起交給程式，終端機會直接執行命令、聊天室會直接送出。要執行或換行再按一次 Enter。
+	// 一樣不替使用者接受反白的建議。
+	if k == proto.KeyEnter {
+		commit = s.commit()
+		s.englishTokenBlocked = false
+		return true, commit, true
+	}
 	// Deliver exactly the displayed word before letting the original key reach
-	// the application. Enter/space never select the highlighted completion.
+	// the application. Space never selects the highlighted completion.
 	// A URL, identifier or full buffer may continue in the host after this
 	// prefix. Only a word boundary or ordinary enclosing punctuation confirms it.
 	if !englishBoundary(k) && !(len(k) == 1 && strings.ContainsAny(k, "\"'()[]{}<>,!?;")) {
@@ -118,24 +126,35 @@ func (s *Session) refreshEnglishCandidates() {
 	// Request one extra prefix because an exact match is not a completion.
 	var prefixes, corrections []english.Candidate
 	seen := map[string]bool{}
-	for _, word := range s.englishPrefix(s.mixed.raw, limit+1) {
-		if len(word.Text) > len(s.mixed.raw) {
+	// 「我的詞」排在字典前面，照詞條字面（#247）。只差大小寫也算建議（pcloud → pCloud），
+	// 和打的完全相同才不是；ls 和 LS 是兩個詞，兩個都列。
+	for _, word := range s.vocabEnglishWords(s.mixed.raw, limit+1) {
+		if word != s.mixed.raw && len(prefixes) < limit {
+			prefixes = append(prefixes, english.Candidate{Text: word})
+			seen[strings.ToLower(word)] = true
+		}
+	}
+	for _, word := range s.englishPrefix(s.mixed.raw, limit+1+len(prefixes)) {
+		if len(prefixes) == limit {
+			break
+		}
+		if folded := strings.ToLower(word.Text); len(word.Text) > len(s.mixed.raw) && !seen[folded] {
 			prefixes = append(prefixes, word)
-			seen[strings.ToLower(word.Text)] = true
-			if len(prefixes) == limit {
-				break
-			}
+			seen[folded] = true
 		}
 	}
 	// Corrections can overlap completions. Reserve up to three distinct
 	// corrections while keeping prefix completion first for an unfinished word.
-	for _, word := range s.englishCorrections(s.mixed.raw, limit+3) {
-		folded := strings.ToLower(word.Text)
-		if !seen[folded] {
-			seen[folded] = true
-			corrections = append(corrections, word)
-			if len(corrections) == 3 {
-				break
+	// 親手加進「我的詞」的拼法和字典、學到的拼法一樣不修正。
+	if !s.vocabEnglish(s.mixed.raw) {
+		for _, word := range s.englishCorrections(s.mixed.raw, limit+3) {
+			folded := strings.ToLower(word.Text)
+			if !seen[folded] {
+				seen[folded] = true
+				corrections = append(corrections, word)
+				if len(corrections) == 3 {
+					break
+				}
 			}
 		}
 	}

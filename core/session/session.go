@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf16"
@@ -40,6 +41,9 @@ type candState struct {
 	english       bool            // 英文模式的自動補字候選
 	mixed         bool            // 尚未定案的中英按鍵候選，保留原始按鍵
 	keyLiterals   map[int]string  // candidate index → original physical keys for a phonetic span
+	mixedChars    map[int]string  // 中英按鍵候選裡的中文字（#146）：candidate index → 字，讀音是 mixedSyl
+	mixedAt       int             // mixedChars 的按鍵從待定按鍵的這個位置起，前段照字面
+	mixedSyl      zhuyin.Syllable // mixedChars 的讀音
 	syllable      *pendingLiteral // 原樣留下的音節（#109）：選項是同讀音的各聲調，選入後仍是原樣音節
 	kind          string
 	direct        bool  // empty composition: selection commits once.
@@ -141,7 +145,7 @@ type Session struct {
 	// SelectionKeys 由宿主依使用者設定（#112）：候選窗每一頁第 1–10 項的選字鍵，例如 1234qweras。
 	// 空字串或不合用的值為 1234567890。數字 1–0 不論設定都照位置選字。
 	SelectionKeys string
-	// CtrlPunct 由宿主依「Ctrl＋標點打全形」設定（#168，預設開）：中文模式的 Ctrl＋, . ' ; 與 Ctrl＋Shift＋/ 1
+	// CtrlPunct 由宿主依「Ctrl＋標點打全形」設定（#168，預設開）：中文模式的 Ctrl＋, . ' ; 與 Ctrl＋Shift＋/ 1 ; 9 0（#231）
 	// 打全形標點，跟一般標點一樣插進組字區。零值時這些鍵回 handled=false，外殼照一般快捷鍵交給應用程式。
 	CtrlPunct bool
 	// CapsLockEnglish 由宿主依「Caps Lock 開著時直接打英文」設定（#173，預設關）：外殼送來的 caps_lock 請求才有作用，
@@ -165,6 +169,9 @@ type Session struct {
 	neuralLeft         string // 外殼確認後的自身提交文字（最多 rerank.MaxContextRunes 字），只給宣告需要前文的評分器
 	pendingNeural      string
 	rerankCache        map[string]rerankEntry // 分段神經決策快取；提交／取消時清空
+	rerankMemo         map[int]segMemo        // 段級輸入摘要：輸入全同的段整段跳過（含 N-best）；提交／取消時清空
+	sugPrev            *suggest.Suggestion    // 補全建議與其輸入摘要；refresh 每鍵跑好幾次，同輸入不重算
+	sugPrevKey         string
 	phonetic           *phoneticHint
 	phoneticCache      phoneticHintCache
 	phoneticUndo       *phoneticUndo
@@ -186,6 +193,7 @@ type Session struct {
 	locks           map[int]decode.Lock
 	literals        map[int]bool   // syls 中此位置是字面 Unicode scalar；編輯依 grapheme 邊界
 	displayed       map[int]string // 已顯示的漢字；英數切開詞條而解不出時保留畫面
+	nearShown       map[int]string // 近音保底時避開沒有字的音節、其餘各段照常解出的字（decodeAroundUnreadable）
 	rejected        []personal.RejectedSeg
 	paused          bool
 	private         bool         // 敏感欄位組字持續到清空，切回普通欄位也不把殘留文字學進去
@@ -979,11 +987,32 @@ func (s *Session) signature() string {
 		cursor = 0
 		generation = 0
 	} // 導覽或其他欄位的學習不換掉已顯示文字；下次修改音節才採用最新模型。
-	fmt.Fprintf(&b, "%s|%d|%v|%d|%d|%g|%v|%v|", zhuyin.Key(s.syls), cursor, s.Opt.PrefixAware, generation, s.Opt.Beam, s.Opt.Continue, s.paused, s.private)
-	fmt.Fprintf(&b, "%v|%s|%q|", s.Opt.SeparateContinuation, s.contextLeft(0), s.neuralContext())
-	fmt.Fprintf(&b, "%g|", s.Opt.DocumentContextWeight)
+	b.WriteString(zhuyin.Key(s.syls))
+	b.WriteByte('|')
+	b.WriteString(strconv.Itoa(cursor))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatBool(s.Opt.PrefixAware))
+	b.WriteByte('|')
+	b.WriteString(strconv.Itoa(generation))
+	b.WriteByte('|')
+	b.WriteString(strconv.Itoa(s.Opt.Beam))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatFloat(s.Opt.Continue, 'g', -1, 64))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatBool(s.paused))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatBool(s.private))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatBool(s.Opt.SeparateContinuation))
+	b.WriteByte('|')
+	b.WriteString(strconv.Quote(s.contextLeft(0)))
+	b.WriteByte('|')
+	b.WriteString(strconv.Quote(s.neuralContext()))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatFloat(s.Opt.DocumentContextWeight, 'g', -1, 64))
+	b.WriteByte('|')
 	if s.Fuzzy.AutoEnabled() { // 自動修正的規則、模式與門檻都決定顯示路徑；關閉時簽章與沒有此功能時相同
-		fmt.Fprintf(&b, "fuzzy:%s:%v|", s.Fuzzy.Key(), s.Opt.FuzzyAuto)
+		b.WriteString("fuzzy:" + s.Fuzzy.Key() + ":" + fmt.Sprintf("%v", s.Opt.FuzzyAuto) + "|")
 	}
 	starts := make([]int, 0, len(s.locks))
 	for st := range s.locks {
@@ -991,14 +1020,28 @@ func (s *Session) signature() string {
 	}
 	sort.Ints(starts)
 	for _, st := range starts {
-		fmt.Fprintf(&b, "%d:%s:%d:%v:%d:%s;", st, s.locks[st].Word, s.locks[st].Len, s.locks[st].Completion, s.locks[st].LiteralBoundary, s.locks[st].Matched)
-		if s.locks[st].Segmentation {
+		l := s.locks[st]
+		b.WriteString(strconv.Itoa(st))
+		b.WriteByte(':')
+		b.WriteString(l.Word)
+		b.WriteByte(':')
+		b.WriteString(strconv.Itoa(l.Len))
+		b.WriteByte(':')
+		b.WriteString(strconv.FormatBool(l.Completion))
+		b.WriteByte(':')
+		b.WriteString(strconv.Itoa(l.LiteralBoundary))
+		b.WriteByte(':')
+		b.WriteString(l.Matched)
+		b.WriteByte(';')
+		if l.Segmentation {
 			b.WriteString("seg;")
 		}
 	}
 	for i := range s.syls {
 		if s.literals[i] {
-			fmt.Fprintf(&b, "literal:%d;", i)
+			b.WriteString("literal:")
+			b.WriteString(strconv.Itoa(i))
+			b.WriteByte(';')
 		}
 	}
 	return b.String()
@@ -1025,6 +1068,10 @@ func (s *Session) refresh() {
 			sig = s.signature() // 寫回的是同一串按鍵的另一個讀音，音節格不變，不必再解一次
 		}
 		s.shownPath, s.shownSyls = slices.Clone(s.path), slices.Clone(s.syls)
+		s.nearShown = nil
+		if len(s.path) == 0 && s.Fuzzy.Enabled() && len(s.syls) > 0 {
+			s.nearShown = s.decodeAroundUnreadable()
+		}
 		if len(s.path) > 0 {
 			s.displayed = map[int]string{}
 			for _, g := range s.path {
@@ -1042,9 +1089,56 @@ func (s *Session) refresh() {
 	}
 	s.sug = nil
 	if !s.english && s.mixed.raw == "" && s.cursor == len(s.syls) && s.comp.Empty() && s.cand == nil && !s.autoFuzzed() {
-		s.sug = s.suggestAfterLiteral()
+		// refresh 每鍵最多跑三次；輸入沒變就沿用上次的建議。
+		key := s.sugKey()
+		if key == s.sugPrevKey {
+			s.sug = s.sugPrev
+		} else {
+			s.sug = s.suggestAfterLiteral()
+			s.sugPrev, s.sugPrevKey = s.sug, key
+		}
 	}
 	s.refreshPhoneticHint()
+}
+
+// sugKey 是補全搜尋的輸入摘要。pathSig 在神經模式不含個人版本（#101），所以 Gen 與 Store.Time 另列。
+func (s *Session) sugKey() string {
+	var b strings.Builder
+	b.WriteString(s.pathSig)
+	b.WriteByte('|')
+	writePath(&b, s.path) // refreshSelection 會在 pathSig 不變時換掉 path
+	b.WriteString(strconv.Itoa(s.model.Gen))
+	b.WriteByte('|')
+	b.WriteString(strconv.FormatInt(s.model.Store.Time, 10))
+	if s.previewRewrite {
+		b.WriteString("|pr")
+	}
+	b.WriteByte('|')
+	b.WriteString(strconv.Itoa(s.cursor))
+	return b.String()
+}
+
+// writePath 寫入 path 的全部欄位。
+func writePath(b *strings.Builder, path []decode.Seg) {
+	for _, g := range path {
+		b.WriteString(strconv.Itoa(g.Start))
+		b.WriteByte(',')
+		b.WriteString(strconv.Itoa(g.End))
+		b.WriteByte(',')
+		b.WriteString(g.Word)
+		if g.Partial {
+			b.WriteByte('p')
+		}
+		if g.Correction {
+			b.WriteByte('c')
+		}
+		if g.Matched != "" {
+			b.WriteByte('#')
+			b.WriteString(g.Matched)
+		}
+		b.WriteByte(' ')
+	}
+	b.WriteByte('|')
 }
 
 func (s *Session) openCandidates(length int) {
@@ -1130,32 +1224,58 @@ func (s *Session) openCandidates(length int) {
 	}
 }
 
-// stepCandidate 把要修改的字往前（d=-1，j）或往後（d=1，k）換一格並重開候選（#193，照新酷音）：
-// 不必 Esc、←／→、再 ↓。「要修改的字」是緊貼游標的那個字：後方模式是候選的第一個字，前方模式是最後一個字；
-// 標點等原樣文字整段算一格。換到的位置照 ↓ 的規則開窗（前方／後方模式、優先用現有分詞），
-// 後方模式從句尾開的前方候選也以最後一個字為準往前換，不會開回同一個字。已在頭尾時不動。
+// stepCandidate 把要修改的詞往前（d=-1，j）或往後（d=1，k）換一個並重開候選（#193，照新酷音）：
+// 不必 Esc、←／→、再 ↓。換到的是緊鄰目前候選範圍的那個詞（現有分詞；標點等原樣文字整段算一個），
+// 游標放到「修改字詞的位置」那一側再照 ↓ 的規則開窗：前方模式放在詞尾、選結束在游標的詞，
+// 後方模式放在詞首、選從游標開始的詞。兩種模式走過的詞一樣，換到的範圍都跟把游標放在那裡按 ↓ 相同，
+// 不會停在詞的一半（以前一次移一個字，前方模式按 j 從「風景」到「風」、後方模式從句尾的「好」到「景」，BD-0e2d73）。
+// 後方模式在句尾開的前方候選也照後方模式往前換。已在頭尾時不動。
 // 只用於改字的候選：Emoji／顏文字、中英混打的按鍵候選、注音打到一半與 ` 的符號選單都不套用。
 func (s *Session) stepCandidate(d int) {
 	if !s.canStepCandidate() {
 		return
 	}
-	c := s.cand
-	at := c.start
-	if c.before {
-		at = s.literalFloor(c.start + c.length - 1)
-	}
-	if d < 0 && at == 0 {
+	start, end := s.cand.start, s.cand.start+s.cand.length
+	if d < 0 && start == 0 || d > 0 && end >= len(s.syls) {
 		return
 	}
-	next := s.literalStep(at, d)
-	if next >= len(s.syls) {
-		return
-	}
-	s.cursor = next
-	if s.CandidateBeforeCursor {
-		s.cursor = s.literalStep(next, 1)
+	s.refresh()
+	switch {
+	case d < 0 && s.CandidateBeforeCursor:
+		s.cursor = start
+	case d < 0:
+		s.cursor = s.unitStart(start - 1)
+	case s.CandidateBeforeCursor:
+		s.cursor = s.unitEnd(end)
+	default:
+		s.cursor = end
 	}
 	s.openCandidates(0)
+}
+
+// unitStart／unitEnd：位置 pos 那個字所在的詞（現有分詞；原樣文字是 literalStep 的一格）的起點與終點。
+func (s *Session) unitStart(pos int) int {
+	if s.literals[pos] {
+		return s.literalFloor(pos)
+	}
+	for _, g := range s.path {
+		if g.Start <= pos && pos < g.End {
+			return g.Start
+		}
+	}
+	return pos
+}
+
+func (s *Session) unitEnd(pos int) int {
+	if s.literals[pos] {
+		return s.literalStep(s.literalFloor(pos), 1)
+	}
+	for _, g := range s.path {
+		if g.Start <= pos && pos < g.End {
+			return g.End
+		}
+	}
+	return pos + 1
 }
 
 // canStepCandidate：目前的候選是改字的候選，j／k 會換前後一個字（stepCandidate）。快照的 StepKeys 也依它判斷，
@@ -1472,8 +1592,12 @@ func (s *Session) commit() string {
 	if !s.paused && !s.private && len(ev.Path) > 0 {
 		s.model.Learn(ev)
 	}
-	if s.mixedInput() && !s.paused && !s.private && !s.localBlocked {
+	// 英文學習跟著混打或英文模式自動補字走（#247）：許氏、倚天、聲調選填不支援混打，英文模式一樣要學得到。
+	if (s.mixedInput() || s.EnglishAutocomplete) && !s.paused && !s.private && !s.localBlocked {
 		s.model.LearnEnglish(s.mixedEnglishCommits())
+	}
+	if s.mixedInput() && !s.paused && !s.private && !s.localBlocked {
+		s.model.LearnZhuyinKeys(s.zhuyinKeyCommits())
 	}
 	shown := text
 	text = s.punctuate(text)
@@ -1584,6 +1708,8 @@ func (s *Session) reset() {
 	s.pendingToneKey, s.literalKeys = nil, nil
 	s.clearDocumentContext()
 	s.rerankCache = nil
+	s.rerankMemo = nil
+	s.sugPrev, s.sugPrevKey = nil, ""
 	s.hint = nil
 	s.shownPath, s.shownSyls = nil, nil
 	s.previewRewrite = false
@@ -1594,6 +1720,7 @@ func (s *Session) reset() {
 	s.literals = nil
 	s.pendingLiterals = nil
 	s.displayed = nil
+	s.nearShown = nil
 	s.nearReading = false
 	s.autoLog = nil
 }

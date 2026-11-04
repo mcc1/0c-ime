@@ -2,6 +2,7 @@ package session
 
 import (
 	"slices"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/0c-biggo/0c-ime/core/decode"
@@ -131,10 +132,77 @@ func (s *Session) insertLiteral(text string) {
 	}
 }
 
+// bracketFamilies 是成對標點（#232）：閉括號鍵、半形的開／閉括號，與 ↓ 換得到的全形開／閉括號（同 symbolGroups 的括號組）。
+// [ ] 與 { } 打出的「」『』同一組，巢狀時一起算層數。
+var bracketFamilies = []struct{ closeKeys, halfOpen, halfClose, fullOpen, fullClose string }{
+	{")", "(", ")", "（〔【〈《［｛", "）〕】〉》］｝"},
+	{"]}", "[{", "]}", "「『﹁﹃“‘", "」』﹂﹄”’"},
+}
+
+// openingBracketHalf（#232）：中英混打打閉括號鍵 k 時，往左找組字區內最近、還沒配對的同組開括號，回報它是不是半形。
+// 混打的標點寬度看前文（緊接在照字面英數後面是半形），開括號與閉括號前文不同時會打出「我（DNS)」「DNS(我）」，
+// 所以閉括號改跟著開括號。核心不讀游標前已送出的文字（document_context.go），開括號已經送出、或沒開混打時回 ok=false，照舊。
+func (s *Session) openingBracketHalf(k string) (half, ok bool) {
+	if !s.mixedInput() || len(k) != 1 {
+		return false, false
+	}
+	for _, f := range bracketFamilies {
+		if !strings.Contains(f.closeKeys, k) {
+			continue
+		}
+		depth := 0
+		for at := s.cursor - 1; at >= 0; at-- {
+			if !s.literals[at] {
+				continue
+			}
+			t := string(s.syls[at])
+			if utf8.RuneCountInString(t) != 1 {
+				continue
+			}
+			switch {
+			case strings.Contains(f.halfClose+f.fullClose, t):
+				depth++
+			case strings.Contains(f.halfOpen+f.fullOpen, t):
+				if depth == 0 {
+					return strings.Contains(f.halfOpen, t), true
+				}
+				depth--
+			}
+		}
+	}
+	return false, false
+}
+
+// insertPairedBracket（#232）：混打的閉括號鍵 k 跟著組字區裡配對的開括號用同一種寬度；找不到開括號時回 false，照舊。
+// 另一種寬度記在 literalKeys，↓ 第二項換得回來：半形 ) ] } 不在任何符號組裡（symbolGroups），全形的組裡也沒有半形，
+// 不記的話選錯寬度就換不回來（比照 #190 的「，」記 <）。
+func (s *Session) insertPairedBracket(k string) bool {
+	half, ok := s.openingBracketHalf(k)
+	if !ok {
+		return false
+	}
+	full, ok := s.layout.Punct([]rune(k)[0])
+	if !ok {
+		return false
+	}
+	if half {
+		s.insertMixedLiteral(k, false, false)
+		s.setLiteralKey(s.cursor-1, full)
+	} else {
+		s.insertLiteral(full)
+		s.setLiteralKey(s.cursor-1, k)
+	}
+	return true
+}
+
 // insertPunctKey 在游標處插入標點鍵 k 打出的全形標點 p。中英混打時 Shift＋, Shift＋. 的「，」「。」記下原按鍵，
 // ↓ 第二項是半形 < >（#190）：混打的注音鍵、數字鍵出字後 ↓ 第二項都是原按鍵（#162、#175、#187），這兩個鍵比照辦理，
 // 不切英文也打得出大於、小於。只限這兩個鍵在混打下；一般注音模式與其他標點維持全形（#177），Ctrl＋標點（#168）也不附。
+// 混打的閉括號跟著配對的開括號（#232，insertPairedBracket）。
 func (s *Session) insertPunctKey(k, p string) {
+	if s.insertPairedBracket(k) {
+		return
+	}
 	s.insertLiteral(p)
 	if s.mixedInput() && (k == "<" || k == ">") {
 		s.setLiteralKey(s.cursor-1, k)
@@ -180,11 +248,22 @@ func (s *Session) selectLiteral(id int) bool {
 	// 先移除被選區間，再逐字插入；游標停在新符號後，可直接繼續輸入。
 	start, length := c.span(id) // 混合清單的原樣注音只替換游標那個字（#161）
 	s.cursor = start + length
+	// 原樣音節按 ↓ 又選回它自己：什麼都沒換，原按鍵（↓ 第二項）與選過的注音文紀錄都留著（#208）。
+	if c.syllable != nil && text == c.syllable.syllable().Text() {
+		s.cand = nil
+		return true
+	}
+	if s.pickKeySymbol(start, length, text) {
+		s.cand = nil
+		return true
+	}
+	shown := s.shownBeforeLiteralEdit(c.syllable != nil && c.keyLiterals[id] != "")
 	for range length {
 		s.eraseBeforeCursor()
 	}
 	if c.keyLiterals[id] != "" {
 		s.insertMixedLiteral(text, false, true)
+		s.keepLiteralEdit(shown, start, start+length)
 	} else if c.syllable != nil {
 		s.insertSyllableLiteral(c.syllable.composer, zhuyin.Syllable(text))
 	} else {
