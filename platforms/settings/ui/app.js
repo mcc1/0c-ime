@@ -433,7 +433,7 @@
   // 所以契約新增設定時畫面不必先改；要放別頁再加進 keys。輸出設定的兩項在 output()。
   const SAVE_NOTE = '改動會立即儲存，並在沒有組字時讓輸入法套用。';
   // 只在中英混打開啟時有意義的選項，畫在「中英混打」底下當子選項。
-  const MIXED_INPUT_CHILDREN = ['mixed-input-policy'];
+  const MIXED_INPUT_CHILDREN = ['mixed-input-policy', 'neighbor-key-recovery'];
   const INPUT_PAGES = {
     mode: {
       title: '中英切換', lead: '用哪個鍵切換注音和英文、換程式後回到哪個模式，以及在注音中直接打英文。',
