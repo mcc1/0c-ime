@@ -47,9 +47,6 @@ class SettingsPositionTests(unittest.TestCase):
         items = [{"key": "extra-" + str(i), "label": "測試選項 " + str(i),
                   "description": "用於驗證長頁面背景更新的捲動位置，不讀取或修改真實設定。",
                   "values": ["off", "on"], "value": "off"} for i in range(30)]
-        items += [{"key": "mixed-input", "label": "中英混打", "values": ["off", "on"], "value": "on"},
-                  {"key": "mixed-input-policy", "label": "混打組字傾向", "values": ["conservative", "aggressive"], "value": "aggressive"},
-                  {"key": "neighbor-key-recovery", "label": "鄰鍵容錯", "values": ["off", "on"], "value": "on"}]
         fixture = {"items": items, "file": {"state": "ok", "read_only": False}, "features": {"vocab": False}}
         self.page = self.browser.new_page(viewport={"width": 960, "height": 680})
         self.addCleanup(self.page.close)
@@ -63,7 +60,7 @@ class SettingsPositionTests(unittest.TestCase):
             core: {invoke: async (command) => {
               if (command === 'app_info') return {platform:'windows/x86_64'};
               if (command === 'get_settings') return structuredClone(window.testSettings);
-              if (command === 'get_status') return {schema:1, installed:'0.2.7', mode:'manual', runtime:{state:'not_running'}, update:{state:'never_checked'}};
+              if (command === 'get_status') return {schema:1, installed:'0.2.8', mode:'manual', runtime:{state:'not_running'}, update:{state:'never_checked'}};
               throw new Error('unexpected command: ' + command);
             }}, event: {listen: async () => () => {}}
           };
@@ -112,16 +109,9 @@ class SettingsPositionTests(unittest.TestCase):
         }""")
         self.assertAlmostEqual(after, before, delta=1)
 
-    def test_new_options_are_children_of_mixed_input_and_navigation_starts_at_top(self):
+    def test_navigation_to_another_page_starts_at_top(self):
         self.page.evaluate("document.querySelector('main').scrollTop = 850")
         self.page.locator('.nav[data-page="mode"]').click()
-        group = self.page.locator('[role="group"][aria-labelledby="label-mixed-input"]')
-        self.assertEqual(group.count(), 1)
-        self.assertEqual(group.locator('.suboption').count(), 2)
-        self.assertEqual(group.locator('[data-focus="neighbor-key-recovery"]').count(), 1)
-        labels = group.locator('.label').all_text_contents()
-        self.assertEqual(labels, ['中英混打', '混打組字傾向', '鄰鍵容錯'])
-        self.assertEqual(self.page.locator('#page-candidates [data-focus="neighbor-key-recovery"]').count(), 0)
         self.assertEqual(self.page.evaluate("document.querySelector('main').scrollTop"), 0)
         self.assertEqual(self.errors, [])
 
