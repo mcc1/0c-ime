@@ -1,28 +1,47 @@
 # Claude 接手入口：中英混打與 Shift 回中文實驗
 
-更新：2026-11-04。Fork：<https://github.com/mcc1/0c-ime>；上游：<https://github.com/0c-biggo/0c-ime>。
+更新：2026-11-05。Fork：<https://github.com/mcc1/0c-ime>；上游：<https://github.com/0c-biggo/0c-ime>。
 請先 checkout `research/experiment-records`，讀本文件與 `design/shift-return-acquisition-decision-v1.md`。
 目前工作沒有背景 agent 或品質實驗繼續執行，也沒有等待中的安裝包／正式模型。
 
+## 分支慣例（使用者 2026-11-05 指定）
+
+- **一個 PR 只放一個功能或一個研究主題**，不要混合。順手發現的其他修正另開分支；上游也有的 bug 從上游 `main` 開分支、送上游 PR。
+- 需要混合多個功能的安裝包時，另開 build 分支（例如 `test-builds/*`）把那些功能 merge 進來再打包，不回頭改功能分支。
+- 不 force-push、不改寫既有歷史；搬移內容用新 commit 加 merge。
+
 ## 分支與 PR 範圍
 
-以下均保留原 commit，按相依順序使用 stacked PR。沒有 force-push 或改寫既有凍結歷史。
-此表是分支／建議 PR base；本次只 push fork，沒有新增或合併 PR。
+更新：2026-11-05。產品功能分支以 stacked PR 使用；實驗分支不開 PR。
 
-| 分支 | 建議 base | 內容／停點 |
+### 產品功能（fork）
+
+| 分支 | 建議 base | 內容 |
 | --- | --- | --- |
-| `feat/mixed-input-aggressive`（原 `fix/mixed-digit-rarity`） | fork `main` | 窄／數字聲母、作者帳號保護、保守／積極選項，另含當時 Linux 相容修補；`cc75315` 已合併上游 v0.2.7。2026-11-05 起：593 學習後變數字的修正另拆 `fix/mixed-digit-learning`、Fcitx 5.0 修正另拆 `fix/fcitx5-0-compat`，各自從上游 `main` 開出送上游 |
-| `feat/keyboard-neighbor-recovery` | `feat/mixed-input-aggressive` | layout 鄰鍵恢復，獨立 opt-in；`45701f8` |
-| `fix/settings-refresh-position` | `feat/keyboard-neighbor-recovery` | 設定頁捲動位置與功能分組；`e1fafe9` |
-| `fix/mixed-digit-initial-boundary` | `fix/settings-refresh-position` | 英文後數字聲母恢復；`e754019`，本輪產品基準 preview2 |
-| `experiment/mixed-boundary-v1` | `fix/mixed-digit-initial-boundary` | 舊全域排名器、凍結資料與負結果；`2820128`，NO_GO |
-| `design/shift-return-v2` | `experiment/mixed-boundary-v1` | 下一輪設計、EGM 修正與交換契約；`c512578` |
-| `experiment/shift-return-v2` | `design/shift-return-v2` | P0–P3 隔離工具、pre-quality errata；`18d4f77` |
-| `research/experiment-records` | `experiment/shift-return-v2` | 本交接、實際取得資料、標註、資格失敗與完整歷史證據封存 |
+| `feat/mixed-input-aggressive`（原 `fix/mixed-digit-rarity`） | fork `main` | 保守／積極混打選項的完整功能：中文優先、打錯一鍵後恢復、英文後數字聲母（WQ賺錢）、學過的英數詞與大寫邊界（wq賺了、V了）、`mixedAbsorbNonLetters`、設定頁「混打組字傾向」子選項、`design/aggressive-mixed-boundary.md`。已合併上游 0.2.8。仍含 593 學習修正與 Fcitx 5.0 修正（已另送上游 #55、#54，上游合併並同步 fork `main` 後會從 diff 消失） |
+| `feat/keyboard-neighbor-recovery` | `feat/mixed-input-aggressive` | 鄰鍵容錯（獨立 opt-in）、設定頁「鄰鍵容錯」子選項、積極模式測試的鄰鍵開／關變體 |
+| `fix/settings-refresh-position` | `feat/keyboard-neighbor-recovery` | 只剩設定頁捲動修正，與上游 #53 相同；上游合併後可移除 |
+| `fix/mixed-digit-initial-boundary` | — | 內容已併入 `feat/mixed-input-aggressive`，無自己的差異，可刪除 |
 
-`design/mixed-input-segmentation-plan` 仍保留在 `18d4f77` 作原工作分支，不另算一個獨立功能 PR。
-Fork 另已有 `test-builds/*` 的 Linux／Windows 測試版分支；本次不改寫它們，也不把安裝包塞進研究 PR。
-不要將上述完整分支全部直接對 `main` 開重複範圍的 PR；依表選 base。
+### 已送上游（各自從上游 `main` 開出）
+
+| 分支 | 上游 PR | 內容 |
+| --- | --- | --- |
+| `fix/settings-scroll-position` | 0c-biggo/0c-ime#53 | 背景更新與切回視窗時保留捲動位置 |
+| `fix/fcitx5-0-compat` | 0c-biggo/0c-ime#54 | Ubuntu 22.04（Fcitx 5.0）編譯 |
+| `fix/mixed-digit-learning` | 0c-biggo/0c-ime#55 | 學了其他字之後 593 不再變數字（保守模式） |
+
+### 實驗（不開 PR）
+
+| 分支 | 內容／停點 |
+| --- | --- |
+| `experiment/mixed-boundary-v1` | 舊全域排名器、凍結資料與負結果；`2820128`，NO_GO |
+| `design/shift-return-v2` | 下一輪設計、EGM 修正與交換契約；`c512578` |
+| `experiment/shift-return-v2` | P0–P3 隔離工具、pre-quality errata；`18d4f77` |
+| `research/experiment-records` | 本交接、實際取得資料、標註、資格失敗與完整歷史證據封存 |
+
+實驗分支已 merge 上游 0.2.8，但沒有跟進 2026-11-05 的產品整併；做 acquisition r2 前先 merge `feat/keyboard-neighbor-recovery`。
+`design/mixed-input-segmentation-plan` 仍保留在 `18d4f77` 作原工作分支。Fork 另有 `test-builds/*` 測試版分支，不改寫它們。
 
 ## 使用者核心目標與範圍
 
