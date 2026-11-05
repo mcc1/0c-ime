@@ -432,6 +432,8 @@
   // 各頁依這裡的順序畫（也是 Tab 順序）。不在任何一頁的新項目（較新的 0c-update 才有的設定）放在「選字」最後，
   // 所以契約新增設定時畫面不必先改；要放別頁再加進 keys。輸出設定的兩項在 output()。
   const SAVE_NOTE = '改動會立即儲存，並在沒有組字時讓輸入法套用。';
+  // 只在中英混打開啟時有意義的選項，畫在「中英混打」底下當子選項。
+  const MIXED_INPUT_CHILDREN = ['mixed-input-policy'];
   const INPUT_PAGES = {
     mode: {
       title: '中英切換', lead: '用哪個鍵切換注音和英文、換程式後回到哪個模式，以及在注音中直接打英文。',
@@ -492,12 +494,23 @@
     }
     const emoji = items.find((item) => item.key === 'emoji-shortcut');
     const equalsFirst = items.find((item) => item.key === 'emoji-equals-first');
+    const mixed = items.find((item) => item.key === 'mixed-input');
+    const mixedChildren = mixed ? MIXED_INPUT_CHILDREN
+      .map((key) => items.find((item) => item.key === key)).filter(Boolean) : [];
     const order = (item) => (spec.keys.includes(item.key) ? spec.keys.indexOf(item.key) : spec.keys.length);
-    const mine = items.filter((item) => pageOfKey(item.key) === name && !item.key.startsWith('fuzzy-') && !(emoji && item === equalsFirst))
+    const mine = items.filter((item) => pageOfKey(item.key) === name && !item.key.startsWith('fuzzy-') && !(emoji && item === equalsFirst) && !mixedChildren.includes(item))
       .map((item, i) => [order(item), i, item]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(([, , item]) => item);
     const rows = mine.map((item) => {
       const parent = itemRow(item, locked ||
         (item.key === 'emoji-shortcut' && state.busy.has('emoji-equals-first')));
+      if (item === mixed && mixedChildren.length) {
+        const children = mixedChildren.map((child) => {
+          const childRow = itemRow(child, locked || state.busy.has('mixed-input') || state.busy.has('mixed-input-policy'));
+          childRow.classList.add('suboption');
+          return childRow;
+        });
+        return h('div', { class: 'setting-group', role: 'group', 'aria-labelledby': 'label-mixed-input' }, parent, ...children);
+      }
       if (item.key !== 'emoji-shortcut' || !equalsFirst) return parent;
       const child = itemRow(equalsFirst, locked || item.value !== 'equals' || !!item.disabled || state.busy.has(item.key));
       child.classList.add('suboption');
