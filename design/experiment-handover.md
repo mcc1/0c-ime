@@ -11,8 +11,8 @@
 
 | 分支 | 建議 base | 內容／停點 |
 | --- | --- | --- |
-| `fix/mixed-digit-rarity` | fork `main` | 窄／數字聲母、作者帳號保護、保守／積極選項，另含當時 Linux 相容修補；`cc75315` 已合併上游 v0.2.7 |
-| `feat/keyboard-neighbor-recovery` | `fix/mixed-digit-rarity` | layout 鄰鍵恢復，獨立 opt-in；`45701f8` |
+| `feat/mixed-input-aggressive`（原 `fix/mixed-digit-rarity`） | fork `main` | 窄／數字聲母、作者帳號保護、保守／積極選項，另含當時 Linux 相容修補；`cc75315` 已合併上游 v0.2.7。2026-11-05 起：593 學習後變數字的修正另拆 `fix/mixed-digit-learning`、Fcitx 5.0 修正另拆 `fix/fcitx5-0-compat`，各自從上游 `main` 開出送上游 |
+| `feat/keyboard-neighbor-recovery` | `feat/mixed-input-aggressive` | layout 鄰鍵恢復，獨立 opt-in；`45701f8` |
 | `fix/settings-refresh-position` | `feat/keyboard-neighbor-recovery` | 設定頁捲動位置與功能分組；`e1fafe9` |
 | `fix/mixed-digit-initial-boundary` | `fix/settings-refresh-position` | 英文後數字聲母恢復；`e754019`，本輪產品基準 preview2 |
 | `experiment/mixed-boundary-v1` | `fix/mixed-digit-initial-boundary` | 舊全域排名器、凍結資料與負結果；`2820128`，NO_GO |
