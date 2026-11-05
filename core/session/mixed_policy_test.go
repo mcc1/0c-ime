@@ -1,9 +1,14 @@
 package session
 
 import (
-	"github.com/0c-biggo/0c-ime/core/proto"
 	"strings"
 	"testing"
+
+	"github.com/0c-biggo/0c-ime/core/lexicon"
+	"github.com/0c-biggo/0c-ime/core/lm"
+	"github.com/0c-biggo/0c-ime/core/personal"
+	"github.com/0c-biggo/0c-ime/core/proto"
+	"github.com/0c-biggo/0c-ime/core/zhuyin"
 )
 
 func TestMixedPoliciesDistinguishChineseFromAccounts(t *testing.T) {
@@ -109,6 +114,60 @@ func TestMixedPoliciesKeepSensitiveInputPrivate(t *testing.T) {
 	}
 }
 
+// A high-frequency shorter syllable must not push a digit-key initial into
+// English in aggressive mode. Conservative follows upstream rules: since 0.2.8
+// (#241) an uppercase or two-letter prefix is itself a boundary (WQ賺錢, wq賺錢).
+func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
+	for _, prefix := range []string{"hello", "WQ", "wq", "WD5"} {
+		for _, neighbor := range []bool{false, true} {
+			for _, aggressive := range []bool{false, true} {
+				s := englishBoundarySession()
+				s.MixedInputAggressive, s.NeighborKeyRecovery = aggressive, neighbor
+				lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+				for _, entry := range []struct {
+					w, r string
+					p    float64
+				}{
+					{"賺", "ㄓㄨㄢˋ", 1e-8}, {"萬", "ㄨㄢˋ", 1e-2},
+					{"錢", "ㄑㄧㄢˊ", 1e-3}, {"賺錢", "ㄓㄨㄢˋ ㄑㄧㄢˊ", 1e-3},
+				} {
+					lex.Add(lexicon.Entry{Surface: entry.w, Reading: zhuyin.ParseReading(entry.r), PRW: 1})
+					sys.SetUni(entry.w, entry.p)
+				}
+				keys := prefix + "5j04fu06"
+				var got string
+				if aggressive {
+					first := mixedType(s, prefix+"5j04").Text()
+					if first != prefix+"賺" {
+						t.Fatalf("first syllable %q", first)
+					}
+					items := downItems(key(s, proto.KeyDown))
+					if len(items) < 2 || items[1] != "5j04" {
+						t.Fatalf("original keys: %v", items)
+					}
+					key(s, proto.KeyEscape)
+					got = mixedType(s, "fu06").Text()
+				} else {
+					got = mixedType(s, keys).Text()
+				}
+				if aggressive {
+					if want := prefix + "賺錢"; got != want {
+						t.Fatalf("%s neighbor=%v: %q want %q", keys, neighbor, got, want)
+					}
+				} else {
+					want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ賺錢", "wq": "wq賺錢", "WD5": "WD55萬錢"}[prefix]
+					if got != want {
+						t.Fatalf("conservative %s: %q want %q", keys, got, want)
+					}
+				}
+				if commit := key(s, proto.KeyEnter).Commit; commit != got {
+					t.Fatalf("commit %q != preedit %q", commit, got)
+				}
+			}
+		}
+	}
+}
+
 // 積極模式自己的切法切不開時，照舊走保守的 #241 大寫邊界（V了、G盤），積極不會比保守少切；
 // #249 照字面的英數詞（ps4、x86）在兩種模式都先於積極切法。
 func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
@@ -118,6 +177,12 @@ func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
 	} {
 		s := tokenBoundarySession()
 		s.MixedInputAggressive = true
+		// 真實字典裡有的罕用切法（Vx＋呃、Gq＋玵）也要輸給大寫邊界。
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, e := range []struct{ w, r string }{{"呃", "ㄜ˙"}, {"玵", "ㄢˊ"}} {
+			lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
+			sys.SetUni(e.w, 1e-4)
+		}
 		mixedType(s, tc.keys)
 		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
 			t.Errorf("aggressive %q: %q, want %q", tc.keys, got, tc.want)
@@ -130,6 +195,56 @@ func TestMixedAggressiveKeepsConservativeTokenBoundaries(t *testing.T) {
 			if got := mixedType(s, raw).Text(); got != raw {
 				t.Errorf("policy=%t %q: %q", aggressive, raw, got)
 			}
+		}
+	}
+}
+
+// 學過的英數詞（英文模式打過的 wq5）以數字聲母鍵結尾時，積極模式把那個鍵讓給後面完整的讀音（wq＋賺），
+// 保守模式照上游 #249 留字面前段。要照字面請先按 Shift 切英文。
+func TestMixedAggressiveLearnedTokenYieldsDigitInitial(t *testing.T) {
+	for _, aggressive := range []bool{false, true} {
+		s := englishBoundarySession()
+		s.MixedInputAggressive = aggressive
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, entry := range []struct {
+			w, r string
+			p    float64
+		}{{"賺", "ㄓㄨㄢˋ", 1e-5}, {"萬", "ㄨㄢˋ", 1e-2}} {
+			lex.Add(lexicon.Entry{Surface: entry.w, Reading: zhuyin.ParseReading(entry.r), PRW: 1})
+			sys.SetUni(entry.w, entry.p)
+		}
+		s.model.Store.English = map[string]personal.EnglishEvidence{"wq5": {Text: "wq5", Confirmed: 5, Days: 3, Usage: 5}}
+		if !s.literalToken("wq5") {
+			t.Fatal("fixture: wq5 not learned")
+		}
+		want := "wq5萬"
+		if aggressive {
+			want = "wq賺"
+		}
+		if got := mixedType(s, "wq5j04").Text(); got != want {
+			t.Fatalf("policy=%t: %q want %q", aggressive, got, want)
+		}
+	}
+}
+
+// 積極模式只把數字、標點鍵併進後段的音節（WQ5j04 → WQ賺）；字母鍵不併，英文字尾的聲母鍵不被吃掉：
+// page 的 e 是 ㄍ，pageji3 是 page我，不是 pag果（真實字典的 iPhone我、mac我、python我 同理）。
+func TestMixedAggressiveAbsorbsOnlyNonLetterKeys(t *testing.T) {
+	for _, tc := range []struct{ keys, want string }{
+		{"pageji3", "page我"}, {"lineji3", "line我"}, {"WQ5j04", "WQ賺"}, {"hello5j04", "hello賺"},
+	} {
+		s := englishBoundarySession()
+		s.MixedInputAggressive = true
+		lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+		for _, e := range []struct {
+			w, r string
+			p    float64
+		}{{"果", "ㄍㄨㄛˇ", 2e-3}, {"賺", "ㄓㄨㄢˋ", 1e-6}, {"萬", "ㄨㄢˋ", 1e-2}} {
+			lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
+			sys.SetUni(e.w, e.p)
+		}
+		if got := mixedType(s, tc.keys).Text(); got != tc.want {
+			t.Errorf("%q: %q want %q", tc.keys, got, tc.want)
 		}
 	}
 }
