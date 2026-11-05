@@ -1,9 +1,13 @@
 package session
 
 import (
-	"github.com/0c-biggo/0c-ime/core/proto"
 	"strings"
 	"testing"
+
+	"github.com/0c-biggo/0c-ime/core/lexicon"
+	"github.com/0c-biggo/0c-ime/core/lm"
+	"github.com/0c-biggo/0c-ime/core/proto"
+	"github.com/0c-biggo/0c-ime/core/zhuyin"
 )
 
 func TestMixedPoliciesDistinguishChineseFromAccounts(t *testing.T) {
@@ -104,6 +108,58 @@ func TestMixedPoliciesKeepSensitiveInputPrivate(t *testing.T) {
 				}
 			} else if calls == 0 {
 				t.Fatalf("policy=%t non-private control did not exercise neural scoring", aggressive)
+			}
+		}
+	}
+}
+
+// A high-frequency shorter syllable must not push a digit-key initial into
+// English in aggressive mode. Conservative follows upstream rules: since 0.2.8
+// (#241) an uppercase or two-letter prefix is itself a boundary (WQ賺錢, wq賺錢).
+func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
+	for _, prefix := range []string{"hello", "WQ", "wq", "WD5"} {
+		for _, aggressive := range []bool{false, true} {
+			s := englishBoundarySession()
+			s.MixedInputAggressive = aggressive
+			lex, sys := s.model.Lex.(*lexicon.Mem), s.model.LM.(*lm.Mem)
+			for _, entry := range []struct {
+				w, r string
+				p    float64
+			}{
+				{"賺", "ㄓㄨㄢˋ", 1e-8}, {"萬", "ㄨㄢˋ", 1e-2},
+				{"錢", "ㄑㄧㄢˊ", 1e-3}, {"賺錢", "ㄓㄨㄢˋ ㄑㄧㄢˊ", 1e-3},
+			} {
+				lex.Add(lexicon.Entry{Surface: entry.w, Reading: zhuyin.ParseReading(entry.r), PRW: 1})
+				sys.SetUni(entry.w, entry.p)
+			}
+			keys := prefix + "5j04fu06"
+			var got string
+			if aggressive {
+				first := mixedType(s, prefix+"5j04").Text()
+				if first != prefix+"賺" {
+					t.Fatalf("first syllable %q", first)
+				}
+				items := downItems(key(s, proto.KeyDown))
+				if len(items) < 2 || items[1] != "5j04" {
+					t.Fatalf("original keys: %v", items)
+				}
+				key(s, proto.KeyEscape)
+				got = mixedType(s, "fu06").Text()
+			} else {
+				got = mixedType(s, keys).Text()
+			}
+			if aggressive {
+				if want := prefix + "賺錢"; got != want {
+					t.Fatalf("%s: %q want %q", keys, got, want)
+				}
+			} else {
+				want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ賺錢", "wq": "wq賺錢", "WD5": "WD55萬錢"}[prefix]
+				if got != want {
+					t.Fatalf("conservative %s: %q want %q", keys, got, want)
+				}
+			}
+			if commit := key(s, proto.KeyEnter).Commit; commit != got {
+				t.Fatalf("commit %q != preedit %q", commit, got)
 			}
 		}
 	}

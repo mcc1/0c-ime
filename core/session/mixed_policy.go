@@ -40,7 +40,7 @@ func (s *Session) mixedAggressiveBoundary(raw, key string, tone rune) (int, zhuy
 		if best > 0 && raw[at:best] == "s" && s.mixedEnglishWord(raw[:at]) {
 			ratio = mixedPluralRatio
 		}
-		if best == 0 || score > 0 && score >= ratio*bestScore {
+		if best == 0 || s.mixedDigitInitialExtension(raw, at, best) || score > 0 && score >= ratio*bestScore {
 			best, bestScore, bestSyl = at, score, done
 		}
 	}
@@ -62,9 +62,17 @@ func (s *Session) mixedAggressiveBoundary(raw, key string, tone rune) (int, zhuy
 		if !ok {
 			continue
 		}
-		if score := s.mixedSyllableScore(done); best == 0 || score >= mixedUnknownRatio*bestScore {
+		if score := s.mixedSyllableScore(done); best == 0 || s.mixedDigitInitialExtension(raw, at, best) || score >= mixedUnknownRatio*bestScore {
 			best, bestScore, bestSyl = at, score, done
 		}
 	}
 	return best, bestSyl, best > 0
+}
+
+// In aggressive mode, keep a digit-key initial with a completed syllable rather
+// than attaching that key to English solely because the shorter reading is
+// more frequent: WQ5j04 is WQ + ㄓㄨㄢˋ, not WQ5 + ㄨㄢˋ. Both proposed
+// readings must already have passed exact spelling and dictionary checks.
+func (s *Session) mixedDigitInitialExtension(raw string, at, best int) bool {
+	return best == at+1 && unicode.IsDigit(rune(raw[at])) && s.keyIsInitial(rune(raw[at]))
 }
