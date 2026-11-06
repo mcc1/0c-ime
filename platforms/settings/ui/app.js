@@ -444,7 +444,8 @@
     keyboard: {
       title: '鍵盤與符號', lead: '注音的鍵盤排列，以及標點符號和 Emoji 怎麼打。',
       // emoji-equals-first 是 Emoji 選單的子選項，畫在它下面。
-      keys: ['keyboard-layout', 'ctrl-punctuation', 'punctuation', 'emoji-shortcut', 'emoji-equals-first', 'style-punctuation', 'style-shift-space', 'style-shift-delete'],
+      // shift-symbol-halfwidth（#258）跟 Ctrl＋標點是一對（Shift 半形、Ctrl 全形），排在它下面。
+      keys: ['keyboard-layout', 'ctrl-punctuation', 'shift-symbol-halfwidth', 'punctuation', 'emoji-shortcut', 'emoji-equals-first', 'style-punctuation', 'style-shift-space', 'style-shift-delete'],
     },
   };
   const OUTPUT_KEYS = ['output-simplified', 'simplified-hotkey'];
@@ -654,6 +655,8 @@
   function render() {
     // 名稱輸入仍在組字時保留原欄位；背景 refresh 的結果等 compositionend 再畫。
     if (page === 'styles' && styles?.composing()) return;
+    const main = document.querySelector('main');
+    const scroll = { top: main.scrollTop, left: main.scrollLeft };
     const focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.focus : null;
     const selection = focused === 'style-name' ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
     const vocabOn = vocabEnabled();
@@ -673,15 +676,21 @@
     if (focused) {
       const again = Array.from(document.querySelectorAll('[data-focus]')).find((node) => node.dataset.focus === focused);
       if (again && !again.disabled) {
-        again.focus();
+        again.focus({ preventScroll: true });
         if (selection && typeof again.setSelectionRange === 'function') again.setSelectionRange(...selection);
       }
     }
+    // 背景更新（每 15 秒、視窗重新取得焦點）會重建控制項。還原焦點不能把畫面拉回舊控制項，
+    // 區段暫時清空時被歸零的捲動位置也要還原。
+    main.scrollTop = scroll.top;
+    main.scrollLeft = scroll.left;
   }
 
   let vocabActive = false;
   function show(name) {
-    page = pageName(name);
+    const next = pageName(name);
+    if (next !== page) document.querySelector('main').scrollTop = 0;
+    page = next;
     if (page === 'overview' && vocabEnabled()) vocab.refreshOverview().then(() => { if (page === 'overview') render(); });
     if (page === 'models') models.refresh().then(() => { if (page === 'models') render(); });
     render();
