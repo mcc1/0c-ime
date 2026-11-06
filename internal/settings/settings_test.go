@@ -410,7 +410,7 @@ func TestCorruptFileIsReportedAndCanBeQuarantined(t *testing.T) {
 func TestItemsListEveryKeyWithCurrentValue(t *testing.T) {
 	s := Default()
 	items := s.Items()
-	want := 24 + len(fuzzy.Pairs()) + len(ruleSpecs()) // 含 mixed-input-policy; // also include upstream shift-symbol-halfwidth
+	want := 25 + len(fuzzy.Pairs()) + len(ruleSpecs()) // Includes mixed-input-policy, neighbor recovery and cjk-latin-space.
 	if CapsLockEnglishSetting(runtime.GOOS) {
 		want++ // caps-lock-english（#173）只有 Windows、Linux
 	}
