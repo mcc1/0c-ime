@@ -63,7 +63,7 @@ class SettingsPositionTests(unittest.TestCase):
             core: {invoke: async (command) => {
               if (command === 'app_info') return {platform:'windows/x86_64'};
               if (command === 'get_settings') return structuredClone(window.testSettings);
-              if (command === 'get_status') return {schema:1, installed:'0.2.7', mode:'manual', runtime:{state:'not_running'}, update:{state:'never_checked'}};
+              if (command === 'get_status') return {schema:1, installed:'0.2.8', mode:'manual', runtime:{state:'not_running'}, update:{state:'never_checked'}};
               throw new Error('unexpected command: ' + command);
             }}, event: {listen: async () => () => {}}
           };
