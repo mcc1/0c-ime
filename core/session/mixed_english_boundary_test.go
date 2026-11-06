@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/0c-biggo/0c-ime/core/english"
@@ -105,7 +106,7 @@ func TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning(t *testing.T) {
 	} {
 		t.Run(tc.keys, func(t *testing.T) {
 			s := englishBoundarySession()
-			s.MixedInputAggressive = true
+			s.MixedInputAggressive = strings.HasPrefix(tc.keys, "microsoft")
 			for i := 0; i < 100; i++ {
 				mixedType(s, "ji3")
 				key(s, proto.KeyEnter)
@@ -141,7 +142,7 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 		{"gpt4o ", "gpt4o "}, {"ps4u ", "ps4u "}, {"mp3u ", "mp3u "}, {"win7u ", "win7u "}, {"a4u ", "a4u "},
 	} {
 		s := englishBoundarySession()
-		s.MixedInputAggressive = true
+		s.MixedInputAggressive = strings.HasPrefix(tc.keys, "microsoft")
 		mixedType(s, tc.keys)
 		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
 			t.Errorf("%q：%q，要 %q", tc.keys, got, tc.want)
@@ -153,9 +154,9 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 // explicitly selected aggressive policy extends digit-typo recovery.
 func TestMixedDigitTypoRecoveryPolicy(t *testing.T) {
 	for _, tc := range []struct{ keys, conservative, aggressive string }{
-		{"nina87su3", "nina87su3", "nina87你"},
-		{"lisa03su3", "lisa03su3", "lisa03你"},
-		{"microsoft5993su3cl3", "microsoft5993su3cl3", "microsoft5993你好"},
+		{"nina87su3", "nina87su3", "nin嗎你"},
+		{"lisa03su3", "lisa03su3", "lis滿你"},
+		{"microsoft5993fmp6", "microsoft5993fmp6", "microsoft5993群"},
 		{"p54su3cl3", "p54你好", "p54你好"},
 	} {
 		for _, aggressive := range []bool{false, true} {

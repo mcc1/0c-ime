@@ -11,11 +11,13 @@ import (
 	"github.com/0c-biggo/0c-ime/core/zhuyin"
 )
 
+// Conservative expectations follow upstream 0.2.10 account protection. Digit
+// typo recovery beyond that protection belongs to the aggressive policy.
 func TestMixedPoliciesDistinguishChineseFromAccounts(t *testing.T) {
 	for _, tc := range []struct{ keys, conservative, aggressive string }{
 		{"microsoft593", "microsoft593", "microsoft窄"},
-		{"microsoft593fmp6", "microsoft593群", "microsoft窄群"},
-		{"microsoft5993fmp6su3cl3", "microsoft5993群你好", "microsoft5993群你好"},
+		{"microsoft593fmp6", "microsoft593fmp6", "microsoft窄群"},
+		{"microsoft5993fmp6su3cl3", "microsoft5993fmp6你好", "microsoft5993群你好"},
 		{"microsoft599fmp6su3cl3", "microsoft599fmp6你好", "microsoft599群你好"},
 		{"kevin87", "kevin87", "kevi挱"},
 		{"nina87", "nina87", "nin嗎"},
