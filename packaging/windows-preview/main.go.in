@@ -1,0 +1,316 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+package main
+
+import (
+	"bufio"
+	"crypto/sha256"
+	_ "embed"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	"github.com/0c-biggo/0c-ime/internal/update"
+)
+
+const previewVersion = "@VERSION@"
+const sourceRevision = "@SOURCE_REVISION@"
+
+var engineSHA = "@ENGINE_SHA@"
+
+//go:embed 0c-server.exe
+var engine []byte
+
+//go:embed 0c-update.exe
+var updater []byte
+
+var updaterSHA = "@UPDATER_SHA@"
+
+//go:embed 0c-settings.exe
+var settingsProgram []byte
+
+//go:embed WebView2Loader.dll
+var webviewLoader []byte
+
+//go:embed SETTINGS-NOTICES.txt
+var settingsNotices []byte
+
+var settingsSHA = "@SETTINGS_SHA@"
+var loaderSHA = "@LOADER_SHA@"
+var noticesSHA = "@NOTICES_SHA@"
+
+type embeddedPayload struct {
+	name string
+	data []byte
+	sha  string
+}
+
+func payloads() []embeddedPayload {
+	return []embeddedPayload{
+		{"0c-server.exe", engine, engineSHA}, {"0c-update.exe", updater, updaterSHA},
+		{"0c-settings.exe", settingsProgram, settingsSHA}, {"WebView2Loader.dll", webviewLoader, loaderSHA},
+		{"SETTINGS-NOTICES.txt", settingsNotices, noticesSHA},
+	}
+}
+func payloadOK() error {
+	for _, p := range payloads() {
+		sum := sha256.Sum256(p.data)
+		if hex.EncodeToString(sum[:]) != p.sha {
+			return fmt.Errorf("embedded %s SHA-256 mismatch", p.name)
+		}
+		if (strings.HasSuffix(p.name, ".exe") || strings.HasSuffix(p.name, ".dll")) && (len(p.data) < 64 || string(p.data[:2]) != "MZ") {
+			return fmt.Errorf("embedded %s is not a Windows executable", p.name)
+		}
+	}
+	return nil
+}
+
+func installed(base string) (*update.Receipt, string, error) {
+	b, err := os.ReadFile(filepath.Join(base, "install-receipt.json"))
+	if err != nil {
+		return nil, "", err
+	}
+	var r update.Receipt
+	if err = json.Unmarshal(b, &r); err != nil {
+		return nil, "", err
+	}
+	if r.Schema != 1 || r.Product != "0c" || !r.Active || !update.SafeName(r.Directory) || !strings.HasPrefix(r.Directory, "versions/") {
+		return nil, "", fmt.Errorf("invalid or inactive installation receipt")
+	}
+	return &r, filepath.Join(base, filepath.FromSlash(r.Directory)), nil
+}
+
+func copyFile(src, dst string) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+		return err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(out, in)
+	closeErr := out.Close()
+	if err != nil {
+		return err
+	}
+	return closeErr
+}
+
+func supportedBase(version string) bool {
+	return version == "0.2.9"
+}
+
+func prepare(base, dest string) error {
+	if err := payloadOK(); err != nil {
+		return err
+	}
+	receipt, source, err := installed(base)
+	if err != nil {
+		return err
+	}
+	if !supportedBase(receipt.Version) {
+		return fmt.Errorf("this preview requires official Windows x64 0.2.9; found %s. Update to official 0.2.9 first", receipt.Version)
+	}
+	release, err := update.Verify(source, "windows", "amd64")
+	if err != nil {
+		return fmt.Errorf("verify installed bundle: %w", err)
+	}
+	if release.Version != receipt.Version {
+		return fmt.Errorf("receipt and installed bundle versions differ")
+	}
+	// Anchor source files to the installation receipt as well as release.json.
+	if len(receipt.Files) != len(release.Files) {
+		return fmt.Errorf("receipt file list differs from installed bundle")
+	}
+	for name, expected := range release.Files {
+		if receipt.Files[name] != expected {
+			return fmt.Errorf("receipt hash differs: %s", name)
+		}
+		target := filepath.Join(dest, filepath.FromSlash(name))
+		if err = copyFile(filepath.Join(source, filepath.FromSlash(name)), target); err != nil {
+			return err
+		}
+		actual, e := update.Hash(target)
+		if e != nil {
+			return e
+		}
+		if actual != expected {
+			return fmt.Errorf("copied file hash differs: %s", name)
+		}
+	}
+	for _, p := range payloads() {
+		if err = os.WriteFile(filepath.Join(dest, p.name), p.data, 0600); err != nil {
+			return err
+		}
+	}
+
+	note := "mcc1 private test build, not an official upstream release.\nVersion: " + previewVersion + "\nEngine/updater source: https://github.com/mcc1/0c-ime/commit/" + sourceRevision + "\nTSF shell, candidate UI, dictionary and model runtime reused unchanged from this user's verified installation, version " + receipt.Version + ".\n"
+	if err = os.WriteFile(filepath.Join(dest, "PREVIEW.txt"), []byte(note), 0600); err != nil {
+		return err
+	}
+	raw, err := os.ReadFile(filepath.Join(source, "release.json"))
+	if err != nil {
+		return err
+	}
+	var metadata map[string]any
+	if err = json.Unmarshal(raw, &metadata); err != nil {
+		return err
+	}
+	metadata["version"], metadata["channel"], metadata["revision"] = previewVersion, "internal-preview", sourceRevision
+	metadata["dirty"], metadata["build_platform"] = false, "Linux cross-compiled Go engine/updater and Rust GNU settings; verified installed Windows 0.2.9 TSF and runtime"
+	files := map[string]string{}
+	for name := range release.Files {
+		h, e := update.Hash(filepath.Join(dest, filepath.FromSlash(name)))
+		if e != nil {
+			return e
+		}
+		files[name] = h
+	}
+	for _, p := range payloads() {
+		h, e := update.Hash(filepath.Join(dest, p.name))
+		if e != nil {
+			return e
+		}
+		files[p.name] = h
+	}
+	h, err := update.Hash(filepath.Join(dest, "PREVIEW.txt"))
+	if err != nil {
+		return err
+	}
+	files["PREVIEW.txt"] = h
+	metadata["files"] = files
+	data, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err = os.WriteFile(filepath.Join(dest, "release.json"), append(data, '\n'), 0600); err != nil {
+		return err
+	}
+	if _, err = update.Verify(dest, "windows", "amd64"); err != nil {
+		return fmt.Errorf("verify prepared preview: %w", err)
+	}
+	return nil
+}
+
+func command(file string, args ...string) error {
+	cmd := exec.Command(file, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func run() error {
+	if err := payloadOK(); err != nil {
+		return err
+	}
+	if len(os.Args) == 2 && os.Args[1] == "--verify-payload" {
+		fmt.Println(previewVersion, "engine SHA-256:", engineSHA)
+		fmt.Println("Settings SHA-256:", settingsSHA, "loader SHA-256:", loaderSHA)
+		return nil
+	}
+	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+		return fmt.Errorf("requires Windows x64")
+	}
+	rollback := len(os.Args) == 2 && os.Args[1] == "--rollback"
+	policy := ""
+	if len(os.Args) == 3 && os.Args[1] == "--policy" && (os.Args[2] == "conservative" || os.Args[2] == "aggressive") {
+		policy = os.Args[2]
+	}
+	updateMode := ""
+	if len(os.Args) == 3 && os.Args[1] == "--updates" && (os.Args[2] == "manual" || os.Args[2] == "auto") {
+		updateMode = os.Args[2]
+	}
+	neighborMode := ""
+	if len(os.Args) == 3 && os.Args[1] == "--neighbor" && (os.Args[2] == "on" || os.Args[2] == "off") {
+		neighborMode = os.Args[2]
+	}
+	if len(os.Args) > 1 && !rollback && policy == "" && updateMode == "" && neighborMode == "" {
+		return fmt.Errorf("supported arguments: --rollback, --policy conservative|aggressive, --updates manual|auto, --neighbor on|off")
+	}
+	local := os.Getenv("LOCALAPPDATA")
+	if !filepath.IsAbs(local) {
+		return fmt.Errorf("missing LOCALAPPDATA")
+	}
+	base := filepath.Join(local, "Zuin")
+	receipt, source, err := installed(base)
+	if err != nil {
+		return err
+	}
+	if rollback {
+		if receipt.Version != previewVersion {
+			return fmt.Errorf("this preview is not the active installed version")
+		}
+		fmt.Println("Restoring the previous installation; current personal vocabulary is retained.")
+		return command(filepath.Join(source, "0c-update.exe"), "rollback")
+	}
+	if policy != "" {
+		if receipt.Version != previewVersion {
+			return fmt.Errorf("install this preview before selecting its mixed-input policy")
+		}
+		return command(filepath.Join(source, "0c-update.exe"), "set", "mixed-input-policy", policy, "-apply", "-notify")
+	}
+	if neighborMode != "" {
+		if receipt.Version != previewVersion {
+			return fmt.Errorf("install this preview before toggling neighbor recovery")
+		}
+		args := []string{"set"}
+		if neighborMode == "on" {
+			args = append(args, "mixed-input-policy", "aggressive")
+		}
+		args = append(args, "neighbor-key-recovery", neighborMode, "-apply", "-notify")
+		return command(filepath.Join(source, "0c-update.exe"), args...)
+	}
+	if updateMode != "" {
+		// Allow restoring automatic updates after rolling back to the official base.
+		if receipt.Version != previewVersion && !supportedBase(receipt.Version) {
+			return fmt.Errorf("update-mode helper requires this preview or a supported base")
+		}
+		if err = command(filepath.Join(source, "0c-update.exe"), "mode", updateMode); err != nil {
+			return err
+		}
+		fmt.Println("Update mode:", updateMode)
+		return nil
+	}
+	fmt.Println("Preparing", previewVersion)
+	fmt.Println("Requires official Windows x64 0.2.9. Close Settings, finish composition, and run as administrator using the same Windows account.")
+	dest, err := os.MkdirTemp("", "0c-chinese-preview-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dest)
+	if err = prepare(base, dest); err != nil {
+		return err
+	}
+	fmt.Println("Preview and copied components verified. The bundled 0c updater retains the previous installation for rollback.")
+	if err = command(filepath.Join(dest, "0c-update.exe"), "install", "-bundle", dest, "-channel", "internal-preview"); err != nil {
+		return err
+	}
+	fmt.Println("Installed. Reopen Settings and the applications you want to test. Follow any restart notice from the updater; no forced sign-out.")
+	fmt.Println("To roll back, run this same program as administrator with --rollback.")
+	return nil
+}
+
+func main() {
+	err := run()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Preview setup:", err)
+	}
+	if runtime.GOOS == "windows" && !(len(os.Args) == 2 && os.Args[1] == "--verify-payload") {
+		fmt.Println("Press Enter to close.")
+		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+	}
+	if err != nil {
+		os.Exit(1)
+	}
+}
