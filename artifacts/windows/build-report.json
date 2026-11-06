@@ -1,0 +1,99 @@
+{
+  "version": "0.2.10-preview.mixed.1",
+  "source_revision": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
+  "build_branch": "build/windows-mixed-input-preview-1",
+  "upstream": "f51943a464ab54d86c04e909fec66abaa9a1fb6c",
+  "merged_features": {
+    "feat/mixed-input-aggressive": "dd9df7151473f9b6afd61857367c0a5e554ec0c0",
+    "feat/keyboard-neighbor-recovery": "dfa66e4ffb8ba6af71d9f6b7ad2ce576d8459776"
+  },
+  "requires": "existing verified official Windows x64 0.2.9 installation",
+  "fresh_install_supported": false,
+  "signed": false,
+  "native_windows_execution": "not_run",
+  "archive": {
+    "name": "0c-windows-mixed-preview-1.zip",
+    "bytes": 19292434,
+    "sha256": "a588dddde51de42404e67642fc86d903866286ebdee759ae3cd9a5a8eb97c521"
+  },
+  "payload_metadata": {
+    "version": "0.2.10-preview.mixed.1",
+    "revision": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
+    "required_base": "official Windows amd64 0.2.9",
+    "payloads": {
+      "VERSION": "0.2.10-preview.mixed.1",
+      "SOURCE_REVISION": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
+      "ENGINE_SHA": "ac9ddcbf6c73bdd30d2924d525eba7b94c8f067cacfe9c81bb74d97b7b74e411",
+      "UPDATER_SHA": "00236e848dc29a9d149d619ef175e177f315eb7bc587f5d55b5ebd164a391b07",
+      "SETTINGS_SHA": "dc02a1a166c46bcfc8ef01404bc189c608280940db1569dee22f9c4df1e02145",
+      "LOADER_SHA": "86545b66cdb0603bc26b626fb9ad610cb6e71f28d468f5ea66df23b03dda96d5",
+      "NOTICES_SHA": "09c26054bbe1640fa18f0c9b21ae945fc4503f23d5221f0d4ce8dc0300f327bb"
+    },
+    "PE_imports": {
+      "0c-server.exe": [
+        "kernel32.dll"
+      ],
+      "0c-update.exe": [
+        "kernel32.dll"
+      ],
+      "0c-settings.exe": [
+        "WebView2Loader.dll",
+        "bcryptprimitives.dll",
+        "kernel32.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "api-ms-win-core-winrt-error-l1-1-0.dll",
+        "combase.dll",
+        "comctl32.dll",
+        "dwmapi.dll",
+        "gdi32.dll",
+        "imm32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ole32.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "shlwapi.dll",
+        "user32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ntdll.dll",
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll"
+      ],
+      "WebView2Loader.dll": [
+        "KERNEL32.dll",
+        "ADVAPI32.dll",
+        "ole32.dll"
+      ]
+    },
+    "native_Windows_execution": "not_run",
+    "settings_target": "x86_64-pc-windows-gnu",
+    "rust": "1.99.0",
+    "installer_sha256": "f62562822b0372b58ac2cb9a3e5b17fc61f7d2eb2ab023791b563c73b9e6b8ed"
+  },
+  "verification": {
+    "upgrade_helper_prepare_and_tamper_tests": "passed",
+    "helper_go_vet": "passed",
+    "embedded_payload_hashes": "passed",
+    "PE_architecture_and_imports": "passed",
+    "core_session_and_settings_go_tests": "passed",
+    "core_session_and_settings_go_vet": "passed",
+    "published_dictionary_digit_initial_and_neighbor_tests": "passed",
+    "chromium_mixed_input_group_tests": 2,
+    "chromium_scroll_tests": 4,
+    "zip_crc_and_all_members_sha256": "passed"
+  },
+  "cross_compiler": {
+    "image": "0c-settings-windows-build:1.99.0",
+    "rust": "1.99.0",
+    "target": "x86_64-pc-windows-gnu",
+    "cargo_locked": true,
+    "custom_protocol": true,
+    "notice_reuse": "Cargo.lock unchanged from the prior GNU settings build; exact crate/SDK notices and pinned unmodified WebView2Loader reused",
+    "linker_warning": "corrupt .drectve at end of def file (warning); build completed, PE import checks passed"
+  },
+  "test_dictionary_manifest_sha256": "3e93ed1ef3d2fc7443f64a0b5203294298181b84bed2cd6a144c48a4852aefee",
+  "experimental_rankers_included": false
+}
