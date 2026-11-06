@@ -1,0 +1,5 @@
+=== RUN   TestPrepareActualOfficial0210
+    official_bundle_test.go:11: Prepared and verified actual official bundle: 0.2.11-preview.mixed.1, 1334 files
+--- PASS: TestPrepareActualOfficial0210 (5.27s)
+PASS
+ok  	github.com/0c-biggo/0c-ime/build/windows-feature-preview-0.2.11-preview.mixed.1	5.277s

@@ -1,0 +1,72 @@
+--- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning (0.17s)
+    --- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning/kevin87 (0.02s)
+        mixed_english_boundary_test.go:114: preedit after learning: "kevi挱", want "kevin87"
+    --- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning/nina87 (0.04s)
+        mixed_english_boundary_test.go:114: preedit after learning: "nin嗎", want "nina87"
+    --- ok  	github.com/0c-biggo/0c-ime/cmd/0c-server	172.388s
+FAIL
+ng/lisa0304 (0.03s)
+        mixed_english_boundary_test.go:114: preedit after learning: "lis滿04", want "lisa0304"
+    --- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning/facebookg4 (0.02s)
+        mixed_english_boundary_test.go:114: preedit after learning: "facebook是", want "facebookg4"
+    --- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning/gpt4 (0.01s)
+        mixed_english_boundary_test.go:114: preedit after learning: "gp斥", want "gpt4"
+    --- FAIL: TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning/gpt4o_ (0.04s)
+        mixed_english_boundary_test.go:114: preedit after learning: "gp斥誒", want "gpt4o "
+--- FAIL: TestMixedTypoDoesNotSwallowFollowingZhuyin (0.02s)
+    mixed_english_boundary_test.go:147: "lisa0304"："lis滿04"，要 "lisa0304"
+    mixed_english_boundary_test.go:147: "kevin87"："kevi挱"，要 "kevin87"
+    mixed_english_boundary_test.go:147: "gpt4o "："gp斥誒"，要 "gpt4o "
+--- FAIL: TestMixedDigitTypoRecoveryPolicy (0.02s)
+    mixed_english_boundary_test.go:171: policy=true "nina87su3": "nin嗎你", want "nina87你"
+    mixed_english_boundary_test.go:171: policy=true "lisa03su3": "lis滿你", want "lisa03你"
+    mixed_english_boundary_test.go:171: policy=false "microsoft5993su3cl3": "microsoft5993su3好", want "microsoft5993su3cl3"
+--- FAIL: TestMixedPoliciesDistinguishChineseFromAccounts (0.19s)
+    --- FAIL: TestMixedPoliciesDistinguishChineseFromAccounts/conservative/microsoft593fmp6 (0.00s)
+        mixed_policy_test.go:41: preedit: "microsoft593fmp6", want "microsoft593群"
+    --- FAIL: TestMixedPoliciesDistinguishChineseFromAccounts/conservative/microsoft5993fmp6su3cl3 (0.00s)
+        mixed_policy_test.go:41: preedit: "microsoft5993fmp6你好", want "microsoft5993群你好"
+FAIL
+FAIL	github.com/0c-biggo/0c-ime/core/session	67.109s
+ok  	github.com/0c-biggo/0c-ime/core/engine	0.611s
+ok  	github.com/0c-biggo/0c-ime/internal/settings	(cached)
+0c-update: 加入輸入法清單失敗： not yet
+0c-update: 加入輸入法清單失敗： not yet
+0c-update: 加入輸入法清單失敗： not yet
+更新方式：自動（建議） [auto]
+階段：idle
+更新方式：自動（建議） [auto]
+階段：idle
+更新方式：自動（建議） [auto]
+階段：idle
+上次查詢失敗：Get "https://127.0.0.1:1/feed.json": dial tcp 127.0.0.1:1: connect: connection refused
+{"schema":1,"ok":true,"update":{"state":"check_failed","last_check":"2026-11-06T21:02:58.344091104Z","next_check":"2026-11-06T21:32:58.344091104Z","check_failures":2,"error":"Get \"https://127.0.0.1:1/feed.json\": dial tcp 127.0.0.1:1: connect: connection refused","stage":"idle"}}
+已設定 mixed-input=off。完成組字後執行 pkill -x 0c-server，下一個按鍵會以新設定啟動引擎。
+0c-update: 改為直接啟動引擎： not found
+0c-update: 改為直接啟動引擎： systemd-run：Failed to connect to bus: No medium found (exit status 1)
+0c-update: 改為直接啟動引擎： systemd-run：Failed to connect to bus: No medium found (exit status 1)
+0c-update: 已把靈犀注音加回 Fcitx5 的輸入法清單
+0c-update: 查詢 Fcitx5 輸入法清單失敗，稍後再試： org.freedesktop.DBus.Error.ServiceUnknown
+0c-update: 把靈犀注音加回輸入法清單失敗，稍後再試： Fcitx5 沒有保留靈犀注音
+0c-update: 把靈犀注音加回輸入法清單失敗，稍後再試： permission denied
+0c-update: 已把靈犀注音加回 Fcitx5 的輸入法清單
+0c-update: 已把 kwinrc 的 InputMethod 寫回 /usr/share/applications/org.fcitx.Fcitx5.desktop
+0c-update: 已把 kwinrc 的 InputMethod 寫回 /usr/share/applications/org.fcitx.Fcitx5.desktop
+0c-update: 無法交由 KWin 重新啟動 Fcitx5，改為直接啟動： 寫回 kwinrc 後 KWin 沒有啟動 Fcitx5
+0c-update: Fcitx5 由更新器啟動、拿不到 KWin 的輸入法連線；交還 KWin 重新啟動
+0c-update: Fcitx5 由更新器啟動、拿不到 KWin 的輸入法連線；交還 KWin 重新啟動
+0c-update: Fcitx5 由更新器啟動、拿不到 KWin 的輸入法連線；交還 KWin 重新啟動
+0c-update: 無法顯示下載模型的提醒： 沒有通知服務
+--- FAIL: TestParentWatchNoticesParentExit (11.11s)
+    parent_test.go:47: 葉節點：timeout
+已回到安裝前（沒有 0c 安裝）：一併移除自動更新排程與更新工具副本。
+已重建自動更新（原因：自動更新程式被移除）
+已重建自動更新（原因：自動更新程式被移除）
+已重建自動更新（原因：自動更新排程被移除）
+已把自動更新程式換成目前版本
+已把自動更新程式換成目前版本
+已把自動更新程式換成目前版本
+FAIL
+FAIL	github.com/0c-biggo/0c-ime/cmd/0c-update	56.375s
+ok  	github.com/0c-biggo/0c-ime/cmd/0c-server	153.184s
+FAIL

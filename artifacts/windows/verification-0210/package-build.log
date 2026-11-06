@@ -1,0 +1,8 @@
+ok  	github.com/0c-biggo/0c-ime/build/windows-feature-preview-0.2.11-preview.mixed.1	0.775s
+0.2.11-preview.mixed.1 engine SHA-256: 546d83a7e9537314a14927790d57d35dd42532c40900c4db9098a7dd78cc6440
+Settings SHA-256: 498bd1efd64ece5ddc50d502ddaa84da7f4b40daa4504257fd5f8c81958661b5 loader SHA-256: 86545b66cdb0603bc26b626fb9ad610cb6e71f28d468f5ea66df23b03dda96d5
+{
+  "archive": "/workspace/scratch/windows-mixed-preview-0210/package.zip",
+  "sha256": "480569df0705023d346aaa009cf5dd1f8106878c47b6c89965bfe5cb503b868c",
+  "revision": "56a5881747f61a12ede914082673ed3329525937"
+}

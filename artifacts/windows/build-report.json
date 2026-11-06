@@ -1,31 +1,27 @@
 {
-  "version": "0.2.10-preview.mixed.1",
-  "source_revision": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
+  "version": "0.2.11-preview.mixed.1",
+  "source_revision": "56a5881747f61a12ede914082673ed3329525937",
   "build_branch": "build/windows-mixed-input-preview-1",
-  "upstream": "f51943a464ab54d86c04e909fec66abaa9a1fb6c",
-  "merged_features": {
-    "feat/mixed-input-aggressive": "dd9df7151473f9b6afd61857367c0a5e554ec0c0",
-    "feat/keyboard-neighbor-recovery": "dfa66e4ffb8ba6af71d9f6b7ad2ce576d8459776"
-  },
-  "requires": "existing verified official Windows x64 0.2.9 installation",
+  "upstream_release_source": "5ab090929c18ff8c05df6bc77a19a2a63587e939",
+  "required_base": "official Windows x64 0.2.10",
   "fresh_install_supported": false,
   "signed": false,
   "native_windows_execution": "not_run",
   "archive": {
-    "name": "0c-windows-mixed-preview-1.zip",
-    "bytes": 19292434,
-    "sha256": "a588dddde51de42404e67642fc86d903866286ebdee759ae3cd9a5a8eb97c521"
+    "name": "0c-windows-mixed-preview-2.zip",
+    "bytes": 19326790,
+    "sha256": "480569df0705023d346aaa009cf5dd1f8106878c47b6c89965bfe5cb503b868c"
   },
   "payload_metadata": {
-    "version": "0.2.10-preview.mixed.1",
-    "revision": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
-    "required_base": "official Windows amd64 0.2.9",
+    "version": "0.2.11-preview.mixed.1",
+    "revision": "56a5881747f61a12ede914082673ed3329525937",
+    "required_base": "official Windows amd64 0.2.10",
     "payloads": {
-      "VERSION": "0.2.10-preview.mixed.1",
-      "SOURCE_REVISION": "0f0ebbe02a80a43cd43ec6dc3ac77d1b58b27ff4",
-      "ENGINE_SHA": "ac9ddcbf6c73bdd30d2924d525eba7b94c8f067cacfe9c81bb74d97b7b74e411",
-      "UPDATER_SHA": "00236e848dc29a9d149d619ef175e177f315eb7bc587f5d55b5ebd164a391b07",
-      "SETTINGS_SHA": "dc02a1a166c46bcfc8ef01404bc189c608280940db1569dee22f9c4df1e02145",
+      "VERSION": "0.2.11-preview.mixed.1",
+      "SOURCE_REVISION": "56a5881747f61a12ede914082673ed3329525937",
+      "ENGINE_SHA": "546d83a7e9537314a14927790d57d35dd42532c40900c4db9098a7dd78cc6440",
+      "UPDATER_SHA": "2d985c78e413ae2bdb388e067d2bd1d37e941f7848566b818cd6a46aa650f468",
+      "SETTINGS_SHA": "498bd1efd64ece5ddc50d502ddaa84da7f4b40daa4504257fd5f8c81958661b5",
       "LOADER_SHA": "86545b66cdb0603bc26b626fb9ad610cb6e71f28d468f5ea66df23b03dda96d5",
       "NOTICES_SHA": "09c26054bbe1640fa18f0c9b21ae945fc4503f23d5221f0d4ce8dc0300f327bb"
     },
@@ -71,29 +67,40 @@
     "native_Windows_execution": "not_run",
     "settings_target": "x86_64-pc-windows-gnu",
     "rust": "1.99.0",
-    "installer_sha256": "f62562822b0372b58ac2cb9a3e5b17fc61f7d2eb2ab023791b563c73b9e6b8ed"
+    "installer_sha256": "28462a13f40d6dfcd726d290a59f7e0cfba01a863c747493b44de0aa55fe4458"
+  },
+  "official_provenance": {
+    "official_signed_feed": "public-beta-feed.json",
+    "official_feed_signature": "verified Ed25519 pinned project key",
+    "official_zip_sha256": "6d871d1a4dd6c31887789b8e02006f43d60915b7228cf56463457eb6902335ba",
+    "official_revision": "c337155d2cf9ab0729f358fe27e585ca288d27e6",
+    "official_manifest_files_verified": 1331,
+    "public_release_source": "5ab090929c18ff8c05df6bc77a19a2a63587e939",
+    "source_revision_note": "Official binary revision is not fetchable publicly. Build uses published release/0.2.10 source; no diff in platforms/windows against 0.2.9. Installed TSF/runtime remain unmodified.",
+    "official_data_manifest_sha256": "e356ef4aafade0b2897956a12ac8b8f849051e77557f2d9a88adb746daa94c4e",
+    "native_source_diff": "",
+    "cargo_lock_diff": ""
   },
   "verification": {
-    "upgrade_helper_prepare_and_tamper_tests": "passed",
-    "helper_go_vet": "passed",
-    "embedded_payload_hashes": "passed",
-    "PE_architecture_and_imports": "passed",
-    "core_session_and_settings_go_tests": "passed",
-    "core_session_and_settings_go_vet": "passed",
-    "published_dictionary_digit_initial_and_neighbor_tests": "passed",
+    "go_test_core_session_engine_settings_server_updater": "passed",
+    "go_vet": "passed",
+    "updater_parent_watch_initial_timeout": "isolated retry and subsequent full updater suite passed",
+    "public_dictionary_tests": "passed",
+    "official_0210_dictionary_tests": "passed",
     "chromium_mixed_input_group_tests": 2,
-    "chromium_scroll_tests": 4,
-    "zip_crc_and_all_members_sha256": "passed"
+    "chromium_scroll_tests": 5,
+    "webkit_tests": "skipped: browser unavailable",
+    "helper_preparation_tamper_and_preservation_tests": "passed",
+    "actual_official_0210_bundle_preparation": "passed; output fully verified and original receipt unchanged",
+    "PE_architecture_imports_embedded_payloads_zip_hashes": "passed"
   },
-  "cross_compiler": {
-    "image": "0c-settings-windows-build:1.99.0",
+  "settings_build": {
     "rust": "1.99.0",
     "target": "x86_64-pc-windows-gnu",
-    "cargo_locked": true,
+    "locked": true,
     "custom_protocol": true,
-    "notice_reuse": "Cargo.lock unchanged from the prior GNU settings build; exact crate/SDK notices and pinned unmodified WebView2Loader reused",
-    "linker_warning": "corrupt .drectve at end of def file (warning); build completed, PE import checks passed"
+    "unchanged_Cargo_lock_notices_and_loader_reused": true,
+    "linker_warning": "corrupt .drectve at end of def file; build completed and PE import checks passed"
   },
-  "test_dictionary_manifest_sha256": "3e93ed1ef3d2fc7443f64a0b5203294298181b84bed2cd6a144c48a4852aefee",
   "experimental_rankers_included": false
 }

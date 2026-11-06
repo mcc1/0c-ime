@@ -1,0 +1,12 @@
+package main
+import("os";"path/filepath";"testing";"github.com/0c-biggo/0c-ime/internal/update")
+func TestPrepareActualOfficial0210(t *testing.T){
+ base:="/workspace/scratch/windows-mixed-preview-0210/real-install"
+ receipt:=filepath.Join(base,"install-receipt.json");before,err:=os.ReadFile(receipt);if err!=nil{t.Fatal(err)}
+ dest:=filepath.Join(t.TempDir(),"prepared")
+ if err:=prepare(base,dest);err!=nil{t.Fatal(err)}
+ r,err:=update.Verify(dest,"windows","amd64");if err!=nil{t.Fatal(err)}
+ if r.Version!=previewVersion||r.Channel!="internal-preview"{t.Fatal(r.Version,r.Channel)}
+ after,err:=os.ReadFile(receipt);if err!=nil||string(before)!=string(after){t.Fatal("source receipt changed",err)}
+ t.Logf("Prepared and verified actual official bundle: %s, %d files",r.Version,len(r.Files))
+}

@@ -1,0 +1,4 @@
+=== RUN   TestParentWatchNoticesParentExit
+--- PASS: TestParentWatchNoticesParentExit (1.36s)
+PASS
+ok  	github.com/0c-biggo/0c-ime/cmd/0c-update	1.761s

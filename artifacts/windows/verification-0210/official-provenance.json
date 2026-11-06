@@ -1,0 +1,12 @@
+{
+  "official_signed_feed": "public-beta-feed.json",
+  "official_feed_signature": "verified Ed25519 pinned project key",
+  "official_zip_sha256": "6d871d1a4dd6c31887789b8e02006f43d60915b7228cf56463457eb6902335ba",
+  "official_revision": "c337155d2cf9ab0729f358fe27e585ca288d27e6",
+  "official_manifest_files_verified": 1331,
+  "public_release_source": "5ab090929c18ff8c05df6bc77a19a2a63587e939",
+  "source_revision_note": "Official binary revision is not fetchable publicly. Build uses published release/0.2.10 source; no diff in platforms/windows against 0.2.9. Installed TSF/runtime remain unmodified.",
+  "official_data_manifest_sha256": "e356ef4aafade0b2897956a12ac8b8f849051e77557f2d9a88adb746daa94c4e",
+  "native_source_diff": "",
+  "cargo_lock_diff": ""
+}
