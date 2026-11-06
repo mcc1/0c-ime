@@ -714,7 +714,7 @@ func (s *Session) mixedBoundary(raw, key string, tone rune) (int, zhuyin.Syllabl
 
 // mixedAfterTypo：打錯一鍵的注音（qji3：ㄆㄨㄛˇ 組不成音節）在聲調鍵後仍是待定的按鍵，之後的注音會一路接在後面，
 // 直到下一個空白才整串照字面送出，好幾個字都變成英文字母（qji3ap6rup 而不是 qji3們今）。前段最後一個聲調鍵
-// （前一鍵是數字時，後段須含字母或前段是 reversedTone，保留帳號的純數字尾碼）之後的按鍵照順序打、組成的不是罕用字（mixedRareFloor）時，從那裡切開：打錯的那段照字面，
+// （前一鍵是數字時只允 reversedTone；積極模式也允後段含字母，保留純數字尾碼）之後的按鍵照順序打、組成的不是罕用字（mixedRareFloor）時，從那裡切開：打錯的那段照字面，
 // 後面照常是中文。前段要有字母：只有數字與標點的是數字寫法。罕用字門檻不用 mixedUnknownWordFloor 的常用字門檻：
 // 句首機率會隨個人用字大幅變動（整串照字面送出的句子讓個人模型學到「句首接天」，們的句首機率掉到 5e-5）。
 func (s *Session) mixedAfterTypo(raw string, tone rune) (int, zhuyin.Syllable, bool) {
@@ -726,8 +726,9 @@ func (s *Session) mixedAfterTypo(raw string, tone rune) (int, zhuyin.Syllable, b
 		return 0, "", false
 	}
 	// A digit before the previous tone still protects account/number suffixes.
-	// A new syllable containing letters can resume Chinese after that boundary.
-	if unicode.IsDigit(rune(raw[at-2])) && !s.reversedTone(raw[:at]) && !strings.ContainsFunc(raw[at:], unicode.IsLetter) {
+	// Aggressive mode may resume a letter-containing syllable; conservative mode
+	// retains upstream account protection, except for upstream reversedTone recovery.
+	if unicode.IsDigit(rune(raw[at-2])) && !s.reversedTone(raw[:at]) && (!s.MixedInputAggressive || !strings.ContainsFunc(raw[at:], unicode.IsLetter)) {
 		return 0, "", false
 	}
 	if strings.ContainsFunc(raw[:at], func(r rune) bool { _, ok := s.layout.Symbol(r); return !ok }) {

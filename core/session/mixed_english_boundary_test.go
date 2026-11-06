@@ -105,6 +105,7 @@ func TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning(t *testing.T) {
 	} {
 		t.Run(tc.keys, func(t *testing.T) {
 			s := englishBoundarySession()
+			s.MixedInputAggressive = true
 			for i := 0; i < 100; i++ {
 				mixedType(s, "ji3")
 				key(s, proto.KeyEnter)
@@ -140,9 +141,35 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 		{"gpt4o ", "gpt4o "}, {"ps4u ", "ps4u "}, {"mp3u ", "mp3u "}, {"win7u ", "win7u "}, {"a4u ", "a4u "},
 	} {
 		s := englishBoundarySession()
+		s.MixedInputAggressive = true
 		mixedType(s, tc.keys)
 		if got := key(s, proto.KeyEnter).Commit; got != tc.want {
 			t.Errorf("%q：%q，要 %q", tc.keys, got, tc.want)
+		}
+	}
+}
+
+// Conservative mode retains upstream 0.2.10 account boundaries; only the
+// explicitly selected aggressive policy extends digit-typo recovery.
+func TestMixedDigitTypoRecoveryPolicy(t *testing.T) {
+	for _, tc := range []struct{ keys, conservative, aggressive string }{
+		{"nina87su3", "nina87su3", "nina87你"},
+		{"lisa03su3", "lisa03su3", "lisa03你"},
+		{"microsoft5993su3cl3", "microsoft5993su3cl3", "microsoft5993你好"},
+		{"p54su3cl3", "p54你好", "p54你好"},
+	} {
+		for _, aggressive := range []bool{false, true} {
+			s := englishBoundarySession()
+			s.MixedInputAggressive = aggressive
+			mixedType(s, tc.keys)
+			got := key(s, proto.KeyEnter).Commit
+			want := tc.conservative
+			if aggressive {
+				want = tc.aggressive
+			}
+			if got != want {
+				t.Errorf("policy=%t %q: %q, want %q", aggressive, tc.keys, got, want)
+			}
 		}
 	}
 }

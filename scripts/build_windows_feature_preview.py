@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a Windows x64 upgrade-test helper; requires a verified official 0.2.9 installation."""
+"""Build a Windows x64 upgrade-test helper; requires a verified official 0.2.10 installation."""
 import argparse, hashlib, json, os, shutil, subprocess, zipfile
 from pathlib import Path
 from collect_notices import go_sections
@@ -46,7 +46,7 @@ def build(a):
     text=(ROOT/'packaging/windows-preview/README.txt.in').read_text()
     for key,value in tokens.items(): text=text.replace('@'+key+'@',value)
     (out/'README.txt').write_text(text,encoding='utf-8-sig')
-    metadata={'version':a.version,'revision':revision,'required_base':'official Windows amd64 0.2.9','payloads':tokens,'PE_imports':deps,
+    metadata={'version':a.version,'revision':revision,'required_base':'official Windows amd64 0.2.10','payloads':tokens,'PE_imports':deps,
               'native_Windows_execution':'not_run','settings_target':'x86_64-pc-windows-gnu','rust':'1.99.0','installer_sha256':sha(program)}
     (out/'BUILD-INFO.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
     paths=sorted(p for p in out.rglob('*') if p.is_file())
@@ -62,6 +62,6 @@ def build(a):
     archive.with_suffix('.zip.sha256').write_text(sha(archive)+'  '+archive.name+'\n')
     print(json.dumps({'archive':str(archive),'sha256':sha(archive),'revision':revision},indent=2))
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--version',default='0.2.10-preview.mixed.1')
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('--version',default='0.2.11-preview.mixed.1')
     for name in ('settings','settings-notices','loader','out'): p.add_argument('--'+name,required=True,type=Path)
     p.add_argument('--go',default='go'); build(p.parse_args())
