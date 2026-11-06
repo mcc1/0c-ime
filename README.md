@@ -120,7 +120,9 @@ go test ./...
 go run ./cmd/0c-cli -data assets/data
 ```
 
-中英混打的「混打組字傾向」預設為**保守**，保留帳號、型號及數字的判斷；選**積極**時，明確聲調完成且有對應字詞的注音優先組字，也較積極地從英數或誤按後恢復中文，代價是部分帳號或型號可能變成中文字，需要原文時請切到英文。兩種模式都能從候選選回原按鍵，關閉混打時此選項不生效。CLI 可用 `-mixed-input -mixed-input-policy aggressive` 測試積極模式。積極模式不會用鄰近按鍵替換誤按鍵。
+中英混打的「混打組字傾向」預設為**保守**，保留帳號、型號及數字的判斷；選**積極**時，明確聲調完成且有對應字詞的注音優先組字，也較積極地從英數或誤按後恢復中文，代價是部分帳號或型號可能變成中文字，需要原文時請切到英文。兩種模式都能從候選選回原按鍵，關閉混打時此選項不生效。CLI 可用 `-mixed-input -mixed-input-policy aggressive` 測試積極模式。
+
+「鄰鍵容錯（試用）」是另一個獨立開關，預設關閉；第一版僅用於 QWERTY、標準注音的積極混打。組不出讀音時嘗試替換一個鄰鍵；只有一個讀音時自動恢復，多個讀音則按 ↓ 選字，仍可選回原按鍵。已能組字、聲調誤按、純數字及其他注音排列不在這版範圍。CLI 加上 `-neighbor-key-recovery` 試用；規則、限制與驗證方式見[鄰鍵容錯設計](design/keyboard-neighbor-recovery.md)。
 
 `make assets` 從同版本的 [Release](https://github.com/0c-biggo/0c-ime/releases) 取得原始碼與模型 tarball（合計約 275 MB），驗證後把現成字典放到 `assets/data/`、已配對模型放到 `models/select/` 與 `models/punct/`，和出貨內容相同；0.2.2 起 Release 附的 Source code 壓縮檔也適用。要指定版本用 `make assets RELEASE=v0.2.2`，只取字典用 `make assets MODELS=0`（約 36 MB，以統計選字運作）。
 

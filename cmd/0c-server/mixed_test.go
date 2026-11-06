@@ -53,10 +53,12 @@ func testSavedMixedToggle(t *testing.T, full bool) {
 	}
 	sock := filepath.Join(dir, "mixed.sock")
 	config := settings.Default()
+	config.MixedInputPolicy = settings.MixedAggressive
 	config.Selection = settings.Statistical
 	config.Punctuation = false
 	for _, enabled := range []bool{true, false, true} {
 		config.MixedInput = enabled
+		config.NeighborKeyRecovery = enabled
 		if err := settings.Save(filepath.Join(dir, settings.FileName), config); err != nil {
 			t.Fatal(err)
 		}
@@ -84,7 +86,7 @@ func testSavedMixedToggle(t *testing.T, full bool) {
 				}
 				return r
 			}
-			if health := call(ipc.Envelope{Op: ipc.OpHealth}); health.Info["mixed_input"] != strconv.FormatBool(enabled) || health.Info["english_words"] != strconv.Itoa(words) {
+			if health := call(ipc.Envelope{Op: ipc.OpHealth}); health.Info["mixed_input"] != strconv.FormatBool(enabled) || health.Info["english_words"] != strconv.Itoa(words) || health.Info["neighbor_key_recovery"] != strconv.FormatBool(enabled) {
 				t.Fatalf("wrong runtime toggle: %+v", health.Info)
 			}
 			id := call(ipc.Envelope{Op: ipc.OpOpen, Version: proto.Version}).Session
@@ -94,6 +96,13 @@ func testSavedMixedToggle(t *testing.T, full bool) {
 			out := call(ipc.Envelope{Op: ipc.OpHandle, Session: id, Req: &proto.Request{Type: proto.Commit}})
 			if out.Snapshot == nil || (out.Snapshot.Commit == "hello") != enabled {
 				t.Fatalf("mixed=%v: %+v", enabled, out.Snapshot)
+			}
+			for _, k := range "ki3" {
+				call(ipc.Envelope{Op: ipc.OpHandle, Session: id, Req: &proto.Request{Type: proto.Key, Key: string(k)}})
+			}
+			out = call(ipc.Envelope{Op: ipc.OpHandle, Session: id, Req: &proto.Request{Type: proto.Commit}})
+			if out.Snapshot == nil || (out.Snapshot.Commit == "我") != enabled {
+				t.Fatalf("neighbor recovery after restart, mixed=%v: %+v", enabled, out.Snapshot)
 			}
 		}()
 	}

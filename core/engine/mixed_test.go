@@ -47,8 +47,12 @@ func TestMixedPolicyIsCopiedIntoEachSession(t *testing.T) {
 		t.Fatal("default policy must be conservative")
 	}
 	e.MixedInputAggressive = true
+	e.NeighborKeyRecovery = true
 	second := e.OpenSession()
 	if !e.Session(second).MixedInputAggressive || e.Session(first).MixedInputAggressive {
 		t.Fatal("policy was not isolated per session")
+	}
+	if !e.Session(second).NeighborKeyRecovery || e.Session(first).NeighborKeyRecovery {
+		t.Fatal("neighbor recovery was not isolated per session")
 	}
 }

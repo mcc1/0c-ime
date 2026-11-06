@@ -17,26 +17,29 @@ func TestMixedDigitInitialWithPublishedDictionary(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.MixedInput, e.MixedInputAggressive = true, true
-	for _, tc := range []struct{ keys, want string }{
-		{"WQ5j04fu06", "WQ賺錢"}, {"wq5j04fu06", "wq賺錢"},
-		{"ru,3WQ5j04fu06", "解WQ賺錢"}, {"hello5j04fu06", "hello賺錢"},
-		{"WD55j04fu06", "WD5賺錢"},
-	} {
-		e.Model.Store = personal.NewStore()
-		id := e.OpenSession()
-		for _, k := range tc.keys {
-			if _, err := e.Do(id, proto.Request{Type: proto.Key, Key: string(k)}); err != nil {
+	for _, neighbor := range []bool{false, true} {
+		e.NeighborKeyRecovery = neighbor
+		for _, tc := range []struct{ keys, want string }{
+			{"WQ5j04fu06", "WQ賺錢"}, {"wq5j04fu06", "wq賺錢"},
+			{"ru,3WQ5j04fu06", "解WQ賺錢"}, {"hello5j04fu06", "hello賺錢"},
+			{"WD55j04fu06", "WD5賺錢"},
+		} {
+			e.Model.Store = personal.NewStore()
+			id := e.OpenSession()
+			for _, k := range tc.keys {
+				if _, err := e.Do(id, proto.Request{Type: proto.Key, Key: string(k)}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			out, err := e.Do(id, proto.Request{Type: proto.Commit})
+			if err != nil {
 				t.Fatal(err)
 			}
+			e.CloseSession(id)
+			if out.Commit != tc.want {
+				t.Fatalf("neighbor=%v %s: %q want %q", neighbor, tc.keys, out.Commit, tc.want)
+			}
+			t.Logf("neighbor=%v %s -> %s", neighbor, tc.keys, out.Commit)
 		}
-		out, err := e.Do(id, proto.Request{Type: proto.Commit})
-		if err != nil {
-			t.Fatal(err)
-		}
-		e.CloseSession(id)
-		if out.Commit != tc.want {
-			t.Fatalf("%s: %q want %q", tc.keys, out.Commit, tc.want)
-		}
-		t.Logf("%s -> %s", tc.keys, out.Commit)
 	}
 }

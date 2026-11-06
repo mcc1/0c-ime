@@ -13,7 +13,8 @@ import threading
 import unittest
 
 # Options that only matter while mixed input is on, in display order.
-CHILDREN = [("mixed-input-policy", "混打組字傾向", ["conservative", "aggressive"], "aggressive")]
+CHILDREN = [("mixed-input-policy", "混打組字傾向", ["conservative", "aggressive"], "aggressive"),
+            ("neighbor-key-recovery", "鄰鍵容錯", ["off", "on"], "on")]
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
