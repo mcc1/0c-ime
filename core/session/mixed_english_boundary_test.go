@@ -29,6 +29,8 @@ func englishBoundarySession() *Session {
 		{"應", "ㄧㄥˋ", 1.7e-4}, {"競", "ㄐㄧㄥˋ", 1.2e-4}, {"呃", "ㄜ˙", 2e-6},
 		{"爾", "ㄦˇ", 1e-4}, {"二", "ㄦˋ", 3e-4}, {"偶", "ㄡˇ", 5e-5}, {"天", "ㄊㄧㄢ", 1e-3}, {"換", "ㄏㄨㄢˋ", 2e-4},
 		{"一", "ㄧ", 2e-3}, {"誒", "ㄟ", 1e-5}, {"資", "ㄗ", 3e-4},
+		{"群", "ㄑㄩㄣˊ", 2e-5},
+		{"窄", "ㄓㄞˇ", 2e-5},
 	} {
 		lex.Add(lexicon.Entry{Surface: e.w, Reading: zhuyin.ParseReading(e.r), PRW: 1})
 		sys.SetUni(e.w, e.p)
@@ -95,6 +97,28 @@ func TestMixedUnknownEnglishStaysLiteral(t *testing.T) {
 	}
 }
 
+func TestMixedDigitTypoRecoveryPreservesAccountsAfterLearning(t *testing.T) {
+	for _, tc := range []struct{ keys, want string }{
+		{"microsoft5993fmp6su3cl3", "microsoft5993群你好"},
+		{"kevin87", "kevin87"}, {"nina87", "nina87"}, {"lisa0304", "lisa0304"},
+		{"facebookg4", "facebookg4"}, {"gpt4", "gpt4"}, {"gpt4o ", "gpt4o "},
+	} {
+		t.Run(tc.keys, func(t *testing.T) {
+			s := englishBoundarySession()
+			for i := 0; i < 100; i++ {
+				mixedType(s, "ji3")
+				key(s, proto.KeyEnter)
+			}
+			if got := mixedType(s, tc.keys).Text(); got != tc.want {
+				t.Fatalf("preedit after learning: %q, want %q", got, tc.want)
+			}
+			if got := key(s, proto.KeyEnter).Commit; got != tc.want {
+				t.Fatalf("commit: %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // 打錯一鍵的注音（qji3 是 ㄆㄨㄛˇ、ju3 是 ㄨㄧˇ，組不成音節）照字面留下，後面的注音照常組成中文；
 // 不再一路併成同一串，直到空白才整串變成英文字母（qji3su3cl3 不是整串照字面）。
 func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
@@ -102,6 +126,7 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 		{"qji3su3cl3", "qji3你好"},
 		{"ju3su3cl3", "ju3你好"},
 		{"qji3su3", "qji3你"},
+		{"microsoft5993su3cl3", "microsoft5993你好"},
 		// 句首機率低、但不是罕用字的音節也切開（個人用字可能讓們、門的句首機率掉到 5e-5）
 		{"qji3ap7su3", "qji3們你"},
 		// 照舊：英文字或帳號後的數字不是打錯的注音
