@@ -146,6 +146,7 @@ type syllableState struct {
 	locks           map[int]decode.Lock
 	literals        map[int]bool
 	pendingLiterals []pendingLiteral
+	neighborKeys    map[int]string
 	mixedKeys       map[int]string
 	literalKeys     map[int]string
 	mixedOrigins    map[int]mixedOrigin
@@ -155,12 +156,13 @@ type syllableState struct {
 
 // 插入、刪除都會換成新的切片與對照表，淺複製就足以還原。
 func (s *Session) saveSyllables() syllableState {
-	return syllableState{s.syls, s.cursor, s.locks, s.literals, s.pendingLiterals, s.mixedKeys, s.literalKeys, s.mixedOrigins, s.displayed,
+	return syllableState{s.syls, s.cursor, s.locks, s.literals, s.pendingLiterals, s.neighborKeys, s.mixedKeys, s.literalKeys, s.mixedOrigins, s.displayed,
 		append([]personal.RejectedSeg(nil), s.rejected...)}
 }
 
 func (s *Session) restoreSyllables(st syllableState) {
 	s.syls, s.cursor, s.locks, s.literals, s.pendingLiterals = st.syls, st.cursor, st.locks, st.literals, st.pendingLiterals
+	s.neighborKeys = st.neighborKeys
 	s.mixedKeys, s.literalKeys, s.mixedOrigins, s.displayed, s.rejected = st.mixedKeys, st.literalKeys, st.mixedOrigins, st.displayed, st.rejected
 }
 
