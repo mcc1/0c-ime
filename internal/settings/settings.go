@@ -31,9 +31,11 @@ const (
 	// SchemaVersion 是本版寫入、也完全理解的檔案格式。
 	SchemaVersion = 2
 
-	LayoutStandard = "standard" // 標準（大千）注音鍵盤排列
-	LayoutETen     = "eten"     // 倚天 41 鍵（#83）
-	LayoutHsu      = "hsu"      // 許氏（#183）
+	LayoutStandard    = "standard" // 標準（大千）注音鍵盤排列
+	LayoutETen        = "eten"     // 倚天 41 鍵（#83）
+	LayoutHsu         = "hsu"      // 許氏（#183）
+	MixedConservative = "conservative"
+	MixedAggressive   = "aggressive"
 )
 
 // 讀取結果的檔案狀態。
@@ -62,6 +64,7 @@ type Settings struct {
 	Punctuation         bool   `json:"punctuation"`
 	DocumentContext     bool   `json:"document_context"`
 	MixedInput          bool   `json:"mixed_input"`
+	MixedInputPolicy    string `json:"mixed_input_policy"`
 	EnglishAutocomplete bool   `json:"english_autocomplete"`
 	LeftShift           bool   `json:"left_shift"` // 舊欄位：ToggleKey 含左 Shift。讀新檔時由 ToggleKey 推出，存檔時一併寫回給舊版讀
 	// ToggleKey 是單按哪個 Shift 切換注音／英文（#117）：right、both、left、none。macOS 預設 none，Windows both（#206），Linux right。
@@ -245,7 +248,7 @@ func (s Settings) FuzzyConfig() fuzzy.Config {
 
 func Default() Settings {
 	s := Settings{Selection: Neural, Punctuation: false, DocumentContext: true, CandidateCursor: defaultCandidateCursor(runtime.GOOS), CandidateLayout: "vertical", EmojiShortcut: "equals", EmojiEqualsFirst: true, EscClear: true, SpaceSelects: true, KeyboardLayout: LayoutStandard, SelectionKeys: SelectDigits, CtrlPunctuation: true,
-		ToggleKey: defaultToggleKey(runtime.GOOS), ModeMemory: defaultModeMemory(runtime.GOOS), StartMode: StartZhuyin}
+		ToggleKey: defaultToggleKey(runtime.GOOS), ModeMemory: defaultModeMemory(runtime.GOOS), StartMode: StartZhuyin, MixedInputPolicy: MixedConservative}
 	s.LeftShift = s.TogglesLeft() // 舊欄位跟著切換鍵：Windows 預設左右 Shift 時是 true（#206）
 	return s
 }
@@ -388,6 +391,7 @@ func (s *Settings) UnmarshalJSON(b []byte) error {
 		values []string
 	}{
 		{"candidate_cursor", &s.CandidateCursor, []string{"before", "after"}},
+		{"mixed_input_policy", &s.MixedInputPolicy, []string{MixedConservative, MixedAggressive}},
 		{"candidate_layout", &s.CandidateLayout, []string{"vertical", "grid", "horizontal"}},
 		{"emoji_shortcut", &s.EmojiShortcut, []string{"off", "equals"}},
 		{"keyboard_layout", &s.KeyboardLayout, []string{LayoutStandard, LayoutETen, LayoutHsu}},
@@ -468,7 +472,7 @@ func (s Settings) MarshalJSON() ([]byte, error) {
 	for _, field := range []struct {
 		key   string
 		value any
-	}{{"selection", s.Selection}, {"punctuation", s.Punctuation}, {"document_context", s.DocumentContext}, {"mixed_input", s.MixedInput}, {"english_autocomplete", s.EnglishAutocomplete}, {"left_shift", s.LeftShift}, {"esc_clear", s.EscClear}, {"space_selects", s.SpaceSelects}, {"candidate_cursor", s.CandidateCursor}, {"advance_after_select", s.AdvanceAfterSelect}, {"candidate_layout", s.CandidateLayout}, {"emoji_shortcut", s.EmojiShortcut}, {"emoji_equals_first", s.EmojiEqualsFirst}, {"keyboard_layout", s.KeyboardLayout}, {"selection_keys", s.SelectionKeys}, {"toggle_key", s.ToggleKey}, {"mode_memory", s.ModeMemory}, {"start_mode", s.StartMode}, {"output_simplified", s.OutputSimplified}, {"simplified_hotkey", s.SimplifiedHotkey}, {"ctrl_punctuation", s.CtrlPunctuation}, {"shift_symbol_halfwidth", s.ShiftSymbolHalfwidth}, {"caps_lock_english", s.CapsLockEnglish}, {"toneless", s.Toneless}} {
+	}{{"selection", s.Selection}, {"punctuation", s.Punctuation}, {"document_context", s.DocumentContext}, {"mixed_input", s.MixedInput}, {"mixed_input_policy", s.MixedInputPolicy}, {"english_autocomplete", s.EnglishAutocomplete}, {"left_shift", s.LeftShift}, {"esc_clear", s.EscClear}, {"space_selects", s.SpaceSelects}, {"candidate_cursor", s.CandidateCursor}, {"advance_after_select", s.AdvanceAfterSelect}, {"candidate_layout", s.CandidateLayout}, {"emoji_shortcut", s.EmojiShortcut}, {"emoji_equals_first", s.EmojiEqualsFirst}, {"keyboard_layout", s.KeyboardLayout}, {"selection_keys", s.SelectionKeys}, {"toggle_key", s.ToggleKey}, {"mode_memory", s.ModeMemory}, {"start_mode", s.StartMode}, {"output_simplified", s.OutputSimplified}, {"simplified_hotkey", s.SimplifiedHotkey}, {"ctrl_punctuation", s.CtrlPunctuation}, {"shift_symbol_halfwidth", s.ShiftSymbolHalfwidth}, {"caps_lock_english", s.CapsLockEnglish}, {"toneless", s.Toneless}} {
 		if err := typed(field.key, field.value); err != nil {
 			return nil, err
 		}
@@ -523,7 +527,7 @@ func (s Settings) notes() []string {
 	if s.extra != "" {
 		_ = json.Unmarshal([]byte(s.extra), &kept)
 	}
-	for _, key := range []string{"selection", "punctuation", "document_context", "mixed_input", "english_autocomplete", "left_shift", "esc_clear", "space_selects", "candidate_cursor", "advance_after_select", "candidate_layout", "emoji_shortcut", "emoji_equals_first", "keyboard_layout", "selection_keys", "toggle_key", "mode_memory", "start_mode", "output_simplified", "simplified_hotkey", "ctrl_punctuation", "shift_symbol_halfwidth", "caps_lock_english", "toneless"} {
+	for _, key := range []string{"selection", "punctuation", "document_context", "mixed_input", "mixed_input_policy", "english_autocomplete", "left_shift", "esc_clear", "space_selects", "candidate_cursor", "advance_after_select", "candidate_layout", "emoji_shortcut", "emoji_equals_first", "keyboard_layout", "selection_keys", "toggle_key", "mode_memory", "start_mode", "output_simplified", "simplified_hotkey", "ctrl_punctuation", "shift_symbol_halfwidth", "caps_lock_english", "toneless"} {
 		if raw, ok := kept[key]; ok {
 			out = append(out, fmt.Sprintf("%s：本版不認得 %s，暫用預設值，存檔時保留原值", strings.ReplaceAll(key, "_", "-"), raw))
 			delete(kept, key)
@@ -723,6 +727,8 @@ type spec struct {
 // valueLabels 是選項的顯示名稱（Item.ValueLabels）；設定程式沒有時用自己的對照表。
 func (s Settings) valueLabels(key string) map[string]string {
 	switch key {
+	case "mixed-input-policy":
+		return map[string]string{MixedConservative: "保守", MixedAggressive: "積極"}
 	case "toggle-key":
 		return map[string]string{ToggleRight: "右 Shift", ToggleBoth: "左右 Shift", ToggleLeft: "左 Shift", ToggleNone: "不用 Shift"}
 	case "start-mode":
@@ -745,6 +751,15 @@ func (s Settings) disabledReason(key string) string {
 }
 
 func (s Settings) disabledReasonOn(goos, key string) string {
+	if key == "mixed-input-policy" {
+		if reason := s.disabledReasonOn(goos, "mixed-input"); reason != "" {
+			return reason
+		}
+		if !s.MixedInput {
+			return "中英混打關閉時不生效"
+		}
+		return ""
+	}
 	if reason := s.styleConflictReason(key); reason != "" {
 		return reason
 	}
@@ -791,6 +806,8 @@ func disabledBy(reason string) string {
 		return "toggle-key"
 	case "不打聲調時關閉": // 中英混打（#150）
 		return "toneless"
+	case "中英混打關閉時不生效":
+		return "mixed-input"
 	}
 	return ""
 }
@@ -812,6 +829,8 @@ func specs() []spec {
 			func(s Settings) string { return onOff(s.DocumentContext) }},
 		{"mixed-input", "中英混打（試用）", "直接在注音中打英文；提供英文補全與拼字修正，由你確認接受。開啟時空白鍵輸入空白，按 ↓ 選字；數字拼得成注音時，按 Enter 留數字。若已啟用 Shift 中英切換，混打開或關都能單按 Shift 切到英文", "off", []string{"on", "off"},
 			func(s Settings) string { return onOff(s.MixedInput) }},
+		{"mixed-input-policy", "混打組字傾向", "僅在中英混打開啟時生效。保守：保留帳號、型號與數字判斷；積極：聲調完成且有字詞時優先組成中文，可能把英數帳號或型號轉成中文，需要原文時請切到英文。兩種模式都可在候選選回原按鍵", MixedConservative, []string{MixedConservative, MixedAggressive},
+			func(s Settings) string { return s.MixedInputPolicy }},
 		{"english-autocomplete", "英文模式自動補字", "單按 Shift 切換到英文模式後，輸入至少兩個字母時顯示補全候選，三個字母起也提供拼字修正；按 Tab 補全或修正拼字、Esc 關閉。「我的詞彙」的英文詞排在最前面；自己打過幾次的英文單字會記在本機，之後也會建議（私人欄位與暫停學習時不記）。與中英混打分開設定。空白送出單字並輸入空格；Enter 只送出單字，再按一次才換行或執行", "off", []string{"on", "off"},
 			func(s Settings) string { return onOff(s.EnglishAutocomplete) }},
 		{"toggle-key", "中英切換鍵", toggleKeyDescription(runtime.GOOS), Default().ToggleKey, []string{ToggleRight, ToggleBoth, ToggleLeft, ToggleNone},
@@ -1172,6 +1191,9 @@ func (s *Settings) set(key, value string) error {
 	case "mixed-input":
 		s.MixedInput = value == "on"
 		s.forget("mixed_input")
+	case "mixed-input-policy":
+		s.MixedInputPolicy = value
+		s.forget("mixed_input_policy")
 	case "candidate-cursor":
 		s.CandidateCursor = value
 		s.forget("candidate_cursor")

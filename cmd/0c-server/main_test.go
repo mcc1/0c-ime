@@ -209,6 +209,8 @@ func TestSelectionSettingAndBundledDiscovery(t *testing.T) {
 		{"使用者選統計", `{"selection":"statistical","document_context":false}`, true, map[string]string{"neural_startup_state": "disabled_by_setting", "selection_setting": "statistical", "document_context": "false"}},
 		{"模型無法啟動", "", true, map[string]string{"neural_startup_state": "startup_fallback", "selection_setting": "neural"}},
 		{"設定檔損毀回預設", `{"selection":"magic"}`, false, map[string]string{"neural_startup_state": "not_installed", "selection_setting": "neural"}},
+		{"舊設定使用保守混打", `{"mixed_input":true}`, false, map[string]string{"mixed_input_policy": "conservative"}},
+		{"明確選積極混打", `{"mixed_input":true,"mixed_input_policy":"aggressive"}`, false, map[string]string{"mixed_input_policy": "aggressive"}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			got := info(t, layout(t, c.bundle), c.settings)

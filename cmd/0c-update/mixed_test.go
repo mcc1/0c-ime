@@ -36,3 +36,19 @@ func TestMixedSettingContractReportsPendingAndUnknownRuntime(t *testing.T) {
 		t.Fatal("user-facing toggle missing")
 	}
 }
+
+func TestMixedPolicyContractReportsPendingAndOlderEngine(t *testing.T) {
+	base := t.TempDir()
+	writeSettings(t, base, `{"mixed_input":true,"mixed_input_policy":"aggressive"}`)
+	for _, value := range []string{"conservative", "aggressive", ""} {
+		doc := buildSettingsDoc(base, modelStatusDial(map[string]string{"mixed_input": "true", "mixed_input_policy": value}, true))
+		it := item(t, doc, "mixed-input-policy")
+		if it.Value != "aggressive" || it.Pending != (value == "conservative") || (it.Running != nil) != (value != "") {
+			t.Fatalf("runtime %q: %+v", value, it)
+		}
+	}
+	o, err := parseSetArgs([]string{"mixed-input-policy", "aggressive", "-apply", "-json"})
+	if err != nil || len(o.pairs) != 1 || !o.apply || !o.json {
+		t.Fatalf("parse: %+v %v", o, err)
+	}
+}
