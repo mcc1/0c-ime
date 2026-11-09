@@ -1,0 +1,49 @@
+已驗證靈犀注音 0.2.11-preview.mixed.1（internal-preview）
+已驗證靈犀注音 0.2.11-preview.mixed.1（internal-preview）
+安裝完成，舊程式與配對字典備份：/home/previewtest/.local/share/zuin/backups/0c-install-2a3i6z3o
+個人詞庫已保留。重新啟動 Fcitx5 或下次登入後載入新版。
+更新方式：手動檢查 [manual]
+階段：idle
+輸入習慣已儲存：custom-7a9362c8dbfbb1301820492a（not_requested）
+已設定 mixed-input=on。完成組字後執行 pkill -x 0c-server，下一個按鍵會以新設定啟動引擎。
+已設定 mixed-input-policy=conservative。完成組字後執行 pkill -x 0c-server，下一個按鍵會以新設定啟動引擎。
+
+(type_probe.py:425): dbind-WARNING **: 05:35:23.339: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "593 Return", "text": "窄", "focus": true}
+
+(type_probe.py:458): dbind-WARNING **: 05:35:26.978: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "kevin87 Return", "text": "kevin87", "focus": true}
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+已設定 mixed-input-policy=aggressive，下一個按鍵起生效。
+
+(type_probe.py:514): dbind-WARNING **: 05:35:33.591: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "593 Return", "text": "窄", "focus": true}
+
+(type_probe.py:531): dbind-WARNING **: 05:35:37.025: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "microsoft593fmp6 Return", "text": "microsoft窄裙", "focus": true}
+
+(type_probe.py:549): dbind-WARNING **: 05:35:42.936: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "ru,3WQ5j04fu06 Return", "text": "解WQ賺錢", "focus": true}
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+已設定 neighbor-key-recovery=off，下一個按鍵起生效。
+
+(type_probe.py:585): dbind-WARNING **: 05:35:48.816: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "ki3 Return", "text": "ki3", "focus": true}
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+0c-update: 改為直接啟動引擎： exec: "systemd-run": executable file not found in $PATH
+已設定 neighbor-key-recovery=on，下一個按鍵起生效。
+
+(type_probe.py:636): dbind-WARNING **: 05:35:52.650: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "ki3 Return", "text": "我", "focus": true}
+
+(type_probe.py:666): dbind-WARNING **: 05:35:56.127: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files
+Fcitx5: {"keys": "helloki3cl3 Return", "text": "hello我好", "focus": true}
+Installed engine health: {"advance_after_select": "false", "api_state": "off", "candidate_cursor": "after", "candidate_layout": "vertical", "caps_lock_english": "false", "caps_lock_request": "false", "cjk_latin_space": "false", "composing": "0", "connections": "2", "ctrl_punctuation": "true", "ctrl_punctuation_keys": ",.';?!:()", "data_sha256": "3e93ed1ef3d2fc7443f64a0b5203294298181b84bed2cd6a144c48a4852aefee", "document_context": "true", "document_context_weight": "0.075", "draining": "false", "emoji_equals_first": "true", "emoji_shortcut": "equals", "english_autocomplete": "false", "english_pack": "2026.02.25 (7e99edab8e32f9f9ea2b15f249ca8d4d67237410)", "english_words": "82015", "esc_clear": "true", "executable_sha256": "b890a3a7bd12e2b435f0e80347412da4b1da39aa27b9283aef1affef075a8192", "fuzzy": "z-zh=select,c-ch=select,s-sh=select,en-eng=select", "go": "go1.26.10", "idle_keys": "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", "idle_seconds": "0", "initial_mode": "zhuyin", "input_profile": "custom-7a9362c8dbfbb1301820492a", "input_profile_fingerprint": "6e8c0eb4fba1e24f392d0cad2b9ab26b86048f8d945d75e4b3675c6b6a3215af", "input_style_caps_letter": "platform", "input_style_shift_letter": "inline", "input_style_shift_space": "disabled", "keyboard_layout": "standard", "left_shift": "false", "mixed_input": "true", "mixed_input_policy": "aggressive", "mode_memory": "native", "neighbor_key_recovery": "true", "neural_python": "bundled", "neural_startup_state": "enabled", "output_simplified": "false", "output_simplified_live": "true", "personal_lock": "held", "personal_store": "loaded", "pid": "623", "preview_0_2": "true", "protocol": "0", "punctuation": "false", "punctuation_state": "disabled_by_setting", "right_shift": "true", "selection_keys": "1234567890", "selection_setting": "neural", "selection_source": "bundled", "selection_state": "ready", "sessions": "0", "settings_deferred_apply": "true", "shift_symbol_halfwidth": "false", "shift_tap_ms": "300", "simplified_hotkey": "false", "space_selects": "true", "start_mode": "zhuyin", "toggle_key": "right", "tone_mark_keys": "false", "toneless": "false", "vcs.modified": "false", "vcs.revision": "e640e46f7af75e3c4c56c8d33ee6073bf494c27c", "version": "0.2.11-preview.mixed.1", "vocab_keys": "true", "vocab_state": "loaded"}
+Linux settings GUI stayed running.
+Learned user store exists: 1829
+已回復程式與配對字典，個人詞庫保留；若舊版無法讀取新版格式，會照常輸入但不存檔，可加 --restore-user。
+重新登入後生效。
+Fresh installation rollback preserved learned user data.
+Linux package smoke passed.

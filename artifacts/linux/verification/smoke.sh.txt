@@ -1,0 +1,93 @@
+#!/bin/bash
+set -euo pipefail
+bundle=/work/unpacked/0c-0.2.11-preview.mixed.1-linux-amd64-preview
+cd "$bundle"
+python3 install.py check
+python3 install.py install
+backup=$(find "$HOME/.local/share/zuin/backups" -mindepth 1 -maxdepth 1 -type d -name '0c-install-*' | head -1)
+"$HOME/.local/bin/0c-update" mode manual
+"$HOME/.local/bin/0c-update" profile copy 0c --name 混打測試
+"$HOME/.local/bin/0c-update" set mixed-input on
+"$HOME/.local/bin/0c-update" set mixed-input-policy conservative
+mkdir -p "$HOME/.config/fcitx5" /tmp/0c-test-runtime
+chmod 700 /tmp/0c-test-runtime
+export XDG_RUNTIME_DIR=/tmp/0c-test-runtime DISPLAY=:99 GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx
+export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 LIBGL_ALWAYS_SOFTWARE=1
+cat > "$HOME/.config/fcitx5/profile" <<'PROFILE'
+[Groups/0]
+Name=Default
+Default Layout=us
+DefaultIM=zuin
+
+[Groups/0/Items/0]
+Name=keyboard-us
+Layout=
+
+[Groups/0/Items/1]
+Name=zuin
+Layout=
+
+[GroupOrder]
+0=Default
+PROFILE
+Xvfb :99 -screen 0 1280x800x24 > /tmp/xvfb.log 2>&1 &
+xvfb_pid=$!
+fcitx_pid=''
+cleanup() {
+    if [ -n "$fcitx_pid" ]; then kill "$fcitx_pid" 2>/dev/null || true; fi
+    pkill -u "$(id -u)" -x 0c-server 2>/dev/null || true
+    kill "$xvfb_pid" 2>/dev/null || true
+}
+trap cleanup EXIT
+sleep 1
+fcitx5 -D > /tmp/fcitx.log 2>&1 &
+fcitx_pid=$!
+sleep 3
+probe() { python3 - "$1" "$2" <<'PY'
+import subprocess,json,sys
+v=json.loads(subprocess.check_output(['python3','/work/type_probe.py',sys.argv[1]+' Return'],text=True))
+assert v['text']==sys.argv[2],v
+print('Fcitx5:',json.dumps(v,ensure_ascii=False),flush=True)
+PY
+}
+probe 593 窄
+probe kevin87 kevin87
+"$HOME/.local/bin/0c-update" set mixed-input-policy aggressive -apply
+sleep 2
+probe 593 窄
+probe microsoft593fmp6 microsoft窄裙
+probe ru,3WQ5j04fu06 解WQ賺錢
+"$HOME/.local/bin/0c-update" set neighbor-key-recovery off -apply
+probe ki3 ki3
+"$HOME/.local/bin/0c-update" set neighbor-key-recovery on -apply
+probe ki3 我
+probe helloki3cl3 hello我好
+python3 /work/health.py
+"$HOME/.local/bin/0c-settings" > /tmp/settings-ui.log 2>&1 &
+settings_pid=$!
+sleep 5
+kill -0 "$settings_pid"
+kill "$settings_pid"
+echo 'Linux settings GUI stayed running.'
+cleanup
+wait "$fcitx_pid" 2>/dev/null || true
+trap - EXIT
+unset DISPLAY WAYLAND_DISPLAY
+sleep 2
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+p=Path.home()/'.local/share/zuin/user.json';assert p.is_file()
+print('Learned user store exists:',p.stat().st_size)
+Path('/tmp/learned-store-before-rollback.sha256').write_text(hashlib.sha256(p.read_bytes()).hexdigest())
+PY
+python3 install.py rollback --backup "$backup"
+python3 - <<'PY'
+from pathlib import Path
+import hashlib
+p=Path.home()/'.local/share/zuin/user.json'
+assert hashlib.sha256(p.read_bytes()).hexdigest()==Path('/tmp/learned-store-before-rollback.sha256').read_text()
+assert not (Path.home()/'.local/bin/0c-server').exists()
+print('Fresh installation rollback preserved learned user data.')
+PY
+echo 'Linux package smoke passed.'

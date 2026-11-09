@@ -1,0 +1,52 @@
+rehash: warning: skipping ca-certificates.crt,it does not contain exactly one certificate or CRL
+make: Entering directory '/workspace/0c-ime/platforms/linux-fcitx5'
+cd ../.. && go build -o /workspace/0c-ime/platforms/linux-fcitx5/build/0c-server ./cmd/0c-server
+build/menu_test
+menu_test PASS
+build/locate_test
+locate_test PASS
+build/panel_test
+panel_test ok
+build/keys_test
+keys_test ok
+build/replay_guard_test
+build/legacy_socket_test /workspace/0c-ime/platforms/linux-fcitx5/build/0c-server /workspace/0c-ime/testdata/toy
+0c-server: 2026/11/09 05:30:06 已載入 /workspace/0c-ime/testdata/toy（30ms）
+legacy socket PASS
+build/trace_test
+zuin: 本機 UX 紀錄無法寫入，已停錄；輸入不受影響
+trace enqueue p99 342 us (synthetic)
+PASS trace rotation, restart, permissions, overflow, failure
+build/session_test $(mktemp -u /tmp/zuin-test-XXXXXX.sock) /workspace/0c-ime/platforms/linux-fcitx5/build/0c-server /workspace/0c-ime/testdata/toy $(mktemp -u /tmp/zuin-test-XXXXXX.json)
+0c-server: 2026/11/09 05:30:06 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:06 已載入 /workspace/0c-ime/testdata/toy（0s）
+0c-server: 2026/11/09 05:30:07 已載入 /workspace/0c-ime/testdata/toy（4ms）
+0c-server: 2026/11/09 05:30:07 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:08 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:08 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:09 已載入 /workspace/0c-ime/testdata/toy（5ms）
+0c-server: 2026/11/09 05:30:10 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:10 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:11 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:11 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:12 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:12 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:13 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:13 已載入 /workspace/0c-ime/testdata/toy（10ms）
+0c-server: 2026/11/09 05:30:14 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:14 已載入 /workspace/0c-ime/testdata/toy（2ms）
+0c-server: 2026/11/09 05:30:15 已載入 /workspace/0c-ime/testdata/toy（5ms）
+0c-server: 2026/11/09 05:30:16 已載入 /workspace/0c-ime/testdata/toy（3ms）
+0c-server: 2026/11/09 05:30:16 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:17 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:17 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:18 已載入 /workspace/0c-ime/testdata/toy（5ms）
+0c-server: 2026/11/09 05:30:18 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:19 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:19 已載入 /workspace/0c-ime/testdata/toy（1ms）
+0c-server: 2026/11/09 05:30:20 已載入 /workspace/0c-ime/testdata/toy（4ms）
+0c-server: 2026/11/09 05:30:20 已載入 /workspace/0c-ime/testdata/toy（1ms）
+PASS
+make: Leaving directory '/workspace/0c-ime/platforms/linux-fcitx5'
+g++ -DZC_SHELL_VERSION=\"0.2.11-preview.mixed.1\" -DZC_SYSTEM_LIBEXECDIR=\"/usr/libexec/0c\" -DZC_SYSTEM_DATADIR=\"/usr/share/0c\"  -std=c++20 -fPIC -pthread -Wall -Wextra -Ithird_party -O2 -g $(pkg-config --cflags Fcitx5Core Fcitx5Utils Fcitx5Config) -shared  -o build/lib0c.so src/client.cpp src/session.cpp src/trace.cpp src/menu.cpp src/locate.cpp src/engine.cpp $(pkg-config --libs Fcitx5Core Fcitx5Utils Fcitx5Config)
+/workspace/scratch/linux-mixed-preview-0210/release/0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz

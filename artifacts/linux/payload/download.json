@@ -1,0 +1,52 @@
+{
+  "archive": "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz",
+  "bytes": 408465601,
+  "sha256": "7c1625841aef280bb21259777fe0999eb535f697d3047a43841d793a6ca80cbb",
+  "parts": [
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part00",
+      50331648,
+      "0bad9a79ffa8a27527980c2865c234b76d5c6e647b4d2e6974f87f0e8a9622a5"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part01",
+      50331648,
+      "e6c2bca2afb4483acd5b1b4b7105abce253e62110da661c1c78657a05d871b34"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part02",
+      50331648,
+      "f99a899524aca63d95dacc62110288fe355edd595aff388b5c1e3439952d12f8"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part03",
+      50331648,
+      "453df6acafc48cebea45cf1d21ea5c770170a323d4016c44988d61124a0f4c4e"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part04",
+      50331648,
+      "9d0c7f635e565f57ddfa76f40e1d6603278ab2aa5cd43c40b7b8db9dc964e549"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part05",
+      50331648,
+      "afd6189733447fedc9276b7604888d7c89d05a3ef45a49fa0eba2caba4134a14"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part06",
+      50331648,
+      "e92d0e8d917b127e8de304ac8213b8f5eee2958ad913b49d72d46806122c56a8"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part07",
+      50331648,
+      "a8bc834bd85f97a25bf82c6b7af2156c9b5b2aa5649ea5e6013e61a3f303aaa2"
+    ],
+    [
+      "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part08",
+      5812417,
+      "9ad1cc20980077d6a242d35dc6748877e7c3d145786976872c2cd938cb066c71"
+    ]
+  ]
+}

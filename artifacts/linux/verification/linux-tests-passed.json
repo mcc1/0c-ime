@@ -1,0 +1,11 @@
+{
+  "manifest": "passed",
+  "fresh_install": "passed",
+  "Fcitx5_real_GTK_input": "8 cases passed",
+  "neural_runtime": "enabled",
+  "settings_GUI": "stayed running",
+  "fresh_rollback_user_data_preserved": "passed",
+  "official_0210_upgrade_and_rollback": "passed",
+  "user_store_settings_update_mode_preserved": "passed",
+  "native_wayland_KDE": "not_run"
+}

@@ -1,0 +1,27 @@
+import json
+import socket
+import struct
+import time
+from pathlib import Path
+
+with socket.socket(socket.AF_UNIX) as conn:
+    conn.settimeout(15)
+    conn.connect('/tmp/0c-test-runtime/0c/0c.sock')
+    def read(n):
+        data=b''
+        while len(data)<n:
+            part=conn.recv(n-len(data))
+            if not part: raise RuntimeError('closed')
+            data+=part
+        return data
+    for _ in range(50):
+        body=json.dumps({'op':'health'}).encode()
+        conn.sendall(struct.pack('<I',len(body))+body)
+        result=json.loads(read(struct.unpack('<I',read(4))[0]))
+        assert result['ok'],result
+        info=result['info']
+        if info.get('neural_startup_state')=='enabled': break
+        time.sleep(.2)
+    assert info.get('neural_startup_state')=='enabled',info
+    assert info.get('mixed_input_policy')=='aggressive',info
+    print('Installed engine health:',json.dumps(info,ensure_ascii=False))

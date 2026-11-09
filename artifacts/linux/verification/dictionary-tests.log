@@ -1,0 +1,25 @@
+=== RUN   TestMixedDigitInitialWithPublishedDictionary
+    mixed_digit_initial_test.go:42: neighbor=false WQ5j04fu06 -> WQ賺錢
+    mixed_digit_initial_test.go:42: neighbor=false wq5j04fu06 -> wq賺錢
+    mixed_digit_initial_test.go:42: neighbor=false ru,3WQ5j04fu06 -> 解WQ賺錢
+    mixed_digit_initial_test.go:42: neighbor=false hello5j04fu06 -> hello賺錢
+    mixed_digit_initial_test.go:42: neighbor=false WD55j04fu06 -> WD5賺錢
+    mixed_digit_initial_test.go:42: neighbor=true WQ5j04fu06 -> WQ賺錢
+    mixed_digit_initial_test.go:42: neighbor=true wq5j04fu06 -> wq賺錢
+    mixed_digit_initial_test.go:42: neighbor=true ru,3WQ5j04fu06 -> 解WQ賺錢
+    mixed_digit_initial_test.go:42: neighbor=true hello5j04fu06 -> hello賺錢
+    mixed_digit_initial_test.go:42: neighbor=true WD55j04fu06 -> WD5賺錢
+--- PASS: TestMixedDigitInitialWithPublishedDictionary (1.16s)
+=== RUN   TestNeighborRecoveryWithPublishedDictionary
+    neighbor_recovery_test.go:41: ki3: off="ki3" on="我"
+    neighbor_recovery_test.go:41: 593: off="窄" on="窄"
+    neighbor_recovery_test.go:41: microsoft593fmp6: off="microsoft窄裙" on="microsoft窄裙"
+    neighbor_recovery_test.go:41: kevin87: off="kevin啊" on="kevin啊"
+    neighbor_recovery_test.go:41: gpt4: off="gp赤" on="gp赤"
+    neighbor_recovery_test.go:41: 3.4: off="3.4" on="3.4"
+    neighbor_recovery_test.go:41: 10:30: off="10:30" on="10:30"
+    neighbor_recovery_test.go:41: helloki3cl3: off="hellok嚄好" on="hello我好"
+    neighbor_recovery_test.go:41: qji3cl3: off="qj嚄好" on="qji3好"
+--- PASS: TestNeighborRecoveryWithPublishedDictionary (0.39s)
+PASS
+ok  	github.com/0c-biggo/0c-ime/internal/datadir	1.708s

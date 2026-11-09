@@ -1,0 +1,14 @@
+已驗證靈犀注音 0.2.10（public-beta）
+安裝完成，舊程式與配對字典備份：/home/previewupgrade/.local/share/zuin/backups/0c-install-owf4jfyz
+個人詞庫已保留。重新啟動 Fcitx5 或下次登入後載入新版。
+更新方式：手動檢查 [manual]
+階段：idle
+輸入習慣已儲存：custom-53b2d8fd90cd37c0c90dcf1a（not_requested）
+已設定 mixed-input=on。完成組字後執行 pkill -x 0c-server，下一個按鍵會以新設定啟動引擎。
+已驗證靈犀注音 0.2.11-preview.mixed.1（internal-preview）
+安裝完成，舊程式與配對字典備份：/home/previewupgrade/.local/share/zuin/backups/0c-install-jc6qokcg
+個人詞庫已保留。重新啟動 Fcitx5 或下次登入後載入新版。
+Official 0.2.10 upgrade preserved user store, custom settings and manual update preference.
+已回復程式與配對字典，個人詞庫保留；若舊版無法讀取新版格式，會照常輸入但不存檔，可加 --restore-user。
+重新登入後生效。
+Rollback restored official 0.2.10 and retained user store/settings.

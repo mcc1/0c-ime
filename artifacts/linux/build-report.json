@@ -1,0 +1,44 @@
+{
+  "version": "0.2.11-preview.mixed.1",
+  "source_revision": "e640e46f7af75e3c4c56c8d33ee6073bf494c27c",
+  "build_branch": "build/linux-mixed-input-preview-0210",
+  "upstream": "public release/0.2.10 5ab090929c18ff8c05df6bc77a19a2a63587e939",
+  "same_composition_code_as_windows_source": "56a5881747f61a12ede914082673ed3329525937",
+  "archive": {
+    "name": "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz",
+    "bytes": 408465601,
+    "sha256": "7c1625841aef280bb21259777fe0999eb535f697d3047a43841d793a6ca80cbb",
+    "parts": 9
+  },
+  "data_manifest_sha256": "3e93ed1ef3d2fc7443f64a0b5203294298181b84bed2cd6a144c48a4852aefee",
+  "assets": "verified public dictionary and paired public selection/punctuation models; unchanged portable Linux Python runtime from earlier Linux preview",
+  "tests": {
+    "manifest": "passed",
+    "fresh_install": "passed",
+    "Fcitx5_real_GTK_input": "8 cases passed",
+    "neural_runtime": "enabled",
+    "settings_GUI": "stayed running",
+    "fresh_rollback_user_data_preserved": "passed",
+    "official_0210_upgrade_and_rollback": "passed",
+    "user_store_settings_update_mode_preserved": "passed",
+    "native_wayland_KDE": "not_run"
+  },
+  "build": {
+    "base": "Ubuntu 22.04",
+    "Go": "1.26.10",
+    "Rust": "1.99.0",
+    "Fcitx_headers": "5.0.14",
+    "settings_custom_protocol": true,
+    "Cargo_locked": true,
+    "source_clean": true
+  },
+  "limitations": [
+    "native KDE Plasma Wayland not tested",
+    "Qt6 application input not tested; install fcitx5-frontend-qt6 on Kubuntu",
+    "public dictionary differs from official distribution; exact suggestions may differ"
+  ],
+  "fresh_install_supported": true,
+  "prior_0210_required": false,
+  "signed": false,
+  "experimental_shift_return_ranker": false
+}

@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+old=/work/official/0c-0.2.10-linux-amd64
+new=/work/unpacked/0c-0.2.11-preview.mixed.1-linux-amd64-preview
+python3 "$old/install.py" install
+"$HOME/.local/bin/0c-update" mode manual
+"$HOME/.local/bin/0c-update" profile copy 0c --name 升級保留測試
+"$HOME/.local/bin/0c-update" set mixed-input on
+cp /tmp/learning-fixture.json "$HOME/.local/share/zuin/user.json"
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+h=Path.home();names=['.local/share/zuin/user.json','.local/share/0c/settings.json']
+Path('/tmp/upgrade-preservation.json').write_text(json.dumps({p:hashlib.sha256((h/p).read_bytes()).hexdigest() for p in names}))
+PY
+python3 "$new/install.py" install
+backup=$(find "$HOME/.local/share/zuin/backups" -mindepth 1 -maxdepth 1 -type d -name '0c-install-*' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json,subprocess
+h=Path.home()
+for n,v in json.loads(Path('/tmp/upgrade-preservation.json').read_text()).items():assert hashlib.sha256((h/n).read_bytes()).hexdigest()==v,n
+r=json.loads((h/'.local/share/zuin/install-receipt.json').read_text());assert r['version']=='0.2.11-preview.mixed.1',r['version']
+s=json.loads(subprocess.check_output([str(h/'.local/bin/0c-update'),'status','-json'],text=True));assert s['mode']=='manual',s
+print('Official 0.2.10 upgrade preserved user store, custom settings and manual update preference.')
+PY
+python3 "$new/install.py" rollback --backup "$backup"
+python3 - <<'PY'
+from pathlib import Path
+import hashlib,json
+h=Path.home()
+r=json.loads((h/'.local/share/zuin/install-receipt.json').read_text());assert r['version']=='0.2.10',r['version']
+for n,v in json.loads(Path('/tmp/upgrade-preservation.json').read_text()).items():assert hashlib.sha256((h/n).read_bytes()).hexdigest()==v,n
+print('Rollback restored official 0.2.10 and retained user store/settings.')
+PY
