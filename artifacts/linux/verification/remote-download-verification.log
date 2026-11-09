@@ -1,0 +1,21 @@
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part00
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part01
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part02
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part03
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part04
+未完成：HTTP Error 504: Gateway Timeout
+
+Verify direct content URLs with bounded retries and preserved cache.
+已驗證快取：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part00
+已驗證快取：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part01
+已驗證快取：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part02
+已驗證快取：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part03
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part04
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part05
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part06
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part07
+下載：0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz.part08
+完整套件 SHA256 驗證通過。
+套件目錄：/workspace/scratch/linux-mixed-preview-0210/remote-download-check/unpacked-w0adiped/0c-0.2.11-preview.mixed.1-linux-amd64-preview
+請先閱讀：/workspace/scratch/linux-mixed-preview-0210/remote-download-check/unpacked-w0adiped/0c-0.2.11-preview.mixed.1-linux-amd64-preview/INSTALL.md
+安裝：python3 '/workspace/scratch/linux-mixed-preview-0210/remote-download-check/unpacked-w0adiped/0c-0.2.11-preview.mixed.1-linux-amd64-preview/install.py' install

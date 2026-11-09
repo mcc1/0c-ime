@@ -1,0 +1,10 @@
+{
+  "payload_revision": "31547683f924412a5f73e359e39fc1f11607b492",
+  "commit": "f3f18bf96c4525da700efe5f16b45347b0114011",
+  "sha256": "7c1625841aef280bb21259777fe0999eb535f697d3047a43841d793a6ca80cbb",
+  "bytes": 408465601,
+  "launcher": "https://raw.githubusercontent.com/mcc1/0c-ime/f3f18bf96c4525da700efe5f16b45347b0114011/artifacts/linux/0c-linux-test.py",
+  "remote_launcher_identical": true,
+  "all_remote_parts_downloaded_verified_and_reassembled": true,
+  "remote_bundle_manifest_verified_files": 2425
+}

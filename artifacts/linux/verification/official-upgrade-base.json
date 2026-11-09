@@ -1,0 +1,14 @@
+{
+  "asset": {
+    "os": "linux",
+    "arch": "amd64",
+    "url": "https://s3.biggo.com/0c-releases/releases/0.2.10/0c-0.2.10-linux-amd64.tar.gz",
+    "sha256": "b0f3289dfac6c153b729d4b52e916e567593136e768b58e6ca689a84b7f5e2c4",
+    "size": 411514499,
+    "kind": "shell"
+  },
+  "feed_signature_verified": true,
+  "official_revision": "7bc7f069c2434b9048b513fa06c3f144716f386c",
+  "files_verified": 2424,
+  "data_manifest_sha256": "e356ef4aafade0b2897956a12ac8b8f849051e77557f2d9a88adb746daa94c4e"
+}
