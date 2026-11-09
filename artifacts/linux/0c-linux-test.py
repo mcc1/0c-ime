@@ -13,7 +13,7 @@ import time
 import urllib.error
 import urllib.request
 
-BASE = "https://github.com/mcc1/0c-ime/raw/31547683f924412a5f73e359e39fc1f11607b492/artifacts/linux/payload/"
+BASE = "https://raw.githubusercontent.com/mcc1/0c-ime/31547683f924412a5f73e359e39fc1f11607b492/artifacts/linux/payload/"
 ARCHIVE = "0c-0.2.11-preview.mixed.1-linux-amd64-preview.tar.gz"
 ARCHIVE_SHA256 = "7c1625841aef280bb21259777fe0999eb535f697d3047a43841d793a6ca80cbb"
 PARTS = [

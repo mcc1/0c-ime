@@ -15,7 +15,7 @@ sudo apt install curl python3 fcitx5 fcitx5-config-qt fcitx5-frontend-gtk3 fcitx
 以一般使用者下載與安裝，**不要 sudo 執行安裝程式**。若已有靈犀，先儲存工作並登出圖形桌面，從 Ctrl+Alt+F3 文字主控台安裝。
 
 ```sh
-curl -fL https://github.com/mcc1/0c-ime/raw/refs/heads/build/linux-mixed-input-preview-0210/artifacts/linux/0c-linux-test.py -o 0c-linux-test.py
+curl -fL https://raw.githubusercontent.com/mcc1/0c-ime/refs/heads/build/linux-mixed-input-preview-0210/artifacts/linux/0c-linux-test.py -o 0c-linux-test.py
 python3 0c-linux-test.py --install
 ```
 
