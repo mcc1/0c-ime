@@ -19,7 +19,7 @@ curl -fL https://github.com/mcc1/0c-ime/raw/refs/heads/build/linux-mixed-input-p
 python3 0c-linux-test.py --install
 ```
 
-下載程式核對每段與完整套件 SHA256，再解壓並執行原作者的使用者目錄安裝器。中斷可重跑，會沿用已驗證的快取。
+下載程式核對每段與完整套件 SHA256，再解壓並執行原作者的使用者目錄安裝器。暫時性連線錯誤會重試；中斷可重跑，會沿用已驗證的快取。
 只下載與解壓可省略 `--install`。套件安裝至 `~/.local/`，保留個人詞庫、設定與更新偏好；記下安裝器顯示的備份路徑。
 
 安裝後登出再登入，在 Fcitx5 設定加入「靈犀」。尚未使用 Fcitx5 時先執行 `im-config -n fcitx5`；KDE Wayland 在「虛擬鍵盤」選 Fcitx5。

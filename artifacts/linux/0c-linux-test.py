@@ -9,6 +9,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.error
 import urllib.request
 
 BASE = "https://github.com/mcc1/0c-ime/raw/31547683f924412a5f73e359e39fc1f11607b492/artifacts/linux/payload/"
@@ -71,7 +73,7 @@ def digest(path):
     return h.hexdigest()
 
 
-def obtain(directory, name, size, expected):
+def obtain_once(directory, name, size, expected):
     target = directory / name
     if target.is_file() and target.stat().st_size == size and digest(target) == expected:
         print('已驗證快取：' + name, flush=True)
@@ -98,6 +100,19 @@ def obtain(directory, name, size, expected):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def obtain(directory, name, size, expected):
+    for attempt in range(3):
+        try:
+            return obtain_once(directory, name, size, expected)
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as error:
+            if isinstance(error, urllib.error.HTTPError) and error.code not in (408, 429, 500, 502, 503, 504):
+                raise
+            if attempt == 2:
+                raise
+            print('連線暫時失敗，重試 ' + name + '：' + str(error), flush=True)
+            time.sleep(2 ** attempt)
 
 
 def main():
