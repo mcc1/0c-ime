@@ -22,7 +22,7 @@ func TestMixedPoliciesDistinguishChineseFromAccounts(t *testing.T) {
 		{"kevin87", "kevin87", "kevi挱"},
 		{"nina87", "nina87", "nin嗎"},
 		{"lisa0304", "lisa0304", "lis滿04"},
-		{"gpt4", "gpt4", "gp斥"},
+		{"gpt4", "gpt4", "gpt4"},
 		{"microsoftsu3cl3", "microsoft你好", "microsoft你好"},
 	} {
 		for _, aggressive := range []bool{false, true} {
@@ -157,7 +157,7 @@ func TestMixedAggressiveKeepsDigitInitialAfterEnglish(t *testing.T) {
 						t.Fatalf("%s neighbor=%v: %q want %q", keys, neighbor, got, want)
 					}
 				} else {
-					want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ賺錢", "wq": "wq賺錢", "WD5": "WD55萬錢"}[prefix]
+					want := map[string]string{"hello": "hello5萬錢", "WQ": "WQ賺錢", "wq": "wq賺錢", "WD5": "WD5賺錢"}[prefix]
 					if got != want {
 						t.Fatalf("conservative %s: %q want %q", keys, got, want)
 					}

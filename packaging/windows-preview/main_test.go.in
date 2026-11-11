@@ -12,8 +12,8 @@ import (
 func fixture(t *testing.T) (string, string, *update.Release, *update.Receipt) {
 	t.Helper()
 	base := t.TempDir()
-	source := filepath.Join(base, "versions", "0.2.10-fixture")
-	r := &update.Release{Schema: 1, Product: "0c", Version: "0.2.10", Channel: "public-beta", OS: "windows", Arch: "amd64", Files: map[string]string{}}
+	source := filepath.Join(base, "versions", "0.2.11-fixture")
+	r := &update.Release{Schema: 1, Product: "0c", Version: "0.2.11", Channel: "public-beta", OS: "windows", Arch: "amd64", Files: map[string]string{}}
 	for _, name := range []string{"0c-update.exe", "0c-server.exe", "0c-ui.exe", "0c-settings.exe", "0c_tsf.dll", "x86/0c_tsf.dll", "data/manifest.json", "data/lexicon.bin", "data/lm.bin", "data/NOTICE.txt", "data/report.txt"} {
 		p := filepath.Join(source, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(p), 0700); err != nil {
@@ -29,7 +29,7 @@ func fixture(t *testing.T) (string, string, *update.Release, *update.Receipt) {
 		r.Files[name] = h
 	}
 	writeJSON(t, filepath.Join(source, "release.json"), r)
-	receipt := &update.Receipt{Schema: 1, Product: "0c", Version: "0.2.10", Directory: "versions/0.2.10-fixture", Active: true, Files: r.Files}
+	receipt := &update.Receipt{Schema: 1, Product: "0c", Version: "0.2.11", Directory: "versions/0.2.11-fixture", Active: true, Files: r.Files}
 	writeJSON(t, filepath.Join(base, "install-receipt.json"), receipt)
 	if err := os.WriteFile(filepath.Join(base, "user.json"), []byte("personal data sentinel"), 0600); err != nil {
 		t.Fatal(err)
@@ -70,7 +70,9 @@ func TestPrepareUsesVerifiedBaseAndPreservesOriginals(t *testing.T) {
 		if err != nil || got != want {
 			t.Fatalf("source changed: %s %v", name, err)
 		}
-		if name != "0c-server.exe" && name != "0c-update.exe" && name != "0c-settings.exe" && made.Files[name] != want {
+        replaced := false
+        for _, payload := range payloads() { if name == payload.name { replaced = true } }
+        if !replaced && made.Files[name] != want {
 			t.Fatalf("borrowed component changed: %s", name)
 		}
 	}
@@ -97,7 +99,7 @@ func TestPrepareRejectsTamperedSource(t *testing.T) {
 
 func TestPreparePreservesMixedPreferences(t *testing.T) {
 	base, source, r, receipt := fixture(t)
-	r.Version, receipt.Version = "0.2.10", "0.2.10"
+	r.Version, receipt.Version = "0.2.11", "0.2.11"
 	note := filepath.Join(source, "PREVIEW.txt")
 	os.WriteFile(note, []byte("previous mixed preview"), 0600)
 	r.Files["PREVIEW.txt"], _ = update.Hash(note)
@@ -139,7 +141,7 @@ func TestPrepareRejectsReceiptMismatch(t *testing.T) {
 }
 
 func TestPrepareRejectsUnsupportedVersionAndTraversal(t *testing.T) {
-	for _, tc := range []struct{ version, dir string }{{"0.2.7", "versions/0.2.10-fixture"}, {"0.2.8", "versions/0.2.10-fixture"}, {"0.2.9", "versions/0.2.10-fixture"}, {"0.2.10", "../outside"}} {
+	for _, tc := range []struct{ version, dir string }{{"0.2.10", "versions/0.2.11-fixture"}, {"0.2.7", "versions/0.2.11-fixture"}, {"0.2.8", "versions/0.2.11-fixture"}, {"0.2.9", "versions/0.2.11-fixture"}, {"0.2.11", "../outside"}} {
 		base, _, _, receipt := fixture(t)
 		receipt.Version, receipt.Directory = tc.version, tc.dir
 		writeJSON(t, filepath.Join(base, "install-receipt.json"), receipt)
@@ -151,7 +153,7 @@ func TestPrepareRejectsUnsupportedVersionAndTraversal(t *testing.T) {
 
 func TestPrepareIncludesAllNewPayloads(t *testing.T) {
 	base, source, r, receipt := fixture(t)
-	r.Version, receipt.Version = "0.2.10", "0.2.10"
+	r.Version, receipt.Version = "0.2.11", "0.2.11"
 	writeJSON(t, filepath.Join(source, "release.json"), r)
 	writeJSON(t, filepath.Join(base, "install-receipt.json"), receipt)
 	dest := t.TempDir()
@@ -181,4 +183,17 @@ func TestPrepareRejectsExtraFilesAndExistingDestination(t *testing.T) {
 	if err := prepare(base, dest); err == nil {
 		t.Fatal("existing destination overwritten")
 	}
+}
+
+func TestPreparedBundleActuallyReplacesBothNativeShells(t *testing.T) {
+    base, _, original, _ := fixture(t)
+    dest := t.TempDir()
+    if err := prepare(base, dest); err != nil { t.Fatal(err) }
+    made, err := update.Verify(dest, "windows", "amd64")
+    if err != nil { t.Fatal(err) }
+    for name, expected := range map[string]string{"0c_tsf.dll":tsf64SHA,"x86/0c_tsf.dll":tsf32SHA} {
+        if made.Files[name] != expected || made.Files[name] == original.Files[name] {
+            t.Fatalf("native shell not replaced: %s",name)
+        }
+    }
 }

@@ -7,14 +7,37 @@ const BRAND_ICON: &str = "../../settings/icons/icon.ico";
 fn main() {
     // DllGetClassObject 等匯出由 #[no_mangle] 提供；MSVC 連結器會提醒它們應為 PRIVATE（LNK4104），
     // 這對 in-proc COM server 沒有影響，關掉提醒。
-    if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
-        println!("cargo:rustc-link-arg=/IGNORE:4104");
+    let target_env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    if target_env == "msvc" || target_env == "gnu" {
         println!("cargo:rerun-if-changed={BRAND_ICON}");
+        println!("cargo:rerun-if-env-changed=ZC_NATIVE_VERSION_RESOURCE");
         let ico = std::fs::read(BRAND_ICON).expect("讀取品牌圖示");
-        let res = PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("brand.res");
-        std::fs::write(&res, icon_res(&ico)).expect("寫入品牌圖示資源");
-        // link.exe 直接接受 .res，不需要 rc.exe。
-        println!("cargo:rustc-link-arg={}", res.display());
+        let out = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+        let res = out.join("brand.res");
+        let mut bytes = icon_res(&ico);
+        if let Some(path) = std::env::var_os("ZC_NATIVE_VERSION_RESOURCE") {
+            println!("cargo:rerun-if-changed={}", PathBuf::from(&path).display());
+            let version = std::fs::read(path).expect("讀取預覽版版本資訊");
+            resource(&mut bytes, 16, 1, 0x0030, &version);
+        }
+        std::fs::write(&res, bytes).expect("寫入品牌圖示資源");
+        if target_env == "msvc" {
+            println!("cargo:rustc-link-arg=/IGNORE:4104");
+            println!("cargo:rustc-link-arg={}", res.display());
+        } else {
+            let arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap();
+            let windres = match arch.as_str() {
+                "x86" => "i686-w64-mingw32-windres",
+                "x86_64" => "x86_64-w64-mingw32-windres",
+                _ => panic!("unsupported Windows GNU architecture: {arch}"),
+            };
+            let object = out.join("brand.o");
+            let status = std::process::Command::new(windres)
+                .args(["-J", "res", "-O", "coff", "-i"]).arg(&res)
+                .arg("-o").arg(&object).status().expect("執行 windres");
+            assert!(status.success(), "windres failed");
+            println!("cargo:rustc-link-arg={}", object.display());
+        }
     }
 }
 

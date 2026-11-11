@@ -150,13 +150,13 @@ func TestMixedTypoDoesNotSwallowFollowingZhuyin(t *testing.T) {
 	}
 }
 
-// Conservative mode retains upstream 0.2.10 account boundaries; only the
-// explicitly selected aggressive policy extends digit-typo recovery.
+// Upstream 0.2.11 resumes Chinese after alphanumeric prefixes in conservative
+// mode too; aggressive mode additionally resolves the earlier ambiguous syllable.
 func TestMixedDigitTypoRecoveryPolicy(t *testing.T) {
 	for _, tc := range []struct{ keys, conservative, aggressive string }{
-		{"nina87su3", "nina87su3", "nin嗎你"},
-		{"lisa03su3", "lisa03su3", "lis滿你"},
-		{"microsoft5993fmp6", "microsoft5993fmp6", "microsoft5993群"},
+		{"nina87su3", "nina87你", "nin嗎你"},
+		{"lisa03su3", "lisa03你", "lis滿你"},
+		{"microsoft5993fmp6", "microsoft5993群", "microsoft5993群"},
 		{"p54su3cl3", "p54你好", "p54你好"},
 	} {
 		for _, aggressive := range []bool{false, true} {

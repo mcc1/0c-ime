@@ -44,6 +44,16 @@ var settingsSHA = "@SETTINGS_SHA@"
 var loaderSHA = "@LOADER_SHA@"
 var noticesSHA = "@NOTICES_SHA@"
 
+//go:embed 0c_tsf.dll
+var tsf64 []byte
+//go:embed 0c_tsf-x86.dll
+var tsf32 []byte
+//go:embed NATIVE-NOTICES.txt
+var nativeNotices []byte
+var tsf64SHA = "@TSF64_SHA@"
+var tsf32SHA = "@TSF32_SHA@"
+var nativeNoticesSHA = "@NATIVE_NOTICES_SHA@"
+
 type embeddedPayload struct {
 	name string
 	data []byte
@@ -55,6 +65,8 @@ func payloads() []embeddedPayload {
 		{"0c-server.exe", engine, engineSHA}, {"0c-update.exe", updater, updaterSHA},
 		{"0c-settings.exe", settingsProgram, settingsSHA}, {"WebView2Loader.dll", webviewLoader, loaderSHA},
 		{"SETTINGS-NOTICES.txt", settingsNotices, noticesSHA},
+        {"0c_tsf.dll", tsf64, tsf64SHA}, {"x86/0c_tsf.dll", tsf32, tsf32SHA},
+        {"NATIVE-NOTICES.txt", nativeNotices, nativeNoticesSHA},
 	}
 }
 func payloadOK() error {
@@ -107,7 +119,7 @@ func copyFile(src, dst string) error {
 }
 
 func supportedBase(version string) bool {
-	return version == "0.2.10"
+	return version == "0.2.11"
 }
 
 func prepare(base, dest string) error {
@@ -119,7 +131,7 @@ func prepare(base, dest string) error {
 		return err
 	}
 	if !supportedBase(receipt.Version) {
-		return fmt.Errorf("this preview requires official Windows x64 0.2.10; found %s. Update to official 0.2.10 first", receipt.Version)
+		return fmt.Errorf("this preview requires official Windows x64 0.2.11; found %s. Update to official 0.2.11 first", receipt.Version)
 	}
 	release, err := update.Verify(source, "windows", "amd64")
 	if err != nil {
@@ -154,7 +166,7 @@ func prepare(base, dest string) error {
 		}
 	}
 
-	note := "mcc1 private test build, not an official upstream release.\nVersion: " + previewVersion + "\nEngine/updater source: https://github.com/mcc1/0c-ime/commit/" + sourceRevision + "\nTSF shell, candidate UI, dictionary and model runtime reused unchanged from this user's verified installation, version " + receipt.Version + ".\n"
+	note := "mcc1 private test build, not an official upstream release.\nVersion: " + previewVersion + "\nEngine/updater source: https://github.com/mcc1/0c-ime/commit/" + sourceRevision + "\nTSF x64/x86 rebuilt with secure-mode pass-through. Candidate UI, dictionary and model runtime reused unchanged from this user's verified installation, version " + receipt.Version + ".\n"
 	if err = os.WriteFile(filepath.Join(dest, "PREVIEW.txt"), []byte(note), 0600); err != nil {
 		return err
 	}
@@ -167,7 +179,7 @@ func prepare(base, dest string) error {
 		return err
 	}
 	metadata["version"], metadata["channel"], metadata["revision"] = previewVersion, "internal-preview", sourceRevision
-	metadata["dirty"], metadata["build_platform"] = false, "Linux cross-compiled Go engine/updater and Rust GNU settings; verified installed Windows 0.2.10 TSF and runtime"
+	metadata["dirty"], metadata["build_platform"] = false, "Linux cross-compiled Go engine/updater and Rust GNU settings/TSF x64+x86; verified installed Windows 0.2.11 candidate UI/data/runtime"
 	files := map[string]string{}
 	for name := range release.Files {
 		h, e := update.Hash(filepath.Join(dest, filepath.FromSlash(name)))
@@ -217,6 +229,7 @@ func run() error {
 	if len(os.Args) == 2 && os.Args[1] == "--verify-payload" {
 		fmt.Println(previewVersion, "engine SHA-256:", engineSHA)
 		fmt.Println("Settings SHA-256:", settingsSHA, "loader SHA-256:", loaderSHA)
+        fmt.Println("TSF x64 SHA-256:", tsf64SHA, "TSF x86 SHA-256:", tsf32SHA)
 		return nil
 	}
 	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
@@ -283,7 +296,7 @@ func run() error {
 		return nil
 	}
 	fmt.Println("Preparing", previewVersion)
-	fmt.Println("Requires official Windows x64 0.2.10. Close Settings, finish composition, and run as administrator using the same Windows account.")
+	fmt.Println("Requires official Windows x64 0.2.11. Close Settings, finish composition, and run as administrator using the same Windows account.")
 	dest, err := os.MkdirTemp("", "0c-chinese-preview-")
 	if err != nil {
 		return err
@@ -296,7 +309,7 @@ func run() error {
 	if err = command(filepath.Join(dest, "0c-update.exe"), "install", "-bundle", dest, "-channel", "internal-preview"); err != nil {
 		return err
 	}
-	fmt.Println("Installed. Reopen Settings and the applications you want to test. Follow any restart notice from the updater; no forced sign-out.")
+	fmt.Println("Installed. Save your work and SIGN OUT, then sign in before testing UAC. TSF DLLs already loaded in applications require a new desktop session; no forced sign-out.")
 	fmt.Println("To roll back, run this same program as administrator with --rollback.")
 	return nil
 }
