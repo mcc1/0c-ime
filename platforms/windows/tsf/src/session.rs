@@ -628,6 +628,15 @@ impl Session {
         Snapshot::default()
     }
 
+    /// Enter a secure activation without sending even a close request to the
+    /// normal desktop engine. Closing the transport releases its sessions.
+    /// Keep the remembered mode; secure pass-through must not toggle it.
+    pub fn suspend(&mut self) {
+        self.id = 0;
+        self.client.release();
+        self.reset();
+    }
+
     /// 清除重播紀錄；不重連、不重播，不讓舊組字流入私人欄位或下個欄位。
     pub fn reset(&mut self) {
         self.log.clear();
@@ -2132,5 +2141,25 @@ mod tests {
             modes_after(&server, from),
             vec![json!({"type": "mode", "on": false}), json!({"type": "caps_lock", "on": true})]
         );
+    }
+}
+
+#[cfg(test)]
+mod secure_suspend_tests {
+    use super::*;
+    #[test]
+    fn secure_suspend_discards_replay_without_sending_close_or_changing_mode() {
+        let mut session = Session::with_client(Client::with_pipe(r"\\.\pipe\0c-secure-no-connect"));
+        session.id = 42;
+        session.english = true;
+        session.mode_known = true;
+        session.log.push(json!({"type":"key","key":"s"}));
+        crate::runtime_activity::take();
+        session.suspend();
+        assert_eq!(session.id, 0);
+        assert!(session.log.is_empty());
+        assert!(session.english && session.mode_known);
+        drop(session);
+        assert_eq!(crate::runtime_activity::take(), Vec::<&str>::new());
     }
 }

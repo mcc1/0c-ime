@@ -175,6 +175,12 @@ impl UiClient {
         }
     }
 
+    /// Drop the normal desktop pipe without sending a hide/show message.
+    pub fn suspend(&mut self) {
+        self.close();
+        self.warming = None;
+    }
+
     fn close(&mut self) {
         if let Some(h) = self.handle.take() {
             unsafe {
@@ -207,6 +213,8 @@ impl UiClient {
     /// Activate 跑在宿主的 UI 執行緒上（Outlook 啟動時一次好幾個），在這裡等最多 2 秒會卡住宿主；
     /// 等待留到第一次顯示候選時（connect），那時 0c-ui 通常早已就緒。
     pub fn warm_up(&mut self) {
+        #[cfg(test)]
+        crate::runtime_activity::record("ui-warm-up");
         if self.handle.is_some() || sandboxed() {
             return;
         }
@@ -286,6 +294,8 @@ impl UiClient {
 
     /// 送出呈現訊息給 0c-ui。隱藏訊息只在目前顯示中才送，省掉每鍵一次寫入。
     fn send(&mut self, message: &UiMessage) {
+        #[cfg(test)]
+        crate::runtime_activity::record("ui-send");
         if !message.show && !self.shown {
             return;
         }

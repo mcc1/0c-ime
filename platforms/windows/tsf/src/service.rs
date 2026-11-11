@@ -360,6 +360,7 @@ impl TextService_Impl {
 
     /// 輸入指示器按鈕的左鍵：切換中英（同右 Shift 單按）。
     pub(crate) fn toggle_mode(&self) {
+        if self.state.borrow().secure { return; }
         let ctx = self.focused_context();
         let snapshot = self.state.borrow_mut().session.toggle();
         self.present(ctx.as_ref(), &snapshot);
@@ -369,6 +370,7 @@ impl TextService_Impl {
     /// 「已切換為輸出簡體字／繁體字」照一般提示顯示在游標旁、幾秒後收起，指示器跟著換成「简」／「中」。
     /// 走的是打字用的同一條引擎管道，沙箱宿主（搜尋框等）也可以。引擎不能即時切換或沒回應時回傳 false。
     pub(crate) fn set_output_simplified(&self, on: bool) -> bool {
+        if self.state.borrow().secure { return false; }
         let ctx = self.focused_context();
         let snapshot = {
             let Ok(mut st) = self.state.try_borrow_mut() else { return false };
@@ -395,6 +397,7 @@ impl TextService_Impl {
             // 自己的處理中途（例如 edit session 裡）收到通知：不是使用者按的熱鍵。
             return;
         };
+        if st.secure { return; }
         let Some((compartment, _)) = st.openclose.clone() else {
             return;
         };
@@ -465,8 +468,8 @@ impl TextService_Impl {
     /// 勾選與「简」／「中」也要對。只用已經在執行的引擎；宿主正在處理別的事（狀態借用中）時略過。
     pub(crate) fn recheck_simplified(&self) {
         let changed = match self.state.try_borrow_mut() {
-            Ok(mut st) => st.session.refresh_simplified(),
-            Err(_) => false,
+            Ok(mut st) if !st.secure => st.session.refresh_simplified(),
+            _ => false,
         };
         if changed {
             self.sync_langbar();
@@ -1018,17 +1021,13 @@ impl TextService_Impl {
 
     /// 每次按鍵重新確認欄位；阻擋路徑不記錄鍵碼、不連線／重播引擎。
     fn allowed(&self, ctx: Option<&ITfContext>) -> bool {
-        let (secure, client, ui_less, flags) = {
+        if self.state.borrow().secure { return false; }
+        let (client, ui_less, flags) = {
             let st = self.state.borrow();
-            (st.secure, st.client_id, st.ui_less, st.activate_flags)
+            (st.client_id, st.ui_less, st.activate_flags)
         };
-        let field = if secure {
-            privacy::Field::Blocked
-        } else {
-            let field = privacy::field(ctx, client, ui_less);
-            privacy::note_context(ctx, flags, field);
-            field
-        };
+        let field = privacy::field(ctx, client, ui_less);
+        privacy::note_context(ctx, flags, field);
         if field != privacy::Field::Blocked {
             self.state
                 .borrow_mut()
@@ -1243,14 +1242,28 @@ impl TextService_Impl {
             })
             .unwrap_or(false)
     }
-}
-
-impl ITfTextInputProcessor_Impl for TextService_Impl {
-    fn Activate(&self, ptim: Ref<'_, ITfThreadMgr>, tid: u32) -> windows_core::Result<()> {
+    fn activate(&self, ptim: Ref<'_, ITfThreadMgr>, tid: u32, flags: u32) -> windows_core::Result<()> {
         crate::guarded("Activate", || {
-            // 開頭與結尾各記一行：宿主在 Activate 中途崩潰時，紀錄只有開頭（#89）。
-            zlog!("activate 開始 exe={} tid={}{}", crate::log::exe_name(), tid, if crate::layout::IS_32BIT { " x86" } else { "" });
             let tm = ptim.ok()?.clone();
+            {
+                let mut st = self.state.borrow_mut();
+                st.secure = flags & TF_TMAE_SECUREMODE != 0;
+                st.ui_less = flags & TF_TMAE_UIELEMENTENABLEDONLY != 0;
+                st.activate_flags = flags;
+                if st.secure {
+                    // Keep the TIP eligible on the UAC desktop, but do not
+                    // subscribe to keys, inspect fields, open compartments,
+                    // create UI, query the engine or write diagnostic files.
+                    st.session.suspend();
+                    st.ui.suspend();
+                    st.thread_mgr = Some(tm);
+                    st.client_id = tid;
+                    return Ok(());
+                }
+            }
+            // 開頭與結尾各記一行：宿主在 Activate 中途崩潰時，紀錄只有開頭（#89）。
+            zlog!("activate flags={:#x} comless={}", flags, flags & TF_TMAE_COMLESS != 0);
+            zlog!("activate 開始 exe={} tid={}{}", crate::log::exe_name(), tid, if crate::layout::IS_32BIT { " x86" } else { "" });
             let callback = CandidateWindow::new(self).ok();
             let mut opened = None;
             unsafe {
@@ -1346,9 +1359,27 @@ impl ITfTextInputProcessor_Impl for TextService_Impl {
             Ok(())
         })
     }
+}
+
+impl ITfTextInputProcessor_Impl for TextService_Impl {
+    fn Activate(&self, ptim: Ref<'_, ITfThreadMgr>, tid: u32) -> windows_core::Result<()> {
+        self.activate(ptim, tid, 0)
+    }
 
     fn Deactivate(&self) -> windows_core::Result<()> {
         crate::guarded("Deactivate", || {
+            {
+                let mut st = self.state.borrow_mut();
+                if st.secure {
+                    // Do not query the host or send a normal-desktop close/hide.
+                    st.thread_mgr = None;
+                    st.client_id = 0;
+                    st.secure = false;
+                    st.ui_less = false;
+                    st.activate_flags = 0;
+                    return Ok(());
+                }
+            }
             let ctx = self.focused_context();
             self.finish(ctx.as_ref(), "commit");
             self.forget_candidates();
@@ -1406,22 +1437,14 @@ impl ITfTextInputProcessorEx_Impl for TextService_Impl {
         tid: u32,
         flags: u32,
     ) -> windows_core::Result<()> {
-        crate::guarded("ActivateEx", || {
-            {
-                let mut st = self.state.borrow_mut();
-                st.secure = flags & TF_TMAE_SECUREMODE != 0;
-                st.ui_less = flags & TF_TMAE_UIELEMENTENABLEDONLY != 0;
-                st.activate_flags = flags;
-            }
-            zlog!("activate flags={:#x} comless={}", flags, flags & TF_TMAE_COMLESS != 0);
-            self.Activate(ptim, tid)
-        })
+        self.activate(ptim, tid, flags)
     }
 }
 
 impl ITfKeyEventSink_Impl for TextService_Impl {
     fn OnSetFocus(&self, foreground: BOOL) -> windows_core::Result<()> {
         crate::guarded("OnSetFocus", || {
+            if self.state.try_borrow().is_ok_and(|st| st.secure) { return Ok(()); }
             if !foreground.as_bool() {
                 {
                     let mut st = self.state.borrow_mut();
@@ -1629,6 +1652,7 @@ impl ITfCompositionSink_Impl for TextService_Impl {
         composition: Ref<'_, ITfComposition>,
     ) -> windows_core::Result<()> {
         crate::guarded("OnCompositionTerminated", || {
+            if self.state.try_borrow().is_ok_and(|st| st.secure) { return Ok(()); }
             {
                 let st = self.state.borrow();
                 // 正常 EndComposition 也可能同步回呼；不得把已提交／新組字當成外部取消。
@@ -1674,6 +1698,7 @@ impl ITfThreadMgrEventSink_Impl for TextService_Impl {
         previous: Ref<'_, ITfDocumentMgr>,
     ) -> windows_core::Result<()> {
         crate::guarded("OnSetFocus", || {
+            if self.state.try_borrow().is_ok_and(|st| st.secure) { return Ok(()); }
             let previous = previous.as_ref().and_then(|d| unsafe { d.GetTop().ok() });
             let owner = self.composition_document();
             zdebug!(
@@ -1706,6 +1731,7 @@ impl ITfTextLayoutSink_Impl for TextService_Impl {
         _view: Ref<'_, ITfContextView>,
     ) -> windows_core::Result<()> {
         crate::guarded("OnLayoutChange", || {
+            if self.state.try_borrow().is_ok_and(|st| st.secure) { return Ok(()); }
             if lcode == TF_LC_DESTROY {
                 return Ok(());
             }
@@ -2144,3 +2170,7 @@ mod openclose_tests {
         assert_eq!(open_keyboard(&compartment, 7), (0, 0));
     }
 }
+
+#[cfg(test)]
+#[path = "secure_activation_tests.rs"]
+mod secure_activation_tests;

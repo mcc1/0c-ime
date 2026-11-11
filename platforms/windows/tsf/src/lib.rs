@@ -131,3 +131,11 @@ pub extern "system" fn DllUnregisterServer() -> HRESULT {
         }
     })
 }
+
+#[cfg(test)]
+mod runtime_activity {
+    use std::cell::RefCell;
+    thread_local! { static EVENTS: RefCell<Vec<&'static str>> = const { RefCell::new(Vec::new()) }; }
+    pub fn record(event: &'static str) { EVENTS.with(|v| v.borrow_mut().push(event)); }
+    pub fn take() -> Vec<&'static str> { EVENTS.with(|v| std::mem::take(&mut *v.borrow_mut())) }
+}

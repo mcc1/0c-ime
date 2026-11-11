@@ -24,6 +24,7 @@ use windows::Win32::UI::TextServices::{
     ITfCategoryMgr, ITfInputProcessorProfiles, CLSID_TF_CategoryMgr, CLSID_TF_InputProcessorProfiles,
     GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, GUID_TFCAT_TIPCAP_COMLESS, GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,
     GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT, GUID_TFCAT_TIPCAP_UIELEMENTENABLED, GUID_TFCAT_TIP_KEYBOARD,
+    GUID_TFCAT_TIPCAP_SECUREMODE,
 };
 use windows_core::{Error, PCWSTR, GUID};
 use zuin_win_common::wide;
@@ -36,8 +37,10 @@ use crate::log::zlog;
 // COMLESS：以 COM-less 方式啟用輸入法的宿主（Minecraft Java 版等 GLFW／LWJGL 程式）只載入有這個類別的輸入法，
 // 沒有時工作列顯示「中」但按鍵直接以英文送出（#157）。啟用時因此不呼叫 CoCreateInstance（msctf.rs）。
 // 每次更新都會以新版 DLL 重新註冊，升級即生效；回復舊版時新版 DLL 先取消註冊，舊版不會留著這些類別。
-const CATEGORIES: [GUID; 6] = [
+// Secure activation is a local pass-through: no helper, engine or input forwarding.
+const CATEGORIES: [GUID; 7] = [
     GUID_TFCAT_TIP_KEYBOARD,
+    GUID_TFCAT_TIPCAP_SECUREMODE,
     GUID_TFCAT_TIPCAP_IMMERSIVESUPPORT,
     GUID_TFCAT_TIPCAP_SYSTRAYSUPPORT,
     GUID_TFCAT_TIPCAP_UIELEMENTENABLED,
@@ -352,6 +355,11 @@ mod tests {
         // #157：沒有這個類別，COM-less 啟用的宿主（Minecraft Java 版）不載入靈犀。
         assert_eq!(GUID_TFCAT_TIPCAP_COMLESS, GUID::from_u128(0x364215d9_75bc_11d7_a6ef_00065b84435c));
         assert!(CATEGORIES.contains(&GUID_TFCAT_TIPCAP_COMLESS));
+    }
+
+    #[test]
+    fn registration_advertises_secure_activation() {
+        assert!(CATEGORIES.contains(&GUID_TFCAT_TIPCAP_SECUREMODE));
     }
 
     #[test]

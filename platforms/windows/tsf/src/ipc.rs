@@ -112,6 +112,8 @@ fn programs_dir() -> Option<PathBuf> {
 
 /// 啟動版本目錄裡的程式（脫離宿主，不繼承把手）；32 位元 DLL 也啟動同一份 x64 程式。回傳 pid。引擎優先使用 engine.json 指向的版本。
 pub fn spawn_sibling(exe_name: &str, args: &str) -> Option<u32> {
+        #[cfg(test)]
+        crate::runtime_activity::record("spawn-helper");
     let pointed = if exe_name == "0c-server.exe" {
         engine_dir()
     } else {
@@ -269,6 +271,8 @@ impl Client {
 
     /// 只連已經在執行的引擎，不啟動 0c-server、不等待（Activate 時查開始時的模式，#160）。
     pub fn connect_existing(&mut self) -> bool {
+        #[cfg(test)]
+        crate::runtime_activity::record("engine-connect");
         if self.handle.is_some() {
             return true;
         }
@@ -399,6 +403,8 @@ impl Client {
 
     /// 送出一個 Envelope 並讀回 Reply。連線失敗回傳 None，並關閉連線（下次呼叫會重連）。
     pub fn call(&mut self, envelope: &Value) -> Option<Value> {
+        #[cfg(test)]
+        crate::runtime_activity::record("engine-call");
         if !self.connect() {
             return None;
         }
