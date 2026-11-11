@@ -84,3 +84,39 @@ fn legacy_activation_after_secure_pass_through_uses_normal_flags() {
     assert!(!st.secure && !st.ui_less);
     assert_eq!(st.activate_flags,0);
 }
+
+/// Run explicitly against the exact release DLL that will enter the package.
+/// This uses its exported COM factory, not the test executable's TextService.
+#[test]
+#[ignore = "requires ZUIN_TEST_SECURE_DLL pointing to a built release DLL"]
+fn release_dll_secure_activation() {
+    use windows::Win32::System::Com::IClassFactory;
+    use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+    use windows_core::{HRESULT, PCSTR, PCWSTR};
+    let path = std::env::var("ZUIN_TEST_SECURE_DLL").expect("ZUIN_TEST_SECURE_DLL");
+    let wide = zuin_win_common::wide(&path);
+    // The isolated probe process owns this module until it exits.
+    let module = unsafe { LoadLibraryW(PCWSTR(wide.as_ptr())).unwrap() };
+    type GetClass = unsafe extern "system" fn(*const GUID, *const GUID, *mut *mut std::ffi::c_void) -> HRESULT;
+    type CanUnload = unsafe extern "system" fn() -> HRESULT;
+    let get: GetClass = unsafe { std::mem::transmute(GetProcAddress(module, PCSTR(b"DllGetClassObject\0".as_ptr())).unwrap()) };
+    let can_unload: CanUnload = unsafe { std::mem::transmute(GetProcAddress(module, PCSTR(b"DllCanUnloadNow\0".as_ptr())).unwrap()) };
+    let mut raw = std::ptr::null_mut();
+    unsafe { get(&crate::guids::CLSID_ZUIN, &IClassFactory::IID, &mut raw).ok().unwrap(); }
+    let factory = unsafe { IClassFactory::from_raw(raw) };
+    let tip: ITfTextInputProcessorEx = unsafe { factory.CreateInstance(None).unwrap() };
+    let manager = ComObject::new(NoServices { calls: Cell::new(0) });
+    let tm: ITfThreadMgr = manager.to_interface();
+    unsafe { tip.ActivateEx(&tm, 7, TF_TMAE_SECUREMODE).expect("release DLL must support isolated secure activation"); }
+    let keys: ITfKeyEventSink = tip.cast().unwrap();
+    unsafe {
+        assert!(!keys.OnTestKeyDown(None, WPARAM(0x41), LPARAM(0)).unwrap().as_bool());
+        assert!(!keys.OnKeyDown(None, WPARAM(0x41), LPARAM(0)).unwrap().as_bool());
+        tip.Deactivate().unwrap();
+    }
+    assert_eq!(manager.calls.get(), 0);
+    drop(keys);
+    drop(tip);
+    drop(factory);
+    assert_eq!(unsafe { can_unload() }, windows::Win32::Foundation::S_OK);
+}
