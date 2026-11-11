@@ -1,0 +1,62 @@
+wine-10.0 (Ubuntu 10.0~repack-12ubuntu1)
+wine: created the configuration directory '/tmp/0c-uac-preview-0211'
+
+running 5 tests
+test register::tests::registration_advertises_secure_activation ... ok
+test service::secure_activation_tests::legacy_activation_after_secure_pass_through_uses_normal_flags ... ok
+test service::secure_activation_tests::release_dll_secure_activation ... ignored, requires ZUIN_TEST_SECURE_DLL pointing to a built release DLL
+test service::secure_activation_tests::secure_activation_events_and_deactivation_never_use_normal_runtime ... ok
+test session::secure_suspend_tests::secure_suspend_discards_replay_without_sending_close_or_changing_mode ... ok
+
+test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 150 filtered out; finished in 0.01s
+
+
+running 3 tests
+test register::tests::categories_include_comless ... ok
+test register::tests::categories_keep_existing_capabilities ... ok
+test register::tests::registration_advertises_secure_activation ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 152 filtered out; finished in 0.01s
+
+
+running 3 tests
+test service::openclose_tests::closed_or_unset_keyboard_is_opened_on_activation ... ok
+test service::openclose_tests::open_keyboard_is_left_alone ... ok
+test service::openclose_tests::refused_write_reports_the_value_unchanged ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 152 filtered out; finished in 0.01s
+
+
+running 5 tests
+test service::focus_tests::composition_moved_by_the_host_keeps_composing ... ok
+test service::focus_tests::excel_handover_waits_then_keeps_composing ... ok
+test service::focus_tests::focus_to_null_then_another_document_commits ... ok
+test service::focus_tests::leaving_the_composition_document_still_commits ... ok
+test service::focus_tests::switching_documents_directly_commits ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 150 filtered out; finished in 0.01s
+
+
+running 1 test
+test service::secure_activation_tests::release_dll_secure_activation ... 
+thread 'service::secure_activation_tests::release_dll_secure_activation' (432) panicked at tsf/src/secure_activation_tests.rs:110:57:
+release DLL must support isolated secure activation: Error { code: HRESULT(0x80004002), message: "" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    service::secure_activation_tests::release_dll_secure_activation
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 154 filtered out; finished in 0.01s
+
+
+running 1 test
+test service::secure_activation_tests::release_dll_secure_activation ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 154 filtered out; finished in 0.02s
+
+Original official DLL fails secure activation at the expected COM boundary; the exact candidate release DLL passes.
+X connection to :92 broken (explicit kill or server shutdown).
+X connection to :92 broken (explicit kill or server shutdown).

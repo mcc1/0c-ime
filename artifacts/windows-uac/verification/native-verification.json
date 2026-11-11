@@ -1,0 +1,79 @@
+{
+  "0c_tsf.dll": {
+    "arch": "x64",
+    "sha256": "db59695c09d2f65443770402e6e9998db750cfbf49c277c7c9cf1e47a4b2adbe",
+    "bytes": 3935736,
+    "exports": [
+      "DllCanUnloadNow",
+      "DllGetClassObject",
+      "DllMain",
+      "DllRegisterServer",
+      "DllUnregisterServer"
+    ],
+    "resources": [
+      3,
+      14,
+      16
+    ],
+    "PE_imports": [
+      "KERNEL32.dll",
+      "msvcrt.dll",
+      "ntdll.dll",
+      "bcryptprimitives.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "d2d1.dll",
+      "dwrite.dll",
+      "gdi32.dll",
+      "kernel32.dll",
+      "ntdll.dll",
+      "ole32.dll",
+      "oleacc.dll",
+      "oleaut32.dll",
+      "shell32.dll",
+      "user32.dll",
+      "msctf.dll"
+    ],
+    "ASLR": true,
+    "NX": true,
+    "version": "0.2.12-preview.uac.1"
+  },
+  "0c_tsf-x86.dll": {
+    "arch": "x86",
+    "sha256": "7999adc17a6b812102c67ab9e82357d48c02c2f69def05b5263dbb3a7256b991",
+    "bytes": 3929022,
+    "exports": [
+      "DllCanUnloadNow",
+      "DllGetClassObject",
+      "DllMain",
+      "DllRegisterServer",
+      "DllUnregisterServer"
+    ],
+    "resources": [
+      3,
+      14,
+      16
+    ],
+    "PE_imports": [
+      "KERNEL32.dll",
+      "msvcrt.dll",
+      "ntdll.dll",
+      "bcryptprimitives.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "d2d1.dll",
+      "dwrite.dll",
+      "gdi32.dll",
+      "kernel32.dll",
+      "ole32.dll",
+      "oleacc.dll",
+      "oleaut32.dll",
+      "shell32.dll",
+      "user32.dll",
+      "msctf.dll"
+    ],
+    "ASLR": true,
+    "NX": true,
+    "version": "0.2.12-preview.uac.1"
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "version": "0.2.12-preview.uac.1",
+  "source_revision": "edc07bc3838277d80ecff6403f5b0a61a6a0e929",
+  "upstream_version": "0.2.11",
+  "upstream_revision": "d0f13874aacff9392db410f34b781f7adcc9764c",
+  "uac_branch_rebased_head": "dbfd001dd4fb104f4f20bf1d823c6d19508f79fa",
+  "build_branch": "build/windows-uac-preview-0211",
+  "archive": {
+    "name": "0c-windows-uac-preview-1.zip",
+    "bytes": 22412467,
+    "sha256": "bfac5458d5298df71c4d4b58186dc9269ea560431405a4db24a40a554f7b7299"
+  },
+  "required_base": "official Windows x64 0.2.11",
+  "fresh_install": false,
+  "signed": false,
+  "native_Windows_UAC_validation": "not_run; user trial required",
+  "toolchain": "Go 1.26.10; Rust 1.99.0; GNU Windows x64/i686, release with icon and version resources",
+  "native_payloads": {
+    "0c_tsf.dll": {
+      "arch": "x64",
+      "sha256": "db59695c09d2f65443770402e6e9998db750cfbf49c277c7c9cf1e47a4b2adbe",
+      "bytes": 3935736,
+      "exports": [
+        "DllCanUnloadNow",
+        "DllGetClassObject",
+        "DllMain",
+        "DllRegisterServer",
+        "DllUnregisterServer"
+      ],
+      "resources": [
+        3,
+        14,
+        16
+      ],
+      "PE_imports": [
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll",
+        "bcryptprimitives.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "d2d1.dll",
+        "dwrite.dll",
+        "gdi32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ole32.dll",
+        "oleacc.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "user32.dll",
+        "msctf.dll"
+      ],
+      "ASLR": true,
+      "NX": true,
+      "version": "0.2.12-preview.uac.1"
+    },
+    "0c_tsf-x86.dll": {
+      "arch": "x86",
+      "sha256": "7999adc17a6b812102c67ab9e82357d48c02c2f69def05b5263dbb3a7256b991",
+      "bytes": 3929022,
+      "exports": [
+        "DllCanUnloadNow",
+        "DllGetClassObject",
+        "DllMain",
+        "DllRegisterServer",
+        "DllUnregisterServer"
+      ],
+      "resources": [
+        3,
+        14,
+        16
+      ],
+      "PE_imports": [
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll",
+        "bcryptprimitives.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "d2d1.dll",
+        "dwrite.dll",
+        "gdi32.dll",
+        "kernel32.dll",
+        "ole32.dll",
+        "oleacc.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "user32.dll",
+        "msctf.dll"
+      ],
+      "ASLR": true,
+      "NX": true,
+      "version": "0.2.12-preview.uac.1"
+    }
+  },
+  "package_metadata": {
+    "version": "0.2.12-preview.uac.1",
+    "revision": "edc07bc3838277d80ecff6403f5b0a61a6a0e929",
+    "required_base": "official Windows amd64 0.2.11",
+    "payloads": {
+      "VERSION": "0.2.12-preview.uac.1",
+      "SOURCE_REVISION": "edc07bc3838277d80ecff6403f5b0a61a6a0e929",
+      "ENGINE_SHA": "ffbbba858047cbe2a341712be8657be7758779b7d9893a8f9983f027d8a8adf7",
+      "UPDATER_SHA": "d6fe040f753322aa07bd5adbc3eaab7f554a3b6d37c20aa11b9f1a707b70b184",
+      "SETTINGS_SHA": "18603a8ef458332adf749d34420cb940d8af8ba2eaebd9c111b462144de1099b",
+      "LOADER_SHA": "86545b66cdb0603bc26b626fb9ad610cb6e71f28d468f5ea66df23b03dda96d5",
+      "NOTICES_SHA": "bde7f79b06e40d5ff02be8a755e0fe29504e0f25c2061859b68166ca6f0ee174",
+      "TSF64_SHA": "db59695c09d2f65443770402e6e9998db750cfbf49c277c7c9cf1e47a4b2adbe",
+      "TSF32_SHA": "7999adc17a6b812102c67ab9e82357d48c02c2f69def05b5263dbb3a7256b991",
+      "NATIVE_NOTICES_SHA": "cbb92f8d9c212b7e84b12740a1c71bc1aea09e7cbdda27dba6b425bf7cfcec7d"
+    },
+    "PE_imports": {
+      "0c-server.exe": [
+        "kernel32.dll"
+      ],
+      "0c-update.exe": [
+        "kernel32.dll"
+      ],
+      "0c-settings.exe": [
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll",
+        "WebView2Loader.dll",
+        "bcryptprimitives.dll",
+        "kernel32.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "api-ms-win-core-winrt-error-l1-1-0.dll",
+        "combase.dll",
+        "comctl32.dll",
+        "dwmapi.dll",
+        "gdi32.dll",
+        "imm32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ole32.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "shlwapi.dll",
+        "user32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ntdll.dll"
+      ],
+      "WebView2Loader.dll": [
+        "KERNEL32.dll",
+        "ADVAPI32.dll",
+        "ole32.dll"
+      ],
+      "0c_tsf.dll": [
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll",
+        "bcryptprimitives.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "d2d1.dll",
+        "dwrite.dll",
+        "gdi32.dll",
+        "kernel32.dll",
+        "ntdll.dll",
+        "ole32.dll",
+        "oleacc.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "user32.dll",
+        "msctf.dll"
+      ],
+      "0c_tsf-x86.dll": [
+        "KERNEL32.dll",
+        "msvcrt.dll",
+        "ntdll.dll",
+        "bcryptprimitives.dll",
+        "advapi32.dll",
+        "api-ms-win-core-synch-l1-2-0.dll",
+        "d2d1.dll",
+        "dwrite.dll",
+        "gdi32.dll",
+        "kernel32.dll",
+        "ole32.dll",
+        "oleacc.dll",
+        "oleaut32.dll",
+        "shell32.dll",
+        "user32.dll",
+        "msctf.dll"
+      ]
+    },
+    "native_Windows_execution": "not_run",
+    "settings_target": "x86_64-pc-windows-gnu",
+    "rust": "1.99.0",
+    "native_shell_targets": [
+      "x86_64-pc-windows-gnu",
+      "i686-pc-windows-gnu"
+    ],
+    "native_UAC_execution": "not_run",
+    "installer_sha256": "68c4c72498fea29b4a1f62ca2da6ff9168a03d6f2a7111941dd63dfe9dd129fa"
+  },
+  "official_base": {
+    "version": "0.2.11",
+    "revision": "1bc4fddd54e38a39e7bdf001addbb332b4a3ad63",
+    "asset": {
+      "os": "windows",
+      "arch": "amd64",
+      "url": "https://s3.biggo.com/0c-releases/releases/0.2.11/0c-0.2.11-windows-amd64.zip",
+      "sha256": "6d775c213a4b693da0d5132bc64e6f22d42f0306f0fbb75fac5d55346bf25a3d",
+      "size": 369425757,
+      "kind": "shell"
+    },
+    "Ed25519_feed_signature_verified": true,
+    "manifest_files_verified": 1331
+  },
+  "validation": {
+    "Go_core_engine_settings_server_updater": "passed",
+    "Go_vet": "passed",
+    "public_and_official_dictionaries": "passed",
+    "Chromium_group_tests": 2,
+    "Chromium_scroll_tests": 5,
+    "WebKit_tests": "skipped: unavailable",
+    "Wine10_secure_and_normal_COM_tests": "passed",
+    "real_release_DLL_COM_control": "official baseline fails with expected E_NOINTERFACE; exact new release DLL passes isolated secure activation/key pass-through/unload",
+    "PE_architectures_exports_icons_versions_ASLR_NX_no_extra_GCC_runtime_DLLs": "passed",
+    "helper_prepare_tamper_receipt_privacy_and_two_TSF_replacement": "passed",
+    "actual_official_0211_bundle_preparation": "passed; both TSF payloads replaced, data/UI/original receipt retained; 1335 output files verified",
+    "ZIP_CRC_and_all_members_SHA256": "passed"
+  },
+  "native_relogin_required": true,
+  "known_behavior_changes_from_upstream": "0.2.11 canonical model numbers such as gpt4 remain literal in both policies; conservative alphanumeric-to-Chinese recovery follows upstream",
+  "experimental_shift_return_ranker": false
+}

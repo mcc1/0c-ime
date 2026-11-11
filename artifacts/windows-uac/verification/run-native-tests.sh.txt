@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+Xvfb :92 -screen 0 1024x768x24 >/tmp/0c-uac-preview-xvfb.log 2>&1 &
+display_pid=$!
+trap 'kill "$display_pid" 2>/dev/null || true' EXIT
+export DISPLAY=:92 WINEARCH=win64 WINEPREFIX=/tmp/0c-uac-preview-0211 WINEDEBUG=-all
+sleep 1
+wine --version
+exe=$(find /target/x86_64-pc-windows-gnu/debug/deps -maxdepth 1 -name '0c_tsf-*.exe' | head -1)
+wine "$exe" secure_ --nocapture --test-threads=1
+for filter in register::tests service::openclose_tests service::focus_tests; do
+ wine "$exe" "$filter" --nocapture --test-threads=1
+done
+export ZUIN_TEST_SECURE_DLL='Z:\preview\official-install\versions\official-0.2.11\0c_tsf.dll'
+set +e
+wine "$exe" release_dll_secure_activation --ignored --nocapture --test-threads=1 >/tmp/0c-baseline-control.log 2>&1
+control=$?
+set -e
+cat /tmp/0c-baseline-control.log
+if [ "$control" = 0 ]; then echo 'ERROR: baseline unexpectedly passed'; exit 1; fi
+grep -q 'release DLL must support isolated secure activation' /tmp/0c-baseline-control.log
+export ZUIN_TEST_SECURE_DLL='Z:\preview\native\0c_tsf.dll'
+wine "$exe" release_dll_secure_activation --ignored --nocapture --test-threads=1
+echo 'Original official DLL fails secure activation at the expected COM boundary; the exact candidate release DLL passes.'

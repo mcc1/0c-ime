@@ -1,0 +1,13 @@
+from pathlib import Path
+import pefile,json,hashlib,sys
+root=Path('/workspace/scratch/windows-uac-preview-0211');sys.path.insert(0,'/workspace/0c-ime/scripts');from package_windows import pe_imports,check_pe
+records={};required={'DllGetClassObject','DllCanUnloadNow','DllRegisterServer','DllUnregisterServer'}
+for name,arch in [('0c_tsf.dll','x64'),('0c_tsf-x86.dll','x86')]:
+ p=root/'native'/name;check_pe(p,arch);pe=pefile.PE(str(p));exports={s.name.decode() for s in pe.DIRECTORY_ENTRY_EXPORT.symbols if s.name};assert required<=exports,(name,exports)
+ types={e.id for e in pe.DIRECTORY_ENTRY_RESOURCE.entries};assert {3,14,16}<=types,(name,types)
+ fixed=pe.VS_FIXEDFILEINFO[0];assert (fixed.FileVersionMS,fixed.FileVersionLS)==((0<<16)|2,(12<<16)|0)
+ assert '0.2.12-preview.uac.1'.encode('utf-16-le') in p.read_bytes()
+ deps=pe_imports(p);assert not any(n.lower().startswith(('libgcc','libstdc++','libwinpthread','vcruntime','msvcp')) for n in deps),deps
+ flags=pe.OPTIONAL_HEADER.DllCharacteristics;assert flags&0x40 and flags&0x100,(name,flags)
+ records[name]={'arch':arch,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,'exports':sorted(exports),'resources':sorted(types),'PE_imports':deps,'ASLR':True,'NX':True,'version':'0.2.12-preview.uac.1'}
+print(json.dumps(records,indent=2));(root/'native-verification.json').write_text(json.dumps(records,indent=2)+'\n')

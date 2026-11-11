@@ -1,0 +1,38 @@
+#!/bin/bash
+set -euo pipefail
+umask 022
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y gcc-mingw-w64-i686-posix binutils-mingw-w64-i686
+rustup target add i686-pc-windows-gnu
+export CARGO_TARGET_DIR=/workspace/scratch/windows-uac-fix/target
+export CARGO_BUILD_JOBS=4
+export ZC_NATIVE_VERSION_RESOURCE=/workspace/scratch/windows-uac-preview-0211/native-version.bin
+cd /workspace/0c-ime/platforms/windows
+cargo build --locked --release --target x86_64-pc-windows-gnu -p zuin-tsf
+cargo build --locked --release --target i686-pc-windows-gnu -p zuin-tsf
+mkdir -p /workspace/scratch/windows-uac-preview-0211/native
+install -m 0644 "$CARGO_TARGET_DIR/x86_64-pc-windows-gnu/release/0c_tsf.dll" /workspace/scratch/windows-uac-preview-0211/native/0c_tsf.dll
+install -m 0644 "$CARGO_TARGET_DIR/i686-pc-windows-gnu/release/0c_tsf.dll" /workspace/scratch/windows-uac-preview-0211/native/0c_tsf-x86.dll
+cargo test --locked --target x86_64-pc-windows-gnu -p zuin-tsf --no-run
+python3 /workspace/0c-ime/scripts/collect_notices.py rust --workspace /workspace/0c-ime/platforms/windows --target x86_64-pc-windows-gnu > /workspace/scratch/windows-uac-preview-0211/NATIVE-NOTICES.txt
+python3 /workspace/0c-ime/scripts/collect_notices.py rust --workspace /workspace/0c-ime/platforms/windows --target i686-pc-windows-gnu >> /workspace/scratch/windows-uac-preview-0211/NATIVE-NOTICES.txt
+python3 - <<'PY'
+from pathlib import Path
+import subprocess
+out=Path('/workspace/scratch/windows-uac-preview-0211/NATIVE-NOTICES.txt')
+root=Path(subprocess.check_output(['rustc','--print','sysroot'],text=True).strip())
+paths=list(root.glob('share/doc/rust/licenses/*'))
+paths+=[p for n in ['LICENSE-APACHE','LICENSE-MIT','COPYRIGHT','share/doc/rust/html/COPYRIGHT.html'] if (p:=root/n).is_file()]
+paths+=list(Path('/usr/share/doc').glob('*mingw*/copyright'))
+assert paths,'No compiler/runtime license texts found'
+with out.open('a') as f:
+ for p in paths:
+  if p.is_file():f.write('\n\n=== '+str(p)+' ===\n'+p.read_text(errors='replace')+'\n')
+print('Native runtime/compiler notices collected:',len(paths))
+PY
+unset ZC_NATIVE_VERSION_RESOURCE
+export CARGO_TARGET_DIR=/workspace/scratch/windows-uac-preview-0211/settings-target
+cd /workspace/scratch/windows-uac-preview-0211/settings-src
+ZC_BUILD_VERSION=0.2.12-preview.uac.1 cargo build --locked --release --target x86_64-pc-windows-gnu --features tauri/custom-protocol
+install -m 0755 "$CARGO_TARGET_DIR/x86_64-pc-windows-gnu/release/0c-settings.exe" /workspace/scratch/windows-uac-preview-0211/settings/0c-settings.exe
+python3 /workspace/0c-ime/scripts/collect_notices.py rust --workspace . --target x86_64-pc-windows-gnu > /workspace/scratch/windows-uac-preview-0211/SETTINGS-NOTICES.txt

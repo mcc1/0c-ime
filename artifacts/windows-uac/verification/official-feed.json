@@ -1,0 +1,45 @@
+{
+  "schema": 2,
+  "product": "0c",
+  "serial": 46,
+  "issued": "2026-11-10T20:40:38Z",
+  "expires": "2026-11-24T20:40:38Z",
+  "channel": "public-beta",
+  "version": "0.2.11",
+  "rollout": 100,
+  "withdrawn": null,
+  "assets": [
+    {
+      "os": "linux",
+      "arch": "amd64",
+      "url": "https://s3.biggo.com/0c-releases/releases/0.2.11/0c-0.2.11-linux-amd64.tar.gz",
+      "sha256": "89cbdf6a3de5f2fc225cca8174dfa278bc6dffed8c6b868a37b3e8c9dd8b6c59",
+      "size": 411547398,
+      "kind": "shell"
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://s3.biggo.com/0c-releases/releases/0.2.11/0c-0.2.11-macos-arm64.tar.gz",
+      "sha256": "3dfe996837ef13394278837bc9971357648b6befb2b3c8cec65de001f5a77b91",
+      "size": 385200596,
+      "kind": "shell"
+    },
+    {
+      "os": "darwin",
+      "arch": "amd64",
+      "url": "https://s3.biggo.com/0c-releases/releases/0.2.11/0c-0.2.11-macos-amd64.tar.gz",
+      "sha256": "b218fa0aa60834b418218680d10ef132bfac99944a6581644a31cb34e42da7b6",
+      "size": 396385370,
+      "kind": "shell"
+    },
+    {
+      "os": "windows",
+      "arch": "amd64",
+      "url": "https://s3.biggo.com/0c-releases/releases/0.2.11/0c-0.2.11-windows-amd64.zip",
+      "sha256": "6d775c213a4b693da0d5132bc64e6f22d42f0306f0fbb75fac5d55346bf25a3d",
+      "size": 369425757,
+      "kind": "shell"
+    }
+  ]
+}

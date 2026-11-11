@@ -1,0 +1,20 @@
+package main
+import("os";"path/filepath";"testing";"github.com/0c-biggo/0c-ime/internal/update")
+func TestActualOfficial0211UpgradeReplacesBothShells(t *testing.T){
+ base:="/workspace/scratch/windows-uac-preview-0211/official-install"
+ receiptPath:=filepath.Join(base,"install-receipt.json")
+ before,err:=os.ReadFile(receiptPath);if err!=nil{t.Fatal(err)}
+ original,err:=update.Verify(filepath.Join(base,"versions","official-0.2.11"),"windows","amd64");if err!=nil{t.Fatal(err)}
+ dest:=filepath.Join(t.TempDir(),"prepared")
+ if err:=prepare(base,dest);err!=nil{t.Fatal(err)}
+ made,err:=update.Verify(dest,"windows","amd64");if err!=nil{t.Fatal(err)}
+ if made.Version!=previewVersion||made.Channel!="internal-preview"{t.Fatal(made.Version)}
+ for n,want:=range map[string]string{"0c_tsf.dll":tsf64SHA,"x86/0c_tsf.dll":tsf32SHA}{
+  if made.Files[n]!=want||made.Files[n]==original.Files[n]{t.Fatalf("native shell unchanged: %s",n)}
+ }
+ for _,n:=range []string{"0c-ui.exe","data/manifest.json","data/lexicon.bin","data/lm.bin"}{
+  if made.Files[n]!=original.Files[n]{t.Fatalf("borrowed component changed: %s",n)}
+ }
+ after,err:=os.ReadFile(receiptPath);if err!=nil||string(before)!=string(after){t.Fatal("source receipt changed",err)}
+ t.Logf("Real official 0.2.11 upgraded to %s: both TSF files replaced, candidate UI/data and original receipt unchanged; %d verified files",made.Version,len(made.Files))
+}

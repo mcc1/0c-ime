@@ -1,0 +1,5 @@
+=== RUN   TestActualOfficial0211UpgradeReplacesBothShells
+    official_bundle_test.go:19: Real official 0.2.11 upgraded to 0.2.12-preview.uac.1: both TSF files replaced, candidate UI/data and original receipt unchanged; 1335 verified files
+--- PASS: TestActualOfficial0211UpgradeReplacesBothShells (6.08s)
+PASS
+ok  	github.com/0c-biggo/0c-ime/build/windows-feature-preview-0.2.12-preview.uac.1	6.095s

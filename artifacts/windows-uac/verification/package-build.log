@@ -1,0 +1,9 @@
+ok  	github.com/0c-biggo/0c-ime/build/windows-feature-preview-0.2.12-preview.uac.1	1.162s
+0.2.12-preview.uac.1 engine SHA-256: ffbbba858047cbe2a341712be8657be7758779b7d9893a8f9983f027d8a8adf7
+Settings SHA-256: 18603a8ef458332adf749d34420cb940d8af8ba2eaebd9c111b462144de1099b loader SHA-256: 86545b66cdb0603bc26b626fb9ad610cb6e71f28d468f5ea66df23b03dda96d5
+TSF x64 SHA-256: db59695c09d2f65443770402e6e9998db750cfbf49c277c7c9cf1e47a4b2adbe TSF x86 SHA-256: 7999adc17a6b812102c67ab9e82357d48c02c2f69def05b5263dbb3a7256b991
+{
+  "archive": "/workspace/scratch/windows-uac-preview-0211/package.zip",
+  "sha256": "bfac5458d5298df71c4d4b58186dc9269ea560431405a4db24a40a554f7b7299",
+  "revision": "edc07bc3838277d80ecff6403f5b0a61a6a0e929"
+}

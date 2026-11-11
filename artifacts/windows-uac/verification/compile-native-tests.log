@@ -1,0 +1,16 @@
+   Compiling zuin-tsf v0.1.0 (/workspace/0c-ime/platforms/windows/tsf)
+warning: unused `windows_core::BOOL` that must be used
+    --> tsf/src/service.rs:2031:13
+     |
+2031 |             unsafe { sink.OnKeyDown(&ctx, SHIFT, lparam(scan, false)) }.unwrap();
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(unused_must_use)]` (part of `#[warn(unused)]`) on by default
+help: use `let _ = ...` to ignore the resulting value
+     |
+2031 |             let _ = unsafe { sink.OnKeyDown(&ctx, SHIFT, lparam(scan, false)) }.unwrap();
+     |             +++++++
+
+warning: `zuin-tsf` (lib test) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.48s
+  Executable unittests src/lib.rs (/workspace/scratch/windows-uac-fix/target/x86_64-pc-windows-gnu/debug/deps/0c_tsf-3399eff07f3997d9.exe)
