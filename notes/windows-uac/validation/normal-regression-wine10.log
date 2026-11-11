@@ -1,0 +1,28 @@
+wine: created the configuration directory '/tmp/0c-uac-regression'
+
+running 3 tests
+test register::tests::categories_include_comless ... ok
+test register::tests::categories_keep_existing_capabilities ... ok
+test register::tests::registration_advertises_secure_activation ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 149 filtered out; finished in 0.02s
+
+
+running 3 tests
+test service::openclose_tests::closed_or_unset_keyboard_is_opened_on_activation ... ok
+test service::openclose_tests::open_keyboard_is_left_alone ... ok
+test service::openclose_tests::refused_write_reports_the_value_unchanged ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 149 filtered out; finished in 0.01s
+
+
+running 5 tests
+test service::focus_tests::composition_moved_by_the_host_keeps_composing ... ok
+test service::focus_tests::excel_handover_waits_then_keeps_composing ... ok
+test service::focus_tests::focus_to_null_then_another_document_commits ... ok
+test service::focus_tests::leaving_the_composition_document_still_commits ... ok
+test service::focus_tests::switching_documents_directly_commits ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 147 filtered out; finished in 0.01s
+
+X connection to :89 broken (explicit kill or server shutdown).

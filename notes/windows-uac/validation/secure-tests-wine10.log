@@ -1,0 +1,11 @@
+wine-10.0 (Ubuntu 10.0~repack-12ubuntu1)
+
+running 4 tests
+test register::tests::registration_advertises_secure_activation ... ok
+test service::secure_activation_tests::legacy_activation_after_secure_pass_through_uses_normal_flags ... ok
+test service::secure_activation_tests::secure_activation_events_and_deactivation_never_use_normal_runtime ... ok
+test session::secure_suspend_tests::secure_suspend_discards_replay_without_sending_close_or_changing_mode ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 148 filtered out; finished in 0.03s
+
+X connection to :90 broken (explicit kill or server shutdown).

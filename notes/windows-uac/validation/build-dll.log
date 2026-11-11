@@ -1,0 +1,12 @@
+    Blocking waiting for file lock on build directory
+   Compiling zuin-tsf v0.1.0 (/workspace/0c-ime/platforms/windows/tsf)
+warning: function `layout_dependent` is never used
+   --> tsf/src/keys.rs:956:8
+    |
+956 | pub fn layout_dependent(key: &str) -> bool {
+    |        ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `zuin-tsf` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 52.75s
